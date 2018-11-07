@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
-from .transforms import image_transforms
+from transforms import image_transforms
 
 
 class KittiLoader(Dataset):
@@ -72,6 +72,10 @@ def prepare_dataloader(data_directory, mode, augment_parameters=[0.8, 1.2, 0.5, 
             data loader
     """
     data_dirs = os.listdir(data_directory)
+
+    #ignore the hidden files (such as .DS_Store) required for mac
+    data_dirs = [item for item in data_dirs if not item.startswith(".")]
+
     data_transform = image_transforms(
         mode=mode,
         augment_parameters=augment_parameters,
