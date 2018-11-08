@@ -12,7 +12,7 @@ class KittiLoader(Dataset):
         If mode='train', each element is a dict containing 'left_image' and 'right_image'
     """
 
-    def __init__(self, root_dir, mode, transform=None):
+    def __init__(self, root_dir, filenames_file, mode, transform=None):
         """ Setup a Kitti sequence dataset.
 
         Args:
@@ -20,14 +20,16 @@ class KittiLoader(Dataset):
             mode: 'train' or 'test'
             transform: a torchvision.transforms type transform
         """
-        left_dir = os.path.join(root_dir, 'image_02/data/')
-        self.left_paths = sorted([os.path.join(left_dir, fname) for fname \
-                                  in os.listdir(left_dir)])
+
+        with open(filenames_file) as filenames:
+            self.left_paths = sorted(os.path.join(root_dir,fname.split()[0]) for fname \
+                                  in filenames)
+
         if mode == 'train':
-            right_dir = os.path.join(root_dir, 'image_03/data/')
-            self.right_paths = sorted([os.path.join(right_dir, fname) for fname \
-                                       in os.listdir(right_dir)])
-            assert len(self.right_paths) == len(self.left_paths)
+              with open(filenames_file) as filenames:
+                self.right_paths = sorted(os.path.join(root_dir,fname.split()[1]) for fname \
+                                  in filenames)
+            
         self.transform = transform
         self.mode = mode
 
@@ -51,13 +53,13 @@ class KittiLoader(Dataset):
             return left_image
 
 
-def prepare_dataloader(data_directory, mode, augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
+def prepare_dataloader(root_dir,filenames_file, mode, augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
                        do_augmentation=True, batch_size=256, size=(256, 512), num_workers=1):
     """ Prepares a DataLoader that loads multiple Kitti sequences
     
     Args:
     
-        data_directory: (str) folder that contains multiple subfolders with Kitti sequences
+        root_dir: (str) folder that contains multiple subfolders with Kitti sequences
         mode: (str) 'test' or 'train'
         augment_parameters: list of parameters for the data augmentation
         do_augmentation: decides if data are augmented
@@ -71,20 +73,17 @@ def prepare_dataloader(data_directory, mode, augment_parameters=[0.8, 1.2, 0.5, 
         loader : torch.utils.data.DataLoader
             data loader
     """
-    data_dirs = os.listdir(data_directory)
-
-    #ignore the hidden files (such as .DS_Store) required for mac
-    data_dirs = [item for item in data_dirs if not item.startswith(".")]
-
+   
     data_transform = image_transforms(
         mode=mode,
         augment_parameters=augment_parameters,
         do_augmentation=do_augmentation,
         size=size)
-    datasets = [KittiLoader(os.path.join(data_directory,
-                                         data_dir), mode, transform=data_transform)
-                for data_dir in data_dirs]
-    dataset = ConcatDataset(datasets)
+
+
+
+    dataset = KittiLoader(root_dir, filenames_file, mode, transform=data_transform)
+
     n_img = len(dataset)
     print('Use a dataset with', n_img, 'images')
     if mode == 'train':
