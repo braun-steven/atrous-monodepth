@@ -9,8 +9,9 @@ class Backbone(nn.Module):
     disparity maps on different scales.
     """
 
-    def __init__(self):
+    def __init__(self, n_input_channels: int):
         super(Backbone, self).__init__()
+        self._n_input_channels = n_input_channels
 
     def forward(self, x) -> List[torch.Tensor]:
         """
