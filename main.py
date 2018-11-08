@@ -75,6 +75,15 @@ def parse_args():
 
 
 def to_device(input, device):
+    """ Move a tensor or a collection of tensors to a device
+
+    Args:
+        input: tensor, dict of tensors or list of tensors
+        device: e.g. 'cuda' or 'cpu'
+
+    Returns:
+        same structure as input, but on device
+    """
     if torch.is_tensor(input):
         return input.to(device=device)
     elif isinstance(input, str):
@@ -88,7 +97,7 @@ def to_device(input, device):
 
 
 def adjust_learning_rate(optimizer, epoch, learning_rate):
-    """Sets the learning rate to the initial LR\
+    """ Sets the learning rate to the initial LR\
         decayed by 2 every 10 epochs after 30 epoches"""
 
     if epoch >= 30 and epoch < 40:
@@ -102,6 +111,14 @@ def adjust_learning_rate(optimizer, epoch, learning_rate):
 
 
 def post_process_disparity(disp):
+    """ Apply the post-processing step described in the paper
+
+    Args:
+        disp: [2, h, w] np.array a disparity map
+
+    Returns:
+        post-processed disparity map
+    """
     (_, h, w) = disp.shape
     l_disp = disp[0, :, :]
     r_disp = np.fliplr(disp[1, :, :])
@@ -119,8 +136,7 @@ class Model:
     Important:
         - args.data_dir is the root directory
         - args.filenames_file should be different depending on whether you want to train or test the model
-
-
+        - args.val_filenames_file is only used during training
     """
 
     def __init__(self, args):
@@ -166,6 +182,11 @@ class Model:
             torch.cuda.synchronize()
 
     def train(self):
+        """ Train the model for self.args.epochs epochs
+
+        Returns:
+            None
+        """
         losses = []
         val_losses = []
         best_loss = float('Inf')
@@ -249,6 +270,11 @@ class Model:
         self.model.load_state_dict(torch.load(path))
 
     def test(self):
+        """ Test the model.
+
+        Returns:
+            None
+        """
         self.model.eval()
         disparities = np.zeros((self.n_img,
                                 self.input_height, self.input_width),
