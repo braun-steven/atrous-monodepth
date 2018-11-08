@@ -104,7 +104,10 @@ class DeepLabv3Plus(Backbone):
         # TODO: missing init_weight(self) call?
 
     def forward(self, x):
+        # Apply DCNN
         x, low_level_features = self.dcnn(x)
+
+        # Get ASPP outputs
         x1 = self.aspp1(x)
         x2 = self.aspp2(x)
         x3 = self.aspp3(x)
@@ -112,6 +115,7 @@ class DeepLabv3Plus(Backbone):
         x5 = self.global_avg_pool(x)
         x5 = F.upsample(x5, size=x4.size()[2:], mode="bilinear", align_corners=True)
 
+        # Concat ASPP module outputs
         x = torch.cat((x1, x2, x3, x4, x5), dim=1)
 
         x = self.conv1(x)
@@ -128,11 +132,12 @@ class DeepLabv3Plus(Backbone):
         low_level_features = self.bn2(low_level_features)
         low_level_features = self.relu(low_level_features)
 
+        # Concat DCNN output and ASPP output
         x = torch.cat((x, low_level_features), dim=1)
         x = self.last_conv(x)
         x = F.upsample(x, size=x.size()[2:], mode="bilinear", align_corners=True)
 
-        return x
+        return x, low_level_features
 
     def freeze_bn(self):
         for m in self.modules():
@@ -142,7 +147,7 @@ class DeepLabv3Plus(Backbone):
 
 if __name__ == "__main__":
     model = DeepLabv3Plus(
-        dcnn_type=DCNNType.RESNET,
+        dcnn_type=DCNNType.XCEPTION,
         n_input_channels=3,
         n_classes=21,
         output_stride=16,
