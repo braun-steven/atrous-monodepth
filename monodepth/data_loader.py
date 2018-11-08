@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
-from transforms import image_transforms
+from .transforms import image_transforms
 
 
 class KittiLoader(Dataset):
