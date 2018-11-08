@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
-from transforms import image_transforms
+from .transforms import image_transforms
 
 
 class KittiLoader(Dataset):
@@ -16,7 +16,8 @@ class KittiLoader(Dataset):
         """ Setup a Kitti sequence dataset.
 
         Args:
-            root_dir: data directory. should contain 'image_02' (left) and 'image_03' (right) subfolders
+            root_dir: data directory
+            filenames_file: file, where each line contains left and right image paths (separated by whitespace)
             mode: 'train' or 'test'
             transform: a torchvision.transforms type transform
         """
@@ -53,18 +54,19 @@ class KittiLoader(Dataset):
             return left_image
 
 
-def prepare_dataloader(root_dir,filenames_file, mode, augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
+def prepare_dataloader(root_dir, filenames_file, mode, augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
                        do_augmentation=True, batch_size=256, size=(256, 512), num_workers=1):
     """ Prepares a DataLoader that loads multiple Kitti sequences
     
     Args:
     
-        root_dir: (str) folder that contains multiple subfolders with Kitti sequences
+        root_dir: data directory
+        filenames_file: file, where each line contains left and right image paths (separated by whitespace)
         mode: (str) 'test' or 'train'
         augment_parameters: list of parameters for the data augmentation
         do_augmentation: decides if data are augmented
         batch_size: number of images per batch
-        num_workers: number of GPUs
+        num_workers: number of workers in the data loader
         
     Returns:
         n_img : int
