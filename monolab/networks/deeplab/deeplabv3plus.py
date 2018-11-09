@@ -10,8 +10,10 @@ from monolab.networks.deeplab.resnet import ResNet
 from monolab.networks.deeplab.xception import Xception
 from monolab.networks.backbone import Backbone
 
+
 class DCNNType(Enum):
     """DeepLabv3+ DCNN Type"""
+
     XCEPTION = 1
     RESNET = 2
 
@@ -25,7 +27,6 @@ class DeepLabv3Plus(Backbone):
         self,
         dcnn_type: DCNNType,
         n_input_channels=3,
-        n_classes=21,
         output_stride=16,
         pretrained=False,
         _print=True,
@@ -35,14 +36,12 @@ class DeepLabv3Plus(Backbone):
         Args:
             dcnn_type: Type of the DCNN used in the encoder
             n_input_channels: Numper of input channels
-            n_classes: Number of classes
             output_stride: Output stride
             pretrained: Flag if weights should be loaded from a pretrained model
             _print: Print flag
         """
         if _print:
             print("Constructing DeepLabv3+ model...")
-            print("Number of classes: {}".format(n_classes))
             print("Output stride: {}".format(output_stride))
             print("Number of Input Channels: {}".format(n_input_channels))
         super(DeepLabv3Plus, self).__init__(n_input_channels)
@@ -88,7 +87,7 @@ class DeepLabv3Plus(Backbone):
         self.conv1 = nn.Conv2d(1280, 256, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(256)
 
-        # adopt [1x1, 48] for channel reduction.
+        # adopt [1x1, 2] for channel reduction.
         self.conv2 = nn.Conv2d(dcnn_feature_size, 48, 1, bias=False)
         self.bn2 = nn.BatchNorm2d(48)
 
@@ -99,14 +98,18 @@ class DeepLabv3Plus(Backbone):
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.Conv2d(256, n_classes, kernel_size=1, stride=1),
+            nn.Conv2d(256, 2, kernel_size=1, stride=1),
+        )
+
+        self.low_level_features_reduction = nn.Conv2d(
+            48, 2, kernel_size=3, stride=1, padding=1, bias=1
         )
 
         # TODO: missing init_weight(self) call?
 
-    def forward(self, x):
+    def forward(self, input):
         # Apply DCNN
-        x, low_level_features = self.dcnn(x)
+        x, low_level_features = self.dcnn(input)
 
         # Get ASPP outputs
         x1 = self.aspp1(x)
@@ -122,23 +125,22 @@ class DeepLabv3Plus(Backbone):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = F.upsample(
-            x,
-            size=(int(math.ceil(x.size()[-2] / 4)), int(math.ceil(x.size()[-1] / 4))),
-            mode="bilinear",
-            align_corners=True,
+        size_ = (
+            int(math.ceil(input.size()[-2] / 4)),
+            int(math.ceil(input.size()[-1] / 4)),
         )
+        x = F.upsample(x, size=size_, mode="bilinear", align_corners=True)
 
         low_level_features = self.conv2(low_level_features)
         low_level_features = self.bn2(low_level_features)
         low_level_features = self.relu(low_level_features)
 
-        # TODO: Shapes of x and low_level_feat do not fit
         # Concat DCNN output and ASPP output
         x = torch.cat((x, low_level_features), dim=1)
         x = self.last_conv(x)
         x = F.upsample(x, size=x.size()[2:], mode="bilinear", align_corners=True)
 
+        low_level_features = self.low_level_features_reduction(low_level_features)
         return x, low_level_features
 
     def freeze_bn(self):
@@ -149,9 +151,8 @@ class DeepLabv3Plus(Backbone):
 
 if __name__ == "__main__":
     model = DeepLabv3Plus(
-        dcnn_type=DCNNType.XCEPTION,
+        dcnn_type=DCNNType.RESNET,
         n_input_channels=3,
-        n_classes=21,
         output_stride=16,
         pretrained=True,
         _print=True,
@@ -160,4 +161,5 @@ if __name__ == "__main__":
     image = torch.randn(1, 3, 512, 512)
     with torch.no_grad():
         output = model.forward(image)
-    print(output.size())
+    print("Out", output[0].size())
+    print("Low level feat", output[1].size())
