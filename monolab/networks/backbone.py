@@ -17,7 +17,9 @@ class Backbone(nn.Module):
         """
         Forward input through backbone and generate disparity maps on different
         scales.
-        :param x: Left input image
-        :return: List of tensors of size [batch_size, 2, n_pixels_x, n_pixels_y]
+        Args:
+            x: Left input image
+        Returns:
+            List of tensors of size [batch_size, 2, n_pixels_x, n_pixels_y]
         """
         pass

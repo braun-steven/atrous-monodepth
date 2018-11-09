@@ -32,12 +32,13 @@ class DeepLabv3Plus(Backbone):
     ):
         """
         Initialize the DeepLabev3+ Model.
-        :param dcnn_type: Type of the DCNN used in the encoder
-        :param n_input_channels: Numper of input channels
-        :param n_classes: Number of classes
-        :param output_stride: Output stride
-        :param pretrained: Flag if weights should be loaded from a pretrained model
-        :param _print: Print flag
+        Args:
+            dcnn_type: Type of the DCNN used in the encoder
+            n_input_channels: Numper of input channels
+            n_classes: Number of classes
+            output_stride: Output stride
+            pretrained: Flag if weights should be loaded from a pretrained model
+            _print: Print flag
         """
         if _print:
             print("Constructing DeepLabv3+ model...")
@@ -132,6 +133,7 @@ class DeepLabv3Plus(Backbone):
         low_level_features = self.bn2(low_level_features)
         low_level_features = self.relu(low_level_features)
 
+        # TODO: Shapes of x and low_level_feat do not fit
         # Concat DCNN output and ASPP output
         x = torch.cat((x, low_level_features), dim=1)
         x = self.last_conv(x)

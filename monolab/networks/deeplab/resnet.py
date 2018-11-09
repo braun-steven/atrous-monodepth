@@ -67,11 +67,12 @@ class ResNet(nn.Module):
     ) -> nn.Sequential:
         """
         Generate a layer block
-        :param block: Block type
-        :param planes: Number of planes
-        :param blocks: Number of blocks
-        :param stride: Convolution stride for each convolution layer
-        :param rate: Atrous rate
+        Args:
+            block: Block type
+            planes: Number of planes
+            blocks: Number of blocks
+            stride: Convolution stride for each convolution layer
+            rate: Atrous rate
         :return: Sequential model
         """
         downsample = None
@@ -100,12 +101,14 @@ class ResNet(nn.Module):
     ) -> nn.Sequential:
         """
         Generate a multigrid block
-        :param block: Block type
-        :param planes: Number of planes
-        :param blocks: List of blocks
-        :param stride: Convolution stride for each convolution layer
-        :param rate: Atrous rate
-        :return: Sequential model
+        Args:
+            block: Block type
+            planes: Number of planes
+            blocks: List of blocks
+            stride: Convolution stride for each convolution layer
+            rate: Atrous rate
+        Returns:
+             Sequential model
         """
         if blocks is None:
             blocks = [1, 2, 4]
