@@ -3,6 +3,7 @@ from torch import nn
 
 import torch.nn.functional as F
 from .backbone import Backbone
+from .deeplab.deeplabv3plus import DCNNType, DeepLabv3Plus
 
 
 def get_model(model: str, input_channels=3):
@@ -14,6 +15,13 @@ def get_model(model: str, input_channels=3):
     """
     if model == "backbone":
         out_model = Backbone(n_input_channels=input_channels)
+    elif model == "deeplab":
+        out_model = DeepLabv3Plus(
+            DCNNType(1),
+            n_input_channels=3,
+            n_classes=2,
+            output_stride=16
+        )
     # elif and so on and so on
     else:
         raise ValueError("Please specify a valid model")
