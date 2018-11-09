@@ -11,3 +11,4 @@ Project for the Deep Learning in Computer Vision practical course
 
 ## Coding Style
 - Code Formatter: [black](https://github.com/ambv/black)
+- Docstring: [Google Style](https://www.chromium.org/chromium-os/python-style-guidelines)
