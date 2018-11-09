@@ -6,70 +6,80 @@ import argparse
 import time
 import numpy as np
 
-from monolab.models.utils import get_model
-from monodepth import MonodepthLoss, prepare_dataloader
+from monolab.networks import get_model
+from monolab.loss import MonodepthLoss
+from monolab.data_loader import prepare_dataloader
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='PyTorch Monodepth')
+    parser = argparse.ArgumentParser(description="PyTorch Monodepth")
 
-    parser.add_argument('data_dir',
-                        help='path to the dataset folder. \
+    parser.add_argument(
+        "data_dir",
+        help="path to the dataset folder. \
                         The filenames given in filenames_file \
-                        are relative to this path.')
-    parser.add_argument('filenames_file',
-                        help='File that contains a list of filenames for training. \
+                        are relative to this path.",
+    )
+    parser.add_argument(
+        "filenames_file",
+        help="File that contains a list of filenames for training. \
                         Each line should contain left and right image paths \
-                        separated by a space.'
-                        )
-    parser.add_argument('val_filenames_file',
-                        help='File that contains a list of filenames for validation. \
+                        separated by a space.",
+    )
+    parser.add_argument(
+        "val_filenames_file",
+        help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
-                            separated by a space.'
+                            separated by a space.",
+    )
+    parser.add_argument('--model', default='backbone',
+                        help='encoder architecture: ' +
+                             'resnet18_md or resnet50_md ' + '(default: resnet18)'
+                             + 'or torchvision version of any resnet model'
                         )
-    parser.add_argument('model_path', help='path to the trained model')
-    parser.add_argument('output_directory',
-                        help='where save dispairities\
-                            for tested images'
-                        )
-    parser.add_argument('--input_height', type=int, help='input height',
-                        default=256)
-    parser.add_argument('--input_width', type=int, help='input width',
-                        default=512)
-    parser.add_argument('--mode', default='train',
-                        help='mode: train or test (default: train)')
-    parser.add_argument('--epochs', default=50,
-                        help='number of total epochs to run')
-    parser.add_argument('--learning_rate', default=1e-4,
-                        help='initial learning rate (default: 1e-4)')
-    parser.add_argument('--adjust_lr', default=True,
-                        help='apply learning rate decay or not\
-                            (default: True)'
-                        )
-    parser.add_argument('--batch_size', default=256,
-                        help='mini-batch size (default: 256)')
-    parser.add_argument('--device',
-                        default='cuda:0',
-                        help='choose cpu or cuda:0 device"'
-                        )
-    parser.add_argument('--do_augmentation', default=True,
-                        help='do augmentation of images or not')
-    parser.add_argument('--augment_parameters', default=[
-        0.8,
-        1.2,
-        0.5,
-        2.0,
-        0.8,
-        1.2,
-    ],
-                        help='lowest and highest values for gamma,\
-                        brightness and color respectively'
-                        )
-    parser.add_argument('--input_channels', default=3,
-                        help='Number of channels in input tensor')
-    parser.add_argument('--num_workers', default=4,
-                        help='Number of workers in dataloader')
-    parser.add_argument('--use_multiple_gpu', default=False)
+    parser.add_argument("model_path", help="path to the trained model")
+    parser.add_argument(
+        "output_directory",
+        help="where save dispairities\
+                            for tested images",
+    )
+    parser.add_argument("--input_height", type=int, help="input height", default=256)
+    parser.add_argument("--input_width", type=int, help="input width", default=512)
+    parser.add_argument(
+        "--mode", default="train", help="mode: train or test (default: train)"
+    )
+    parser.add_argument("--epochs", default=50, help="number of total epochs to run")
+    parser.add_argument(
+        "--learning_rate", default=1e-4, help="initial learning rate (default: 1e-4)"
+    )
+    parser.add_argument(
+        "--adjust_lr",
+        default=True,
+        help="apply learning rate decay or not\
+                            (default: True)",
+    )
+    parser.add_argument(
+        "--batch_size", default=256, help="mini-batch size (default: 256)"
+    )
+    parser.add_argument(
+        "--device", default="cuda:0", help='choose cpu or cuda:0 device"'
+    )
+    parser.add_argument(
+        "--do_augmentation", default=True, help="do augmentation of images or not"
+    )
+    parser.add_argument(
+        "--augment_parameters",
+        default=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
+        help="lowest and highest values for gamma,\
+                        brightness and color respectively",
+    )
+    parser.add_argument(
+        "--input_channels", default=3, help="Number of channels in input tensor"
+    )
+    parser.add_argument(
+        "--num_workers", default=4, help="Number of workers in dataloader"
+    )
+    parser.add_argument("--use_multiple_gpu", default=False)
     args = parser.parse_args()
     return args
 
@@ -107,7 +117,7 @@ def adjust_learning_rate(optimizer, epoch, learning_rate):
     else:
         lr = learning_rate
     for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+        param_group["lr"] = lr
 
 
 def post_process_disparity(disp):
@@ -149,18 +159,21 @@ class Model:
         if args.use_multiple_gpu:
             self.model = torch.nn.DataParallel(self.model)
 
-        if args.mode == 'train':
+        if args.mode == "train":
             self.loss_function = MonodepthLoss(
-                n=4,
-                SSIM_w=0.85,
-                disp_gradient_w=0.1, lr_w=1).to(self.device)
-            self.optimizer = optim.Adam(self.model.parameters(),
-                                        lr=args.learning_rate)
-            self.val_n_img, self.val_loader = prepare_dataloader(args.data_dir, args.val_filenames_file, args.mode,
-                                                                 args.augment_parameters,
-                                                                 False, args.batch_size,
-                                                                 (args.input_height, args.input_width),
-                                                                 args.num_workers)
+                n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
+            ).to(self.device)
+            self.optimizer = optim.Adam(self.model.parameters(), lr=args.learning_rate)
+            self.val_n_img, self.val_loader = prepare_dataloader(
+                args.data_dir,
+                args.val_filenames_file,
+                args.mode,
+                args.augment_parameters,
+                False,
+                args.batch_size,
+                (args.input_height, args.input_width),
+                args.num_workers,
+            )
         else:
             self.model.load_state_dict(torch.load(args.model_path))
             args.augment_parameters = None
@@ -172,13 +185,18 @@ class Model:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        self.n_img, self.loader = prepare_dataloader(args.data_dir, args.filenames_file,
-                                                     args.mode, args.augment_parameters,
-                                                     args.do_augmentation, args.batch_size,
-                                                     (args.input_height, args.input_width),
-                                                     args.num_workers)
+        self.n_img, self.loader = prepare_dataloader(
+            args.data_dir,
+            args.filenames_file,
+            args.mode,
+            args.augment_parameters,
+            args.do_augmentation,
+            args.batch_size,
+            (args.input_height, args.input_width),
+            args.num_workers,
+        )
 
-        if 'cuda' in self.device:
+        if "cuda" in self.device:
             torch.cuda.synchronize()
 
     def train(self):
@@ -189,35 +207,34 @@ class Model:
         """
         losses = []
         val_losses = []
-        best_loss = float('Inf')
-        best_val_loss = float('Inf')
+        best_loss = float("Inf")
+        best_val_loss = float("Inf")
 
         running_val_loss = 0.0
         self.model.eval()
         for data in self.val_loader:
             data = to_device(data, self.device)
-            left = data['left_image']
-            right = data['right_image']
+            left = data["left_image"]
+            right = data["right_image"]
             disps = self.model(left)
             loss = self.loss_function(disps, [left, right])
             val_losses.append(loss.item())
             running_val_loss += loss.item()
 
         running_val_loss /= self.val_n_img / self.args.batch_size
-        print('Val_loss:', running_val_loss)
+        print("Val_loss:", running_val_loss)
 
         for epoch in range(self.args.epochs):
             if self.args.adjust_lr:
-                adjust_learning_rate(self.optimizer, epoch,
-                                     self.args.learning_rate)
+                adjust_learning_rate(self.optimizer, epoch, self.args.learning_rate)
             c_time = time.time()
             running_loss = 0.0
             self.model.train()
             for data in self.loader:
                 # Load data
                 data = to_device(data, self.device)
-                left = data['left_image']
-                right = data['right_image']
+                left = data["left_image"]
+                right = data["right_image"]
 
                 # One optimization iteration
                 self.optimizer.zero_grad()
@@ -233,8 +250,8 @@ class Model:
             self.model.eval()
             for data in self.val_loader:
                 data = to_device(data, self.device)
-                left = data['left_image']
-                right = data['right_image']
+                left = data["left_image"]
+                right = data["right_image"]
                 disps = self.model(left)
                 loss = self.loss_function(disps, [left, right])
                 val_losses.append(loss.item())
@@ -244,23 +261,23 @@ class Model:
             running_loss /= self.n_img / self.args.batch_size
             running_val_loss /= self.val_n_img / self.args.batch_size
             print(
-                'Epoch:',
+                "Epoch:",
                 epoch + 1,
-                'train_loss:',
+                "train_loss:",
                 running_loss,
-                'val_loss:',
+                "val_loss:",
                 running_val_loss,
-                'time:',
+                "time:",
                 round(time.time() - c_time, 3),
-                's',
+                "s",
             )
-            self.save(self.args.model_path[:-4] + '_last.pth')
+            self.save(self.args.model_path[:-4] + "_last.pth")
             if running_val_loss < best_val_loss:
-                self.save(self.args.model_path[:-4] + '_cpt.pth')
+                self.save(self.args.model_path[:-4] + "_cpt.pth")
                 best_val_loss = running_val_loss
-                print('Model_saved')
+                print("Model_saved")
 
-        print('Finished Training. Best loss:', best_loss)
+        print("Finished Training. Best loss:", best_loss)
         self.save(self.args.model_path)
 
     def save(self, path):
@@ -276,12 +293,12 @@ class Model:
             None
         """
         self.model.eval()
-        disparities = np.zeros((self.n_img,
-                                self.input_height, self.input_width),
-                               dtype=np.float32)
-        disparities_pp = np.zeros((self.n_img,
-                                   self.input_height, self.input_width),
-                                  dtype=np.float32)
+        disparities = np.zeros(
+            (self.n_img, self.input_height, self.input_width), dtype=np.float32
+        )
+        disparities_pp = np.zeros(
+            (self.n_img, self.input_height, self.input_width), dtype=np.float32
+        )
         with torch.no_grad():
             for (i, data) in enumerate(self.loader):
                 # Get the inputs
@@ -291,28 +308,27 @@ class Model:
                 disps = self.model(left)
                 disp = disps[0][:, 0, :, :].unsqueeze(1)
                 disparities[i] = disp[0].squeeze().cpu().numpy()
-                disparities_pp[i] = \
-                    post_process_disparity(disps[0][:, 0, :, :] \
-                                           .cpu().numpy())
+                disparities_pp[i] = post_process_disparity(
+                    disps[0][:, 0, :, :].cpu().numpy()
+                )
 
-        np.save(self.output_directory + '/disparities.npy', disparities)
-        np.save(self.output_directory + '/disparities_pp.npy',
-                disparities_pp)
+        np.save(self.output_directory + "/disparities.npy", disparities)
+        np.save(self.output_directory + "/disparities_pp.npy", disparities_pp)
 
-        print('Finished Testing')
+        print("Finished Testing")
 
 
 def main():
     args = parse_args()
 
-    if args.mode == 'train':
+    if args.mode == "train":
         model = Model(args)
         model.train()
 
-    elif args.mode == 'test':
+    elif args.mode == "test":
         model = Model(args)
         model.test()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
