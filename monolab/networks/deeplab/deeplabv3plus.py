@@ -148,18 +148,3 @@ class DeepLabv3Plus(Backbone):
             if isinstance(m, nn.BatchNorm2d):
                 m.eval()
 
-
-if __name__ == "__main__":
-    model = DeepLabv3Plus(
-        dcnn_type=DCNNType.RESNET,
-        n_input_channels=3,
-        output_stride=16,
-        pretrained=True,
-        _print=True,
-    )
-    model.eval()
-    image = torch.randn(1, 3, 512, 512)
-    with torch.no_grad():
-        output = model.forward(image)
-    print("Out", output[0].size())
-    print("Low level feat", output[1].size())
