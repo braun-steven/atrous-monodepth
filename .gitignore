@@ -1,5 +1,8 @@
 # Created by https://www.gitignore.io/api/latex
 
+### Mac stuff
+*.DS_Store
+
 ### IDEs ###
 .idea/
 
