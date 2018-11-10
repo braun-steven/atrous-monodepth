@@ -1,14 +1,18 @@
 import math
 
+import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from enum import Enum
+from typing import List, Tuple
 
 from monolab.networks.deeplab.submodules import ASPPModule, Bottleneck
 from monolab.networks.deeplab.resnet import ResNet
 from monolab.networks.deeplab.xception import Xception
 from monolab.networks.backbone import Backbone
+
+logger = logging.getLogger(__name__)
 
 
 class DCNNType(Enum):
@@ -24,88 +28,148 @@ class DeepLabv3Plus(Backbone):
     """
 
     def __init__(
-        self,
-        dcnn_type: DCNNType,
-        n_input_channels=3,
-        output_stride=16,
-        pretrained=False,
-        _print=True,
+        self, dcnn_type: DCNNType, in_channels=3, output_stride=16, pretrained=False
     ):
         """
         Initialize the DeepLabev3+ Model.
         Args:
             dcnn_type: Type of the DCNN used in the encoder
-            n_input_channels: Numper of input channels
+            in_channels: Numper of input channels
             output_stride: Output stride
             pretrained: Flag if weights should be loaded from a pretrained model
-            _print: Print flag
         """
-        if _print:
-            print("Constructing DeepLabv3+ model...")
-            print("Output stride: {}".format(output_stride))
-            print("Number of Input Channels: {}".format(n_input_channels))
-        super(DeepLabv3Plus, self).__init__(n_input_channels)
+        logger.debug("Constructing DeepLabv3+ model...")
+        logger.debug("Output stride: {}".format(output_stride))
+        logger.debug("Number of Input Channels: {}".format(in_channels))
+        super(DeepLabv3Plus, self).__init__(in_channels)
 
-        # DCNN Model
-        if dcnn_type == DCNNType.XCEPTION:
-            self.dcnn = Xception(n_input_channels, output_stride, pretrained)
-            dcnn_feature_size = 128
-        elif dcnn_type == DCNNType.RESNET:
-            self.dcnn = ResNet(
-                n_input_channels=n_input_channels,
-                block=Bottleneck,
-                layers=[3, 4, 23, 3],
-                output_stride=output_stride,
-                pretrained=pretrained,
-            )
-            dcnn_feature_size = 256
-        else:
-            raise NotImplementedError
+        # Setup DCNN
+        self.dcnn, dcnn_feature_size = self._create_dcnn(
+            dcnn_type, in_channels, output_stride, pretrained
+        )
 
-        # ASPP
+        # Get ASPP rates
+        rates = self._calculate_aspp_rates(output_stride)
+
+        # ASPP Modules
+        self.aspp1 = ASPPModule(inplanes=2048, planes=256, rate=rates[0])
+        self.aspp2 = ASPPModule(inplanes=2048, planes=256, rate=rates[1])
+        self.aspp3 = ASPPModule(inplanes=2048, planes=256, rate=rates[2])
+        self.aspp4 = ASPPModule(inplanes=2048, planes=256, rate=rates[3])
+
+        self.relu = nn.ReLU()
+
+        self.global_avg_pool = self._create_global_avg_pooling()
+
+        self.conv1 = nn.Conv2d(
+            in_channels=1280, out_channels=256, kernel_size=1, bias=False
+        )
+        self.bn1 = nn.BatchNorm2d(num_features=256)
+
+        # adopt [1x1, 2] for channel reduction.
+        self.conv2 = nn.Conv2d(
+            in_channels=dcnn_feature_size, out_channels=48, kernel_size=1, bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(num_features=48)
+
+        self.last_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=304,
+                out_channels=256,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_features=256),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_features=256),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=2, kernel_size=1, stride=1),
+        )
+
+        self.low_level_features_reduction = nn.Conv2d(
+            in_channels=48, out_channels=2, kernel_size=3, stride=1, padding=1, bias=1
+        )
+
+        # TODO: missing init_weight(self) call?
+
+    def _create_global_avg_pooling(self) -> nn.Module:
+        """
+        Create the global average pooling layer.
+        Returns:
+            Global average pooling layer
+        """
+        return nn.Sequential(
+            nn.AdaptiveAvgPool2d(output_size=(1, 1)),
+            nn.Conv2d(
+                in_channels=2048, out_channels=256, kernel_size=1, stride=1, bias=False
+            ),
+            nn.BatchNorm2d(num_features=256),
+            nn.ReLU(),
+        )
+
+    def _calculate_aspp_rates(self, output_stride: int) -> List[int]:
+        """
+        Calculates the ASPP rates based on the output stride.
+        Args:
+            output_stride: Output stride
+
+        Returns:
+            List of size four containing ASPP rates (dilation) for the four ASPP modules
+        """
         if output_stride == 16:
             rates = [1, 6, 12, 18]
         elif output_stride == 8:
             rates = [1, 12, 24, 36]
         else:
             raise NotImplementedError
+        return rates
 
-        self.aspp1 = ASPPModule(2048, 256, rate=rates[0])
-        self.aspp2 = ASPPModule(2048, 256, rate=rates[1])
-        self.aspp3 = ASPPModule(2048, 256, rate=rates[2])
-        self.aspp4 = ASPPModule(2048, 256, rate=rates[3])
+    def _create_dcnn(
+        self,
+        dcnn_type: DCNNType,
+        in_channels: int,
+        output_stride: int,
+        pretrained: bool,
+    ) -> Tuple[nn.Module, int]:
+        """
+        Create the encoder DCNN.
+        Args:
+            dcnn_type: DCNN Type
+            in_channels: Number of input channels
+            output_stride: Output stride
+            pretrained: Flag whether the DCNN should be loaded with pretrained weights
 
-        self.relu = nn.ReLU()
-
-        self.global_avg_pool = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Conv2d(2048, 256, 1, stride=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-        )
-
-        self.conv1 = nn.Conv2d(1280, 256, 1, bias=False)
-        self.bn1 = nn.BatchNorm2d(256)
-
-        # adopt [1x1, 2] for channel reduction.
-        self.conv2 = nn.Conv2d(dcnn_feature_size, 48, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(48)
-
-        self.last_conv = nn.Sequential(
-            nn.Conv2d(304, 256, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 2, kernel_size=1, stride=1),
-        )
-
-        self.low_level_features_reduction = nn.Conv2d(
-            48, 2, kernel_size=3, stride=1, padding=1, bias=1
-        )
-
-        # TODO: missing init_weight(self) call?
+        Returns:
+            Tuple with [0]=DCNN object, [1]=DCNN feature size
+        """
+        # DCNN Model
+        if dcnn_type == DCNNType.XCEPTION:
+            dcnn = Xception(
+                inplanes=in_channels, output_stride=output_stride, pretrained=pretrained
+            )
+            dcnn_feature_size = 128
+        elif dcnn_type == DCNNType.RESNET:
+            dcnn = ResNet(
+                in_channels=in_channels,
+                block=Bottleneck,
+                n_layer_blocks=[3, 4, 23, 3],
+                output_stride=output_stride,
+                pretrained=pretrained,
+            )
+            dcnn_feature_size = 256
+        else:
+            raise NotImplementedError
+        return dcnn, dcnn_feature_size
 
     def forward(self, input):
         # Apply DCNN
@@ -142,9 +206,3 @@ class DeepLabv3Plus(Backbone):
 
         low_level_features = self.low_level_features_reduction(low_level_features)
         return x, low_level_features
-
-    def freeze_bn(self):
-        for m in self.modules():
-            if isinstance(m, nn.BatchNorm2d):
-                m.eval()
-

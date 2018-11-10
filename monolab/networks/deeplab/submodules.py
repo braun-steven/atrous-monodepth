@@ -1,5 +1,8 @@
+import logging
 from torch import nn
-from monolab.networks.utils import init_weights, fixed_padding
+from monolab.networks.utils import init_weights
+
+logger = logging.getLogger(__name__)
 
 
 class ASPPModule(nn.Module):
@@ -8,6 +11,12 @@ class ASPPModule(nn.Module):
     """
 
     def __init__(self, inplanes: int, planes: int, rate: int):
+        """
+        Args:
+            inplanes: Number of incoming channels
+            planes: Number of outgoing channels
+            rate: Atrous rate (dilation)
+        """
         super(ASPPModule, self).__init__()
         if rate == 1:
             kernel_size = 1
@@ -16,8 +25,8 @@ class ASPPModule(nn.Module):
             kernel_size = 3
             padding = rate
         self.atrous_convolution = nn.Conv2d(
-            inplanes,
-            planes,
+            in_channels=inplanes,
+            out_channels=planes,
             kernel_size=kernel_size,
             stride=1,
             padding=padding,
@@ -43,13 +52,24 @@ class Bottleneck(nn.Module):
 
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, rate=1, downsample=None):
+    def __init__(
+        self, inplanes, planes, stride=1, rate=1, downsample: nn.Module = None
+    ):
+        """
+        Initialize the ResNet bottleneck module
+        Args:
+            inplanes: Number of incoming channels
+            planes: Number of channels for the middle part
+            stride: Stride
+            rate: Atrous rate (dilation)
+            downsample: Downsampling module
+        """
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(
-            planes,
-            planes,
+            in_channels=planes,
+            out_channels=planes,
             kernel_size=3,
             stride=stride,
             dilation=rate,
@@ -57,7 +77,9 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+        self.conv3 = nn.Conv2d(
+            in_channels=planes, out_channels=planes * 4, kernel_size=1, bias=False
+        )
         self.bn3 = nn.BatchNorm2d(planes * 4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample

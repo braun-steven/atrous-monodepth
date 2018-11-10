@@ -1,8 +1,10 @@
 import argparse
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="PyTorch Monodepth x DeepLabv3+")
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="PyTorch Monolab: Monodepth x " "DeepLabv3+"
+    )
 
     parser.add_argument(
         "data-dir",
@@ -22,11 +24,14 @@ def parse_args():
                             Each line should contain left and right image paths \
                             separated by a space.",
     )
-    parser.add_argument('--model', default='backbone',
-                        help='encoder architecture: ' +
-                             'resnet18_md or resnet50_md ' + '(default: resnet18)'
-                             + 'or torchvision version of any resnet model'
-                        )
+    parser.add_argument(
+        "--model",
+        default="backbone",
+        help="encoder architecture: "
+        + "resnet18_md or resnet50_md "
+        + "(default: resnet18)"
+        + "or torchvision version of any resnet model",
+    )
     parser.add_argument("model-path", help="path to the trained model")
     parser.add_argument(
         "output-directory",
@@ -70,7 +75,12 @@ def parse_args():
         "--num-workers", default=4, help="Number of workers in dataloader"
     )
     parser.add_argument("--use-multiple-gpu", default=False)
+    parser.add_argument(
+        "--log",
+        default="info",
+        choices=["verbose", "info", "warning", "error", "debug"],
+        help="Log level",
+    )
+    parser.add_argument("log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args
-
-

@@ -1,3 +1,5 @@
+import sys
+
 import collections
 import numpy as np
 import time
@@ -6,7 +8,11 @@ import torch
 
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
+from monolab.networks.backbone import Backbone
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Experiment:
@@ -245,7 +251,7 @@ def post_process_disparity(disp):
     return r_mask * l_disp + l_mask * r_disp + (1.0 - l_mask - r_mask) * m_disp
 
 
-def get_model(model: str, n_input_channels=3):
+def get_model(model: str, n_input_channels=3) -> Backbone:
     """
     Get model via name
     Args:
@@ -256,9 +262,26 @@ def get_model(model: str, n_input_channels=3):
     """
     if model == "deeplab":
         out_model = DeepLabv3Plus(
-            DCNNType.XCEPTION, n_input_channels=n_input_channels, output_stride=16
+            DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
         )
     # elif and so on and so on
     else:
         raise NotImplementedError("Unknown model type")
     return out_model
+
+
+def setup_logging(filename: str = "monolab.log", level: int = logging.INFO):
+    """
+    Setup global loggers
+    Args:
+        filename: Log file destination
+        level: Log level
+    """
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.StreamHandler(stream=sys.stdout),
+            logging.FileHandler(filename=filename),
+        ],
+    )
