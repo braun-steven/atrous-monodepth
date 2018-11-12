@@ -8,3 +8,7 @@ Project for the Deep Learning in Computer Vision practical course
 ### PyTorch implementations
 - [DeepLab v3+](https://github.com/jfzhang95/pytorch-deeplab-xception)
 - [Unsupervised Monodepth](https://github.com/ClubAI/MonoDepth-PyTorch)
+
+## Coding Style
+- Code Formatter: [black](https://github.com/ambv/black)
+- Docstring: [Google Style](https://www.chromium.org/chromium-os/python-style-guidelines)
