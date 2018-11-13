@@ -9,6 +9,7 @@ import torch
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
 from monolab.networks.backbone import Backbone
+from monolab.networks.resnet_18_own import MonoDepthModel
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
 import logging
 
@@ -266,6 +267,8 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
         out_model = DeepLabv3Plus(
             DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
         )
+    elif model == 'resnet18_md':
+        out_model = MonoDepthModel()
     # elif and so on and so on
     else:
         raise NotImplementedError("Unknown model type")
@@ -279,17 +282,15 @@ def setup_logging(filename: str = "monolab.log", level: str = "INFO"):
         filename: Log file destination
         level: Log level
     """
-    levels = {'CRITICAL': logging.critical,
-              'ERROR': logging.error,
-              'WARNING': logging.warning,
-              'INFO': logging.info,
-              'DEBUG': logging.debug
-              }
     logging.basicConfig(
-        level=levels[level.upper()],
+        level=logging.getLevelName(level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(stream=sys.stdout),
             logging.FileHandler(filename=filename),
         ],
     )
+
+
+if __name__ == "__main__":
+    setup_logging("monolab.log", "info")

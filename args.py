@@ -26,7 +26,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="backbone",
+        default="resnet18_md",
         help="encoder architecture: "
         + "resnet18_md or resnet50_md "
         + "(default: resnet18)"
