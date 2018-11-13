@@ -1,6 +1,5 @@
 from args import parse_args
-from experiment import Experiment
-from monolab.networks.utils import setup_logging
+from experiment import Experiment, setup_logging
 
 
 def main():
