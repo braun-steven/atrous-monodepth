@@ -272,15 +272,21 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
     return out_model
 
 
-def setup_logging(filename: str = "monolab.log", level: int = logging.INFO):
+def setup_logging(filename: str = "monolab.log", level: str = "INFO"):
     """
     Setup global loggers
     Args:
         filename: Log file destination
         level: Log level
     """
+    levels = {'CRITICAL': logging.critical,
+              'ERROR': logging.error,
+              'WARNING': logging.warning,
+              'INFO': logging.info,
+              'DEBUG': logging.debug
+              }
     logging.basicConfig(
-        level=level,
+        level=levels[level.upper()],
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(stream=sys.stdout),
