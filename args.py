@@ -81,6 +81,6 @@ def parse_args() -> argparse.Namespace:
         choices=["verbose", "info", "warning", "error", "debug"],
         help="Log level",
     )
-    parser.add_argument("log-file", default="monolab.log", help="Log file")
+    parser.add_argument("log_file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args
