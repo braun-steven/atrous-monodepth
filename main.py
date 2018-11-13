@@ -5,7 +5,7 @@ from monolab.networks.utils import setup_logging
 
 def main():
     args = parse_args()
-    setup_logging(level=args.log_level, filename=args.log_file)
+    setup_logging(level=args.log, filename=args.log_file)
     if args.mode == "train":
         model = Experiment(args)
         model.train()

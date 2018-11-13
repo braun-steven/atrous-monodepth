@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "filenames-file",
-        help="File that contains a list of filenames for training. \
+        help="File that contains a list of filenames for training/testing. \
                         Each line should contain left and right image paths \
                         separated by a space.",
     )
