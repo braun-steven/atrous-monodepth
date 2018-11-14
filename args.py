@@ -7,19 +7,19 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "data-dir",
+        "--data-dir",
         help="path to the dataset folder. \
                         The filenames given in filenames_file \
                         are relative to this path.",
     )
     parser.add_argument(
-        "filenames-file",
+        "--filenames-file",
         help="File that contains a list of filenames for training/testing. \
                         Each line should contain left and right image paths \
                         separated by a space.",
     )
     parser.add_argument(
-        "val-filenames-file",
+        "--val-filenames-file",
         help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
                             separated by a space.",
@@ -32,9 +32,9 @@ def parse_args() -> argparse.Namespace:
         + "(default: resnet18)"
         + "or torchvision version of any resnet model",
     )
-    parser.add_argument("model-path", help="path to the trained model")
+    parser.add_argument("--model-path", help="path to the trained model")
     parser.add_argument(
-        "output-directory",
+        "--output-directory",
         help="where save dispairities\
                             for tested images",
     )
