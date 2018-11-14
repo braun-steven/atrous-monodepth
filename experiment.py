@@ -86,7 +86,6 @@ class Experiment:
         """
         losses = []
         val_losses = []
-        best_loss = float("Inf")
         best_val_loss = float("Inf")
 
         running_val_loss = 0.0
@@ -143,9 +142,9 @@ class Experiment:
                 "Epoch:",
                 epoch + 1,
                 "train_loss:",
-                running_loss,
+                round(running_loss, 4),
                 "val_loss:",
-                running_val_loss,
+                round(running_val_loss, 4),
                 "time:",
                 round(time.time() - c_time, 3),
                 "s",
@@ -154,9 +153,9 @@ class Experiment:
             if running_val_loss < best_val_loss:
                 self.save(self.args.model_path[:-4] + "_cpt.pth")
                 best_val_loss = running_val_loss
-                print("Model_saved")
+                print("Model saved")
 
-        print("Finished Training. Best loss:", best_loss)
+        print("Finished Training. Best loss:", best_val_loss)
         self.save(self.args.model_path)
 
     def save(self, path):
@@ -223,7 +222,14 @@ def to_device(input, device):
 
 def adjust_learning_rate(optimizer, epoch, learning_rate):
     """ Sets the learning rate to the initial LR\
-        decayed by 2 every 10 epochs after 30 epoches"""
+        decayed by 2 every 10 epochs after 30 epochs
+
+    Args:
+        optimizer: torch.optim type optimizer
+        epoch: current epoch
+        learning_rate: current learning rate
+
+    """
 
     if epoch >= 30 and epoch < 40:
         lr = learning_rate / 2
@@ -267,9 +273,9 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
         out_model = DeepLabv3Plus(
             DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
         )
-    elif model == 'resnet18_md':
+    elif model == "resnet18_md":
         out_model = Resnet18_md(num_in_layers=n_input_channels)
-    elif model == 'resnet50_md':
+    elif model == "resnet50_md":
         out_model = Resnet50_md(num_in_layers=n_input_channels)
     # elif and so on and so on
     else:
