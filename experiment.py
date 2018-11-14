@@ -9,7 +9,7 @@ import torch
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
 from monolab.networks.backbone import Backbone
-from monolab.networks.resnet_18_own import MonoDepthModel
+from monolab.networks.resnet_models import Resnet18_md, Resnet50_md
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
 import logging
 
@@ -268,7 +268,9 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
             DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
         )
     elif model == 'resnet18_md':
-        out_model = MonoDepthModel()
+        out_model = Resnet18_md(num_in_layers=n_input_channels)
+    elif model == 'resnet50_md':
+        out_model = Resnet50_md(num_in_layers=n_input_channels)
     # elif and so on and so on
     else:
         raise NotImplementedError("Unknown model type")
