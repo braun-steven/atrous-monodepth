@@ -8,6 +8,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--data-dir",
+        default="/visinf/projects_students/monolab/data/kitti",
         help="path to the dataset folder. \
                         The filenames given in filenames_file \
                         are relative to this path.",
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-path", help="path to the trained model")
     parser.add_argument(
         "--output-directory",
+        default="data/output/",
         help="where save dispairities\
                             for tested images",
     )
