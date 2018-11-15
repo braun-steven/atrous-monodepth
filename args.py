@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-path", help="path to the trained model")
     parser.add_argument(
         "--output-directory",
-        default="data/output/",
+        default="/visinf/projects_students/monolab/results/",
         help="where save dispairities\
                             for tested images",
     )
