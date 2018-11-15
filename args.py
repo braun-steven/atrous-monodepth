@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
                             (default: True)",
     )
     parser.add_argument(
-        "--batch-size", default=256, help="mini-batch size (default: 256)"
+        "--batch-size", default=256, type=int, help="mini-batch size (default: 256)"
     )
     parser.add_argument(
         "--device", default="cuda:0", help='choose cpu or cuda:0 device"'
@@ -69,10 +69,10 @@ def parse_args() -> argparse.Namespace:
                         brightness and color respectively",
     )
     parser.add_argument(
-        "--input-channels", default=3, help="Number of channels in input tensor"
+        "--input-channels", default=3, type=int, help="Number of channels in input tensor"
     )
     parser.add_argument(
-        "--num-workers", default=4, help="Number of workers in dataloader"
+        "--num-workers", default=4, type=int, help="Number of workers in dataloader"
     )
     parser.add_argument("--use-multiple-gpu", default=False)
     parser.add_argument(
