@@ -157,7 +157,7 @@ class Experiment:
                 best_val_loss = running_val_loss
                 logging.info("Model saved")
 
-        logging.info("Finished Training. Best loss:", best_val_loss)
+        logging.info("Finished Training. Best loss: {}".format(best_val_loss))
         self.save(self.args.model_path)
 
     def save(self, path):
