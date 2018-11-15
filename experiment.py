@@ -56,7 +56,7 @@ class Experiment:
             )
             logging.info("Using a validation set with {} images".format(self.val_n_img))
         else:
-            self.model.load_state_dict(torch.load(args.model_path))
+            self.load(args.model_path)
             args.augment_parameters = None
             args.do_augmentation = False
             args.batch_size = 1
@@ -164,7 +164,7 @@ class Experiment:
         torch.save(self.model.state_dict(), path)
 
     def load(self, path):
-        self.model.load_state_dict(torch.load(path))
+        self.model.load_state_dict(torch.load(path, map_location=self.device))
 
     def test(self):
         """ Test the model.
@@ -192,8 +192,13 @@ class Experiment:
                     disps[0][:, 0, :, :].cpu().numpy()
                 )
 
+        if not os.path.exists(self.output_directory):
+            os.makedirs(self.output_directory)
+
         np.save(os.path.join(self.output_directory, "disparities.npy"), disparities)
-        np.save(os.path.join(self.output_directory, "disparities_pp.npy"), disparities_pp)
+        np.save(
+            os.path.join(self.output_directory, "disparities_pp.npy"), disparities_pp
+        )
 
         logging.info("Finished Testing")
 
