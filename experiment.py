@@ -53,6 +53,7 @@ class Experiment:
                 (args.input_height, args.input_width),
                 args.num_workers,
             )
+            logging.info("Using a validation set with {} images".format(self.val_n_img))
         else:
             self.model.load_state_dict(torch.load(args.model_path))
             args.augment_parameters = None
@@ -73,6 +74,9 @@ class Experiment:
             args.batch_size,
             (args.input_height, args.input_width),
             args.num_workers,
+        )
+        logging.info(
+            "Using a {}ing data set with {} images".format(args.mode, self.n_img)
         )
 
         if "cuda" in self.device:
@@ -100,7 +104,7 @@ class Experiment:
             running_val_loss += loss.item()
 
         running_val_loss /= self.val_n_img / self.args.batch_size
-        print("Val_loss:", running_val_loss)
+        logging.info("Initial val. loss: {}".format(running_val_loss))
 
         for epoch in range(self.args.epochs):
             if self.args.adjust_lr:
@@ -138,24 +142,21 @@ class Experiment:
             # Estimate loss per image
             running_loss /= self.n_img / self.args.batch_size
             running_val_loss /= self.val_n_img / self.args.batch_size
-            print(
-                "Epoch:",
-                epoch + 1,
-                "train_loss:",
-                round(running_loss, 4),
-                "val_loss:",
-                round(running_val_loss, 4),
-                "time:",
-                round(time.time() - c_time, 3),
-                "s",
+            logging.info(
+                "Epoch: {}, train_loss: {}, val_loss: {}, time: {} s".format(
+                    epoch + 1,
+                    round(running_loss, 4),
+                    round(running_val_loss, 4),
+                    round(time.time() - c_time, 3),
+                )
             )
             self.save(self.args.model_path[:-4] + "_last.pth")
             if running_val_loss < best_val_loss:
                 self.save(self.args.model_path[:-4] + "_cpt.pth")
                 best_val_loss = running_val_loss
-                print("Model saved")
+                logging.info("Model saved")
 
-        print("Finished Training. Best loss:", best_val_loss)
+        logging.info("Finished Training. Best loss:", best_val_loss)
         self.save(self.args.model_path)
 
     def save(self, path):
@@ -193,7 +194,7 @@ class Experiment:
         np.save(self.output_directory + "/disparities.npy", disparities)
         np.save(self.output_directory + "/disparities_pp.npy", disparities_pp)
 
-        print("Finished Testing")
+        logging.info("Finished Testing")
 
 
 def to_device(input, device):

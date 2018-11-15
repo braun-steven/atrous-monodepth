@@ -96,7 +96,6 @@ def prepare_dataloader(
     dataset = KittiLoader(root_dir, filenames_file, mode, transform=data_transform)
 
     n_img = len(dataset)
-    print("Use a dataset with", n_img, "images")
     if mode == "train":
         loader = DataLoader(
             dataset,
