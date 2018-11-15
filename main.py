@@ -1,8 +1,10 @@
 from args import parse_args
 from experiment import Experiment, setup_logging
 import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 import numpy as np
 import os
+
 
 def main():
     args = parse_args()
@@ -17,10 +19,23 @@ def main():
 
         disps = np.load(os.path.join(model.output_directory, "disparities.npy"))
 
-        f, ax = plt.subplots(2)
-        image = iter(model.loader).next().cpu().detach().numpy()
-        ax[0].imshow(np.transpose(image, (1,2,0)))
-        ax[1].imshow(disps[0])
+        # setup figure
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+
+        # set up list of images for animation
+        ims = []
+        for i, data in enumerate(iter(model.loader)):
+            image = np.transpose(data.cpu().detach().numpy()[0, 0], (1, 2, 0))
+            im = ax1.imshow(image)
+
+            im2 = ax2.imshow(disps[i], cmap="plasma")
+
+            ims.append([im, im2])
+
+        # run animation
+        ani = anim.ArtistAnimation(fig, ims, interval=500)
         plt.show()
 
 

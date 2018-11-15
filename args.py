@@ -71,7 +71,10 @@ def parse_args() -> argparse.Namespace:
                         brightness and color respectively",
     )
     parser.add_argument(
-        "--input-channels", default=3, type=int, help="Number of channels in input tensor"
+        "--input-channels",
+        default=3,
+        type=int,
+        help="Number of channels in input tensor",
     )
     parser.add_argument(
         "--num-workers", default=4, type=int, help="Number of workers in dataloader"
