@@ -1,3 +1,4 @@
+import os
 import sys
 
 import collections
@@ -191,8 +192,8 @@ class Experiment:
                     disps[0][:, 0, :, :].cpu().numpy()
                 )
 
-        np.save(self.output_directory + "/disparities.npy", disparities)
-        np.save(self.output_directory + "/disparities_pp.npy", disparities_pp)
+        np.save(os.path.join(self.output_directory, "disparities.npy"), disparities)
+        np.save(os.path.join(self.output_directory, "disparities_pp.npy"), disparities_pp)
 
         logging.info("Finished Testing")
 
