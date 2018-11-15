@@ -19,7 +19,7 @@ def main():
 
         f, ax = plt.subplots(2)
         image = iter(model.loader).next().cpu().detach().numpy()
-        ax[0].imshow(image)
+        ax[0].imshow(np.transpose(image, (1,2,0)))
         ax[1].imshow(disps[0])
         plt.show()
 
