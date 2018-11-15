@@ -18,7 +18,7 @@ def main():
         disps = np.load(os.path.join(model.output_directory, "disparities.npy"))
 
         f, ax = plt.subplots(2)
-        image = model.loader[0].cpu().detach().numpy()
+        image = iter(model.loader).next().cpu().detach().numpy()
         ax[0].imshow(image)
         ax[1].imshow(disps[0])
         plt.show()
