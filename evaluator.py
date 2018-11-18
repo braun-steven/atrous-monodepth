@@ -183,7 +183,7 @@ class Evaluator:
 
         # Tensorboard
         self._summary_writer.add_scalars(
-            main_tag="epoch/" + metric_name,
+            main_tag=metric_name,
             tag_scalar_dict={"train": train_metric, "val": val_metric},
             global_step=epoch,
         )
