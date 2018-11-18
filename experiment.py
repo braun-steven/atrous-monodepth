@@ -62,7 +62,7 @@ class Experiment:
             args.batch_size = 1
 
         # Load data
-        self.output_directory = args.output_directory
+        self.output_dir = args.output_dir
         self.input_height = args.input_height
         self.input_width = args.input_width
 
@@ -192,13 +192,11 @@ class Experiment:
                     disps[0][:, 0, :, :].cpu().numpy()
                 )
 
-        if not os.path.exists(self.output_directory):
-            os.makedirs(self.output_directory)
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
 
-        np.save(os.path.join(self.output_directory, "disparities.npy"), disparities)
-        np.save(
-            os.path.join(self.output_directory, "disparities_pp.npy"), disparities_pp
-        )
+        np.save(os.path.join(self.output_dir, "disparities.npy"), disparities)
+        np.save(os.path.join(self.output_dir, "disparities_pp.npy"), disparities_pp)
 
         logging.info("Finished Testing")
 
@@ -297,6 +295,11 @@ def setup_logging(filename: str = "monolab.log", level: str = "INFO"):
         filename: Log file destination
         level: Log level
     """
+
+    # Check if previous log exists since logging.FileHandler only appends
+    if os.path.exists(filename):
+        os.remove(filename)
+
     logging.basicConfig(
         level=logging.getLevelName(level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
