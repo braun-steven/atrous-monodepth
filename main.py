@@ -36,7 +36,7 @@ def main():
 
         # run animation
         ani = anim.ArtistAnimation(fig, ims, interval=500)
-        plt.show()
+        ani.save(os.path.join(model.output_directory, 'disparities.gif'), dpi=80, writer='imagemagick')
 
 
 if __name__ == "__main__":
