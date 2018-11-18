@@ -301,4 +301,4 @@ class MonodepthLoss(nn.modules.Module):
         self.image_loss = image_loss
         self.disp_gradient_loss = disp_gradient_loss
         self.lr_loss = lr_loss
-        return loss
+        return loss, image_loss, disp_gradient_loss, lr_loss
