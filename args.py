@@ -35,10 +35,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model-path", help="path to the trained model")
     parser.add_argument(
-        "--output-directory",
+        "--output-dir",
         default="/visinf/projects_students/monolab/results/",
-        help="where save dispairities\
-                            for tested images",
+        help="Output directory for all results generated during an experiment run",
     )
     parser.add_argument("--input-height", type=int, help="input height", default=256)
     parser.add_argument("--input-width", type=int, help="input width", default=512)
@@ -81,11 +80,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--use-multiple-gpu", default=False)
     parser.add_argument(
-        "--log",
+        "--log-level",
         default="info",
         choices=["verbose", "info", "warning", "error", "debug"],
         help="Log level",
     )
+
+    parser.add_argument(
+        "--tag",
+        default="",
+        type=str,
+        help="Tag to identify runs in the result directory and tensorboard overviews",
+    )
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
+
     args = parser.parse_args()
     return args
