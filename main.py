@@ -21,7 +21,7 @@ def main():
 
         for i in range(disps.shape[0]):
             plt.imsave(
-                os.path.join(model.output_directory, "pred_" + str(i) + ".png"),
+                os.path.join(model.output_dir, "pred_" + str(i) + ".png"),
                 disps[i],
                 cmap="plasma",
             )
