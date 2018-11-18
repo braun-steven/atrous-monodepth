@@ -1,8 +1,13 @@
+import datetime
+import torch
+
 import logging
 import os
+from shutil import copyfile
 
 from typing import List
-
+from torch import nn
+from torch import Tensor
 import matplotlib
 
 matplotlib.use("Agg")
@@ -10,14 +15,10 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
-from experiment import setup_logging
 from argparse import Namespace
 
-# SNS style setup
-sns.set(palette="deep", color_codes=True)
-sns.set_style("ticks")
+from tensorboardX import SummaryWriter
 
 
 logger = logging.getLogger(__name__)
@@ -29,64 +30,108 @@ class Evaluator:
     experiment.
     Main result locations are:
     - tensorboard: Tensorboard files
-    - plots:
+    - plots: Metric plots
     - checkpoints: Model checkpoints
     - args.txt: File containing all commandline arguments with which the
     experiment has been started
     """
 
-    def __init__(self, base_dir: str, loss_names: List[str], args: Namespace):
+    def __init__(self, metric_names: List[str], args: Namespace):
         """
         Initialize the Evaluator object.
         Args:
-            base_dir: Base directory in which all results will be stored
-            loss_names: Naming of different losses
+            metric_names: Names of different metrics
             args: Command line arguments
         """
 
-        self._loss_names = loss_names
-        self._base_dir = base_dir
-        self._loss_epochs = {name: [] for name in loss_names}
-        self._loss_iterations = {name: [] for name in loss_names}
+        # Generate base path: ".../$(args.output_dir)/run-$(date)-$(tag)"
+        _date_str = datetime.datetime.today().strftime("%y-%b-%d_%Hh:%Mm")
+        tagstr = args.tag if args.tag == "" else "_" + args.tag
+
+        self._base_dir = os.path.join(
+            args.output_dir, "run_{0}{1}".format(_date_str, tagstr)
+        )
+
+        self._metric_names = metric_names
+        self._metric_epochs_train = {name: [] for name in metric_names}
+        self._metrics_epochs_val = {name: [] for name in metric_names}
+
+        # Store best loss for model checkpoints
+        self._best_val_loss = float("inf")
+        self._best_cpt_path = os.path.join(self._base_dir, "best-model.pth")
+        self._last_cpt_path = os.path.join(self._base_dir, "last-model.pth")
 
         # File/Directory names
-        self._args_path = os.path.join(base_dir, "args.txt")
-        self._tensorboard_dir = os.path.join(base_dir, "tensorboard/")
-        self._checkpoints_dir = os.path.join(base_dir, "checkpoints/")
-        self._plots_dir = os.path.join(base_dir, "plots/")
+        self._args_path = os.path.join(self._base_dir, "args.txt")
+        self._tensorboard_dir = os.path.join(self._base_dir, "tensorboard/")
+        self._checkpoints_dir = os.path.join(self._base_dir, "checkpoints/")
+        self._plots_dir = os.path.join(self._base_dir, "plots/")
         self._create_dirs()
 
+        # Tensorboard
+        self._summary_writer = SummaryWriter(log_dir=self._tensorboard_dir)
+
         self._args = args
+
+        # Store maxs
+        self._max_epochs = args.epochs
+
+        # Log template
+        max_metric_name_len = max(map(len, metric_names))
+        self._log_template = (
+            "{progress: <10}{name: <10} ({metric_name: <"
+            + str(max_metric_name_len)
+            + "}): Train = {train_metric:10f}, Validation = {val_metric:10f}"
+        )
 
     def _create_dirs(self):
         """Create necessary directories"""
         for d in [self._tensorboard_dir, self._checkpoints_dir, self._plots_dir]:
-            ensure_dir(d)
+            self._ensure_dir(d)
 
-    def _plot_loss_epochs(self):
+    def _plot_metric(self, metric_dict: dict, xlabel: str, title: str, suffix: str):
+        """
+        Plot a specific metric
+        Args:
+            metric_dict (dict): Metric dictionary
+            xlabel (str): X-Axis label
+            title (str): Plot title
+            suffix (str): File suffix
+        """
         plt.figure()
-        for name, losses in self._loss_epochs.items():
-            data = np.array(losses)
+        for name, metrics in metric_dict.items():
+            data = np.array(metrics)
             plt.plot(data[:, 0], data[:, 1], label=name)
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
+        plt.xlabel(xlabel)
+        plt.ylabel("metric")
         plt.legend(loc="upper right")
-        plt.savefig(os.path.join(self._plots_dir, "epoch-loss.png"))
+        plt.title(title)
+        plt.savefig(
+            os.path.join(
+                self._plots_dir, "{}-metric-{}.png".format(xlabel.lower(), suffix)
+            )
+        )
 
-    def _plot_loss_iterations(self):
-        plt.figure()
-
-        for name, losses in self._loss_iterations.items():
-            data = np.array(losses)
-            plt.plot(data[:, 0], data[:, 1], label=name)
-
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
-        plt.legend(loc="upper right")
-        plt.savefig(os.path.join(self._plots_dir, "iteration-loss.png"))
+    def _plot_metric_epochs(self):
+        """Plot metrics"""
+        self._plot_metric(
+            self._metric_epochs_train,
+            xlabel="Epoch",
+            title="Epochs: Train metric",
+            suffix="train",
+        )
+        self._plot_metric(
+            self._metrics_epochs_val,
+            xlabel="Epoch",
+            title="Epochs: Validation metric",
+            suffix="val",
+        )
 
     def _save_args(self):
-        """Save options"""
+        """Save arguments"""
+        if self._args is None:
+            return
+
         # Get maximum argument name length for formatting
         args = sorted(vars(self._args).items())
         length = max(map(lambda k: len(k[0]), args))
@@ -99,73 +144,98 @@ class Evaluator:
             content = header + "\n".join(lines)
             f.write(content)
 
-    def add_epoch_loss(self, epoch: int, value: float, loss_name: str) -> None:
+    def add_epoch_metric(
+        self, epoch: int, train_metric: float, val_metric, metric_name: str
+    ) -> None:
         """
-        Add a specific loss for a single epoch.
+        Add a specific metric for a single epoch.
         Args:
-            epoch: Epoch index
-            value: Loss value
-            loss_name: Loss name
+            epoch (int): Epoch index
+            train_metric (float): Train metric value
+            val_metric (float): Validation metric value
+            metric_name (str): metric name
         """
-        self._loss_epochs[loss_name].append([epoch, value])
-        # TODO: Add to tensorboard
+        # Store metric for plots
+        self._metric_epochs_train[metric_name].append([epoch, train_metric])
+        self._metrics_epochs_val[metric_name].append([epoch, val_metric])
 
-    def add_iteration_loss(self, iteration: int, value: float, loss_name: str) -> None:
+        # Tensorboard
+        self._summary_writer.add_scalars(
+            main_tag="epoch/" + metric_name,
+            tag_scalar_dict={"train": train_metric, "val": val_metric},
+            global_step=epoch,
+        )
+
+        # Log
+        logging.info(
+            self._log_template.format(
+                name="Epoch",
+                metric_name=metric_name,
+                train_metric=train_metric,
+                val_metric=val_metric,
+                progress="[{}/{}]".format(epoch, self._max_epochs),
+            )
+        )
+
+    def add_image(self, epoch: int, img: Tensor, tag: str):
         """
-        Add a specific loss for a single iteration.
+        Add an image to the evaluation results
         Args:
-            iteration: Iteration index
-            value: Loss value
-            loss_name: Loss name
+            epoch (int): Current epoch
+            img (Tensor): Image
+            tag (str): Tag as short description/identifier of the image
         """
-        self._loss_iterations[loss_name].append([iteration, value])
-        # TODO: Add to tensorboard
+        if isinstance(img, np.ndarray):
+            img = Tensor(img)
 
-    def save_checkpoint(self, checkpoint, suffix: str):
-        # TODO
-        pass
+        self._summary_writer.add_image(
+            tag="image/" + tag, img_tensor=img, global_step=epoch
+        )
 
-    def save_sample_predictions(self, samples):
-        # TODO
-        pass
+    def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
+        """
+        Add a new checkpoint. Store latest model weights in checkpoints/last-model.pth
+        and best model based on the current validation metric in
+        checkpoints/best-model.pth.
+        Args:
+            model (nn.Module): PyTorch model
+            val_loss (float): Latest validation loss
+        """
+        torch.save(model.state_dict(), f=self._last_cpt_path)
+        if val_loss < self._best_val_loss:
+            self._best_val_loss = val_loss
+            torch.save(model.state_dict(), f=self._best_cpt_path)
 
-    def evaluate(self):
-        """Evaluate"""
-        self._plot_loss_epochs()
-        self._plot_loss_iterations()
+    def save(self):
+        """
+        Save some results:
+        - Log file
+        - Arguments
+        - Scalar values as JSON
+        - Plots
+        """
+        # Copy log to the output-dir
+        log_path = os.path.join(self._base_dir, "log.txt")
+        copyfile(self._args.log_file, log_path)
+
+        # Save arguments with which the current experiment has been started
         self._save_args()
 
+        # Save all scalars to a json for future processing
+        self._summary_writer.export_scalars_to_json(
+            os.path.join(self._base_dir, "metric-results.json")
+        )
 
-def ensure_dir(file: str) -> None:
-    """
-    Ensures that a given directory exists.
+        # Save plots
+        self._plot_metric_epochs()
 
-    Args:
-        file: file
-    """
-    directory = os.path.dirname(file)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    def _ensure_dir(self, file: str) -> None:
+        """
+        Ensures that a given directory exists.
 
-
-if __name__ == "__main__":
-    setup_logging()
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--test", default="hello")
-    parser.add_argument("--test1", default="hello")
-    parser.add_argument("--test12", default="hello")
-    parser.add_argument("--test123", default="hello")
-    args = parser.parse_args()
-    # Test Evaluator
-    ev = Evaluator(base_dir="/tmp/test", loss_names=["loss1", "loss2"], args=args)
-    for i in range(100):
-        if i % 10 == 0:
-            ev.add_epoch_loss(epoch=np.floor(i / 10.0), loss_name="loss1", value=i / 2)
-            ev.add_epoch_loss(epoch=np.floor(i / 10.0), loss_name="loss2", value=i / 4)
-
-        ev.add_iteration_loss(iteration=i, loss_name="loss1", value=i / 2)
-        ev.add_iteration_loss(iteration=i, loss_name="loss2", value=100 - i ** 0.98)
-
-    ev.evaluate()
+        Args:
+            file: file
+        """
+        directory = os.path.dirname(file)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
