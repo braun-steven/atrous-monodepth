@@ -44,9 +44,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mode", default="train", help="mode: train or test (default: train)"
     )
-    parser.add_argument("--epochs", default=50, help="number of total epochs to run")
     parser.add_argument(
-        "--learning-rate", default=1e-4, help="initial learning rate (default: 1e-4)"
+        "--epochs", type=int, default=50, help="number of total " "epochs to run"
+    )
+    parser.add_argument(
+        "--learning-rate", type=float, default=1e-4, help="initial learning rate (" \
+                                                      "default: 1e-4)"
     )
     parser.add_argument(
         "--adjust-lr",
