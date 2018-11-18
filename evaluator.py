@@ -89,6 +89,28 @@ class Evaluator:
         for d in [self._tensorboard_dir, self._checkpoints_dir, self._plots_dir]:
             self._ensure_dir(d)
 
+    def _plot_loss(self):
+        """Plot a 2x2 map of train/val loss values over the epochs"""
+        if len(self._metric_names) != 4:
+            logger.warning(
+                "Number of metrics != 4 (was {}), skipping 2x2 "
+                "plot.".format(len(self._metric_names))
+            )
+            return
+
+        fig, axs = plt.subplots(nrows=2, ncols=2, constrained_layout=True)
+        for loss_name, ax in zip(self._metric_names, axs.flatten()):
+            train = np.array(self._metric_epochs_train[loss_name])
+            val = np.array(self._metrics_epochs_val[loss_name])
+            l1, = ax.plot(train[:, 0], train[:, 1], color="blue", label="train")
+            l2, = ax.plot(val[:, 0], val[:, 1], color="green", label="val")
+            ax.set_xlabel("epoch")
+            ax.set_ylabel(loss_name)
+            ax.legend([l1, l2], ["train", "val"], loc="upper right")
+            ax.set_xlim((0, self._max_epochs))
+
+        plt.savefig(os.path.join(self._plots_dir, "losses.png"))
+
     def _plot_metric(self, metric_dict: dict, xlabel: str, title: str, suffix: str):
         """
         Plot a specific metric
@@ -228,6 +250,7 @@ class Evaluator:
 
         # Save plots
         self._plot_metric_epochs()
+        self._plot_loss()
 
     def _ensure_dir(self, file: str) -> None:
         """
