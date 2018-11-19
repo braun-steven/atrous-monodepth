@@ -3,12 +3,12 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class MonoDepthModel(torch.nn.Module):
-    def __init__(self):
-        super(MonoDepthModel, self).__init__()
+class VGGMonodepth(torch.nn.Module):
+    def __init__(self, num_in_layers=3):
+        super(VGGMonodepth, self).__init__()
 
         # encoder
-        self.conv1 = conv_block(D_in=3, D_out=32, k=7)  # h,w /2
+        self.conv1 = conv_block(D_in=num_in_layers, D_out=32, k=7)  # h,w /2
         self.conv2 = conv_block(D_in=32, D_out=64, k=5)  # h,w /4
         self.conv3 = conv_block(D_in=64, D_out=128, k=3)  # h,w /8
         self.conv4 = conv_block(D_in=128, D_out=256, k=3)  # h,w /16
