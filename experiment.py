@@ -3,7 +3,10 @@ import sys
 
 import collections
 import numpy as np
+import matplotlib.pyplot as plt
 import time
+from typing import Union, List, Dict
+from argparse import Namespace
 
 import torch
 
@@ -27,7 +30,7 @@ class Experiment:
         - args.val_filenames_file is only used during training
     """
 
-    def __init__(self, args):
+    def __init__(self, args: Namespace):
         self.args = args
 
         # Set up model
@@ -83,7 +86,7 @@ class Experiment:
         if "cuda" in self.device:
             torch.cuda.synchronize()
 
-    def train(self):
+    def train(self) -> None:
         """ Train the model for self.args.epochs epochs
 
         Returns:
@@ -160,10 +163,26 @@ class Experiment:
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
         self.save(self.args.model_path)
 
-    def save(self, path):
+    def save(self, path: str) -> None:
+        """ Save a .pth state dict from self.model
+
+        Args:
+            path: path to .pth state dict file
+
+        Returns:
+            None
+        """
         torch.save(self.model.state_dict(), path)
 
-    def load(self, path):
+    def load(self, path: str) -> None:
+        """ Load a .pth state dict into self.model
+
+        Args:
+            path: path to .pth state dict file
+
+        Returns:
+            None
+        """
         self.model.load_state_dict(torch.load(path, map_location=self.device))
 
     def test(self):
@@ -200,34 +219,43 @@ class Experiment:
             os.path.join(self.output_directory, "disparities_pp.npy"), disparities_pp
         )
 
+        for i in range(disparities.shape[0]):
+            plt.imsave(
+                os.path.join(self.output_directory, "pred_" + str(i) + ".png"),
+                disparities[i],
+                cmap="plasma",
+            )
+
         logging.info("Finished Testing")
 
 
-def to_device(input, device):
+def to_device(
+    x: Union[torch.Tensor, List[torch.tensor], Dict[str, torch.Tensor]], device: str
+):
     """ Move a tensor or a collection of tensors to a device
 
     Args:
-        input: tensor, dict of tensors or list of tensors
+        x: tensor, dict of tensors or list of tensors
         device: e.g. 'cuda' or 'cpu'
 
     Returns:
         same structure as input, but on device
     """
-    if torch.is_tensor(input):
-        return input.to(device=device)
-    elif isinstance(input, str):
-        return input
-    elif isinstance(input, collections.Mapping):
-        return {k: to_device(sample, device=device) for k, sample in input.items()}
-    elif isinstance(input, collections.Sequence):
-        return [to_device(sample, device=device) for sample in input]
+    if torch.is_tensor(x):
+        return x.to(device=device)
+    elif isinstance(x, str):
+        return x
+    elif isinstance(x, collections.Mapping):
+        return {k: to_device(sample, device=device) for k, sample in x.items()}
+    elif isinstance(x, collections.Sequence):
+        return [to_device(sample, device=device) for sample in x]
     else:
-        raise TypeError(
-            "Input must contain tensor, dict or list, found %s" % type(input)
-        )
+        raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
 
 
-def adjust_learning_rate(optimizer, epoch, learning_rate):
+def adjust_learning_rate(
+    optimizer: torch.optim.Optimizer, epoch: int, learning_rate: float
+):
     """ Sets the learning rate to the initial LR\
         decayed by 2 every 10 epochs after 30 epochs
 
@@ -238,7 +266,7 @@ def adjust_learning_rate(optimizer, epoch, learning_rate):
 
     """
 
-    if epoch >= 30 and epoch < 40:
+    if 30 <= epoch < 40:
         lr = learning_rate / 2
     elif epoch >= 40:
         lr = learning_rate / 4
@@ -248,11 +276,11 @@ def adjust_learning_rate(optimizer, epoch, learning_rate):
         param_group["lr"] = lr
 
 
-def post_process_disparity(disp):
+def post_process_disparity(disp: np.ndarray) -> np.ndarray:
     """ Apply the post-processing step described in the paper
 
     Args:
-        disp: [2, h, w] np.array a disparity map
+        disp: [2, h, w] array, a disparity map
 
     Returns:
         post-processed disparity map
