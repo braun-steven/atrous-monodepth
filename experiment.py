@@ -271,7 +271,7 @@ class Experiment:
 
         for i in range(disparities.shape[0]):
             plt.imsave(
-                os.path.join(self.output_directory, "pred_" + str(i) + ".png"),
+                os.path.join(self.output_dir, "pred_" + str(i) + ".png"),
                 disparities[i],
                 cmap="plasma",
             )
