@@ -41,7 +41,6 @@ class MonoDepthModel(torch.nn.Module):
 
     def forward(self, x):
 
-        print("Encoder")
         # encoder
         x1 = self.conv1(x)  # conv1b
         x2 = self.conv2(x1)  # conv2b
@@ -53,7 +52,6 @@ class MonoDepthModel(torch.nn.Module):
 
         encoder = [x1, x2, x3, x4, x5, x6, x7]
 
-        print("Decoder")
         # decoder
         upconv7 = self.upconv7(x7)
         iconv7 = self.iconv7(torch.cat((upconv7, x6), 1))
