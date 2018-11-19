@@ -21,6 +21,7 @@ from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
 import logging
 
 from monolab.networks.test_model import TestModel
+from monolab.utils.utils import notify_mail
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +215,14 @@ class Experiment:
 
             self.eval.add_checkpoint(model=self.model, val_loss=running_val_loss)
 
+
+
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
+
+        if self.args.notify is not None:
+            notify_mail(self.args.notify,"[MONOLAB] Training Finished",
+                        "Finished Training. Best loss: {}".format(best_val_loss))
+
         self.eval.save()
 
     def save(self, path: str) -> None:
@@ -289,7 +297,7 @@ class Experiment:
         """
 
         #Evaluates on the Kitti Stereo 2015 Test Files
-        if args.eval == 'kitti-gt':
+        if self.args.eval == 'kitti-gt':
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
                 predicted_disp_path=self.output_dir + "disparities.npy",
                 gt_path=self.data_dir + '/data_scene_flow/', min_depth=0, max_depth=80).evaluate()
@@ -297,7 +305,7 @@ class Experiment:
             logging.info()
 
         #Evaluates on the 697 Eigen Test Files
-        elif args.eval == 'eigen':
+        elif self.args.eval == 'eigen':
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(self.output_dir + "disparities.npy",
                           test_file_path='resources/filenames/kitti_stereo_2015_test_files.txt',
                           gt_path=self.data_dir, min_depth=0, max_depth= 80).evaluate()

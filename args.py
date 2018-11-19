@@ -98,6 +98,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--notify",
+        default=None,
+        help="Put in email-address to notify when training has finished"
+    )
+
+    parser.add_argument(
         "--tag",
         default="",
         type=str,
