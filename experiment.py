@@ -11,6 +11,8 @@ from argparse import Namespace
 import torch
 
 from evaluator import Evaluator
+from eval.eval_eigensplit import EvaluateEigen
+from eval.eval_kitti_gt import EvaluateKittiGT
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
 from monolab.networks.backbone import Backbone
@@ -277,6 +279,40 @@ class Experiment:
             )
 
         logging.info("Finished Testing")
+
+    def evaluate(self):
+        """ Evaluates the model given either ground truth data or velodyne reprojected data
+
+        Returns:
+            None
+
+        """
+
+        #Evaluates on the Kitti Stereo 2015 Test Files
+        if args.eval == 'kitti-gt':
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
+                predicted_disp_path=self.output_dir + "disparities.npy",
+                gt_path=self.data_dir + '/data_scene_flow/', min_depth=0, max_depth=80).evaluate()
+
+            logging.info()
+
+        #Evaluates on the 697 Eigen Test Files
+        elif args.eval == 'eigen':
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(self.output_dir + "disparities.npy",
+                          test_file_path='resources/filenames/kitti_stereo_2015_test_files.txt',
+                          gt_path=self.data_dir, min_depth=0, max_depth= 80).evaluate()
+        else:
+            pass
+
+        logging.info("{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format('abs_rel', 'sq_rel', 'rms', 'log_rms',
+                                                                                       'a1', 'a2', 'a3'))
+        logging.info("{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(abs_rel.mean(),
+                                                                                                      sq_rel.mean(),
+                                                                                                      rms.mean(),
+                                                                                                      log_rms.mean(),
+                                                                                                      a1.mean(), a2.mean(),
+                                                                                                      a3.mean()))
+
 
 
 def to_device(

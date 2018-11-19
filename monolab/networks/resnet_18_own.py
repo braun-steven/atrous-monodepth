@@ -7,8 +7,6 @@ class MonoDepthModel(torch.nn.Module):
     def __init__(self):
         super(MonoDepthModel, self).__init__()
 
-        # specifiy NN architecture
-
         # encoder
         self.conv1 = conv_block(D_in=3, D_out=32, k=7)  # h,w /2
         self.conv2 = conv_block(D_in=32, D_out=64, k=5)  # h,w /4
@@ -55,9 +53,6 @@ class MonoDepthModel(torch.nn.Module):
 
         encoder = [x1, x2, x3, x4, x5, x6, x7]
 
-        for enc in encoder:
-            print(enc.size())
-
         print("Decoder")
         # decoder
         upconv7 = self.upconv7(x7)
@@ -95,9 +90,6 @@ class MonoDepthModel(torch.nn.Module):
         self.disp1_out = self.disp1(iconv1)
 
         decoder = [iconv7, iconv6, iconv5, iconv4, iconv3, iconv2, iconv1]
-
-        for dec in decoder:
-            print(dec.size())
 
         return self.disp1_out, self.disp2_out, self.disp3_out, self.disp4_out
 
