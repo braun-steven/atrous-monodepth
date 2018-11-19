@@ -185,7 +185,7 @@ class Experiment:
 
             logger.info(
                 "Epoch [{}/{}] time: {} s".format(
-                    epoch + 1, self.args.epochs, round(time.time() - c_time, 3)
+                    epoch, self.args.epochs, round(time.time() - c_time, 3)
                 )
             )
             self.eval.add_epoch_metric(
