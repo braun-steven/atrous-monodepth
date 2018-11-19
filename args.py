@@ -90,6 +90,14 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--eval",
+        default="none",
+        type=str,
+        help="Either evaluate on eigensplit or on kitti gt",
+        choices=['kitti-gt', 'eigen', 'none']
+    )
+
+    parser.add_argument(
         "--tag",
         default="",
         type=str,

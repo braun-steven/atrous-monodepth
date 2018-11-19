@@ -15,7 +15,7 @@ class EvaluateKittiGT():
 
     """
 
-    def __init__(self,predicted_disp_path,gt_path,min_depth=0,max_depth=80):
+    def __init__(self, predicted_disp_path, gt_path, min_depth=0, max_depth=80):
         """
         Args:
             predicted_disp_path: path where the predicted disparities are stored after training
@@ -23,7 +23,6 @@ class EvaluateKittiGT():
             min_depth: minimum depth used in predicted disparity map
             max_depth: maximim depth used in predicted disparity map
         """
-        super(EvaluateKittiGT, self).__init__()
 
         self.width_to_focal = dict()
         self.width_to_focal[1242] = 721.5377
@@ -82,7 +81,7 @@ class EvaluateKittiGT():
             pred_disp = pred_disparities_resized[i]
             disp_diff = np.abs(gt_disp[mask] - pred_disp[mask])
             bad_pixels = np.logical_and(disp_diff >= 3, (disp_diff / gt_disp[mask]) >= 0.05)
-            d1_all[i] = 100.0 * bad_pixels.sum() / mask.sum()
+            d1_all[i] = 100.0 * bad_pixels.sum() / mask.sum() #TODO return D1 all error
 
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[i] = compute_errors(gt_depth[mask], pred_depth[mask])
 

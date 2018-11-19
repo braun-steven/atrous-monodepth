@@ -24,13 +24,12 @@ class EvaluateEigen():
         """
         Args:
             -predicted_disp_path (string): path for the predicted disparities
-            -gt_path (string: path for the ground truth
+            -gt_path (string: path for the ground truth / root directory of the kitti dataset
             -test_file_path (string): path where the 'eigen_test_files.txt' can be found
             -crop (string): either 'eigen' or 'garg' depending on which crop to use
             -min_depth (int): minimal depth that will be used
             -max_depth (int): maximal depth that will be used
         """
-        super(EvaluateEigen, self).__init__()
         self.predicted_disp_path = predicted_disp_path
         self.gt_path = gt_path
         self.test_file_path = test_file_path
