@@ -26,6 +26,12 @@ class Experiment:
     """
 
     def __init__(self, args: Namespace):
+        # Set seed for reproducability
+        torch.initial_seed()
+        np.random.seed(7)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(7)
+
         self.args = args
 
         self.loss_names = dict(
@@ -242,13 +248,9 @@ class Experiment:
 
         with torch.no_grad():
             for (i, data) in enumerate(self.val_loader):
-                if i == 1:
-                    print(data)
-
                 # Stop after n_val_images
-                # TODO: How to reset the dataloader without finishing the iterations?
                 if i >= n_val_images:
-                    continue
+                    break
 
                 # Get the inputs
                 data = to_device(data, self.device)
