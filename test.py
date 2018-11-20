@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import get_model, to_device, setup_logging
-from monolab.data_loader import prepare_test_loader
+from monolab.data_loader import prepare_dataloader
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
 
@@ -99,12 +99,16 @@ class TestRunner:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        self.n_img, self.loader = prepare_test_loader(
-            args.data_dir,
-            args.filenames_file,
-            args.batch_size,
-            (args.input_height, args.input_width),
-            args.num_workers,
+        self.n_img, self.loader = prepare_dataloader(
+            root_dir=args.data_dir,
+            filenames_file=args.filenames_file,
+            mode="test",
+            augment_parameters=None,
+            do_augmentation=False,
+            shuffle=False,
+            batch_size=args.batch_size,
+            size=(args.input_height, args.input_width),
+            num_workers=args.num_workers,
         )
 
         logging.info(

@@ -4,7 +4,7 @@ from argparse import Namespace
 import torch
 
 from evaluator import Evaluator
-from monolab.data_loader import prepare_train_loader
+from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
 from utils import get_model, to_device, setup_logging
 import logging
@@ -53,11 +53,13 @@ class Experiment:
             self.model.parameters(), lr=args.learning_rate
         )
         # the validation loader is a train loader but without data augmentation!
-        self.val_n_img, self.val_loader = prepare_train_loader(
+        self.val_n_img, self.val_loader = prepare_dataloader(
             root_dir=args.data_dir,
             filenames_file=args.val_filenames_file,
-            augment_parameters=args.augment_parameters,
+            mode="val",
+            augment_parameters=None,
             do_augmentation=False,
+            shuffle=False,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
@@ -69,11 +71,13 @@ class Experiment:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        self.n_img, self.loader = prepare_train_loader(
+        self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,
             filenames_file=args.filenames_file,
+            mode="train",
             augment_parameters=args.augment_parameters,
             do_augmentation=args.do_augmentation,
+            shuffle=True,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
