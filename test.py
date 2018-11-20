@@ -55,15 +55,6 @@ def parse_args() -> argparse.Namespace:
         "--device", default="cuda:0", help='choose cpu or cuda:0 device"'
     )
     parser.add_argument(
-        "--do-augmentation", default=True, help="do augmentation of images or not"
-    )
-    parser.add_argument(
-        "--augment-parameters",
-        default=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
-        help="lowest and highest values for gamma,\
-                            brightness and color respectively",
-    )
-    parser.add_argument(
         "--num-workers", default=4, type=int, help="Number of workers in dataloader"
     )
     parser.add_argument("--use-multiple-gpu", default=False)
