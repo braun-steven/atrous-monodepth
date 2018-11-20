@@ -51,9 +51,6 @@ def parse_args() -> argparse.Namespace:
         help="Number of channels in input tensor",
     )
     parser.add_argument(
-        "--batch-size", default=256, type=int, help="mini-batch size (default: 256)"
-    )
-    parser.add_argument(
         "--device", default="cuda:0", help='choose cpu or cuda:0 device"'
     )
     parser.add_argument(
@@ -92,7 +89,6 @@ class TestRunner:
         self.load(args.model_path)
         args.augment_parameters = None
         args.do_augmentation = False
-        args.batch_size = 1
 
         # Load data
         self.output_dir = args.output_dir
@@ -106,7 +102,7 @@ class TestRunner:
             augment_parameters=None,
             do_augmentation=False,
             shuffle=False,
-            batch_size=args.batch_size,
+            batch_size=1,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
         )
