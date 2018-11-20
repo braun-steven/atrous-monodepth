@@ -48,8 +48,10 @@ def parse_args() -> argparse.Namespace:
         "--epochs", type=int, default=50, help="number of total " "epochs to run"
     )
     parser.add_argument(
-        "--learning-rate", type=float, default=1e-4, help="initial learning rate (" \
-                                                      "default: 1e-4)"
+        "--learning-rate",
+        type=float,
+        default=1e-4,
+        help="initial learning rate (" "default: 1e-4)",
     )
     parser.add_argument(
         "--adjust-lr",
@@ -94,7 +96,7 @@ def parse_args() -> argparse.Namespace:
         default="none",
         type=str,
         help="Either evaluate on eigensplit or on kitti gt",
-        choices=['kitti-gt', 'eigen', 'none']
+        choices=["kitti-gt", "eigen", "none"],
     )
 
     parser.add_argument(
@@ -104,6 +106,11 @@ def parse_args() -> argparse.Namespace:
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
-
+    parser.add_argument(
+        "--val-after-k-epochs",
+        default=5,
+        type=int,
+        help="Validate after each k epochs.",
+    )
     args = parser.parse_args()
     return args
