@@ -164,7 +164,7 @@ class Experiment:
                 logger.warning("Validate after k epochs has not been implemented yet.")
                 self.args.val_after_k_epochs = 1
 
-            if epoch % self.args.validate_after_k_epochs == 0:
+            if epoch % self.args.val_after_k_epochs == 0:
                 # VALIDATION LOOP #
                 with torch.no_grad():
                     for idx, data in enumerate(self.val_loader):
