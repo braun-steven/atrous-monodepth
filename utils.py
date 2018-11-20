@@ -11,6 +11,12 @@ import os
 import logging
 import sys
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+
 
 def get_model(model: str, n_input_channels=3) -> Backbone:
     """
@@ -83,3 +89,47 @@ def setup_logging(filename: str = "monolab.log", level: str = "INFO"):
             logging.FileHandler(filename=filename),
         ],
     )
+
+
+def notify_mail(address, subject, message, filename=None):
+    """
+    Sends an E-Mail to the a specified address with a chosen message and subject
+
+     Args:
+        address (string): email-address to be sent to
+        subject (string): subject of the e-mail
+        message (string): message of the e-mail
+        filename (string): path to the file that is going to be send via mail
+
+    Returns:
+        None
+    """
+    email = 'dlcv2k18monolab@gmail.com'
+    password = 'hkR-KFa-ymB-gn2'
+
+    msg = MIMEMultipart()
+
+    msg['From'] = email
+    msg['To'] = address
+    msg['Subject'] = subject
+
+    body = message
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    if filename is not None:
+        attachment = open(filename, "rb")
+
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+
+        msg.attach(part)
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(email, password)
+    text = msg.as_string()
+    server.sendmail(email, address, text)
+    server.quit()

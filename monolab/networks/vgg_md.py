@@ -6,8 +6,7 @@ import numpy as np
 class VGGMonodepth(torch.nn.Module):
     def __init__(self, num_in_layers=3):
         super(VGGMonodepth, self).__init__()
-
-        # encoder
+        # Encoder
         self.conv1 = conv_block(D_in=num_in_layers, D_out=32, k=7)  # h,w /2
         self.conv2 = conv_block(D_in=32, D_out=64, k=5)  # h,w /4
         self.conv3 = conv_block(D_in=64, D_out=128, k=3)  # h,w /8
@@ -15,6 +14,7 @@ class VGGMonodepth(torch.nn.Module):
         self.conv5 = conv_block(D_in=256, D_out=512, k=3)  # h,w /32
         self.conv6 = conv_block(D_in=512, D_out=512, k=3)  # h,w /64
         self.conv7 = conv_block(D_in=512, D_out=512, k=3)  # h,w /128
+
         # Decoder
         self.upconv7 = upconv(D_in=512, D_out=512, k=3, scale=2)  # h,w / 64
         self.iconv7 = iconv(D_in=1024, D_out=512, k=3)
@@ -40,7 +40,6 @@ class VGGMonodepth(torch.nn.Module):
         self.disp1 = disp(D_in=16, D_out=2, k=3, scale=2)
 
     def forward(self, x):
-
         # encoder
         x1 = self.conv1(x)  # conv1b
         x2 = self.conv2(x1)  # conv2b
@@ -49,8 +48,6 @@ class VGGMonodepth(torch.nn.Module):
         x5 = self.conv5(x4)  # conv5b
         x6 = self.conv6(x5)  # conv6b
         x7 = self.conv7(x6)  # conv7b
-
-        encoder = [x1, x2, x3, x4, x5, x6, x7]
 
         # decoder
         upconv7 = self.upconv7(x7)
@@ -64,6 +61,7 @@ class VGGMonodepth(torch.nn.Module):
 
         upconv4 = self.upconv4(iconv5)
         iconv4 = self.iconv4(torch.cat((upconv4, x3), 1))
+
         self.disp4_out = self.disp4(iconv4)
         self.udisp4 = torch.nn.functional.interpolate(
             self.disp4_out, scale_factor=2, mode="bilinear", align_corners=True
@@ -86,8 +84,6 @@ class VGGMonodepth(torch.nn.Module):
         upconv1 = self.upconv1(iconv2)
         iconv1 = self.iconv1(torch.cat((upconv1, self.udisp2), 1))
         self.disp1_out = self.disp1(iconv1)
-
-        decoder = [iconv7, iconv6, iconv5, iconv4, iconv3, iconv2, iconv1]
 
         return self.disp1_out, self.disp2_out, self.disp3_out, self.disp4_out
 
