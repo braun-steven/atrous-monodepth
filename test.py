@@ -164,7 +164,7 @@ class TestRunner:
 
         """
 
-        # Evaluates on the Kitti Stereo 2015 Test Files
+        # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if self.args.eval == "kitti-gt":
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
                 predicted_disp_path=self.output_dir + "disparities.npy",
@@ -179,7 +179,7 @@ class TestRunner:
         elif self.args.eval == "eigen":
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 self.output_dir + "disparities.npy",
-                test_file_path="resources/filenames/kitti_stereo_2015_test_files.txt",
+                test_file_path="resources/filenames/eigen_test_files.txt",
                 gt_path=self.data_dir,
                 min_depth=0,
                 max_depth=80,
