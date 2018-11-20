@@ -120,10 +120,10 @@ class TestRunner:
         """
 
         self.model.eval()
-        disparities = np.zeros(
+        self.disparities = np.zeros(
             (self.n_img, self.input_height, self.input_width), dtype=np.float32
         )
-        disparities_pp = np.zeros(
+        self.disparities_pp = np.zeros(
             (self.n_img, self.input_height, self.input_width), dtype=np.float32
         )
         with torch.no_grad():
@@ -134,21 +134,21 @@ class TestRunner:
                 # Do a forward pass
                 disps = self.model(left)
                 disp = disps[0][:, 0, :, :].unsqueeze(1)
-                disparities[i] = disp[0].squeeze().cpu().numpy()
-                disparities_pp[i] = post_process_disparity(
+                self.disparities[i] = disp[0].squeeze().cpu().numpy()
+                self.disparities_pp[i] = post_process_disparity(
                     disps[0][:, 0, :, :].cpu().numpy()
                 )
 
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-        np.save(os.path.join(self.output_dir, "disparities.npy"), disparities)
-        np.save(os.path.join(self.output_dir, "disparities_pp.npy"), disparities_pp)
+        np.save(os.path.join(self.output_dir, "disparities.npy"), self.disparities)
+        np.save(os.path.join(self.output_dir, "disparities_pp.npy"), self.disparities_pp)
 
-        for i in range(disparities.shape[0]):
+        for i in range(self.disparities.shape[0]):
             plt.imsave(
                 os.path.join(self.output_dir, "pred_" + str(i) + ".png"),
-                disparities[i],
+                self.disparities[i],
                 cmap="plasma",
             )
 
@@ -164,8 +164,10 @@ class TestRunner:
 
         # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if self.args.eval == "kitti-gt":
+            if "kitti_stereo_2015_test_files" not in self.args.filenames_file:
+                raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-                predicted_disp_path=self.output_dir + "disparities.npy",
+                predicted_disps=self.disparities,
                 gt_path=self.data_dir + "/data_scene_flow/",
                 min_depth=0,
                 max_depth=80,
@@ -175,9 +177,11 @@ class TestRunner:
 
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
+            if "eigen_test_files.txt" not in self.args.filenames_file:
+                raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-                self.output_dir + "disparities.npy",
-                test_file_path="resources/filenames/eigen_test_files.txt",
+                predicted_disps=self.disparities,
+                test_file_path=self.args.filenames_file,
                 gt_path=self.data_dir,
                 min_depth=0,
                 max_depth=80,
@@ -250,3 +254,6 @@ if __name__ == "__main__":
 
     model = TestRunner(args)
     model.test()
+
+    if args.eval:
+        model.evaluate()
