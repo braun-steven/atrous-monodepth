@@ -160,9 +160,9 @@ class Experiment:
 
             # TODO: Remove when logic in
             # SummaryTracker for train/val metrics has been separated
-            if self.args.validate_after_k_epochs != 1:
+            if self.args.val_after_k_epochs != 1:
                 logger.warning("Validate after k epochs has not been implemented yet.")
-                self.args.validate_after_k_epochs = 1
+                self.args.val_after_k_epochs = 1
 
             if epoch % self.args.validate_after_k_epochs == 0:
                 # VALIDATION LOOP #
@@ -245,6 +245,8 @@ class Experiment:
 
         with torch.no_grad():
             for (i, data) in enumerate(self.val_loader):
+                if i == 1:
+                    print(data)
 
                 # Stop after n_val_images
                 # TODO: How to reset the dataloader without finishing the iterations?
@@ -262,10 +264,6 @@ class Experiment:
                 self.summary.add_disparity_map(
                     epoch=epoch, disp=torch.Tensor(disp_i), tag="disp-{}".format(i)
                 )
-
-                # Stop after n_val_images
-                if i >= n_val_images:
-                    break
 
     def save(self, path: str) -> None:
         """ Save a .pth state dict from self.model
