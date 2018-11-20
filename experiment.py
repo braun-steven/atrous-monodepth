@@ -1,3 +1,4 @@
+import numpy as np
 import time
 from argparse import Namespace
 
@@ -6,11 +7,9 @@ import torch
 from summarytracker import SummaryTracker
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
-from utils import get_model, to_device, setup_logging
+from utils import get_model, to_device, setup_logging, notify_mail
 import logging
 
-
-from monolab.utils.utils import notify_mail
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class Experiment:
 
     def __init__(self, args: Namespace):
         # Set seed for reproducability
-        torch.initial_seed()
+        torch.manual_seed(7)
         np.random.seed(7)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(7)
@@ -227,7 +226,6 @@ class Experiment:
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
         self.summary.save()
 
-
         # notifies the user via e-mail and sends the log file
         if self.args.notify is not None:
             notify_mail(
@@ -236,7 +234,6 @@ class Experiment:
                 "Finished Training. Best loss: {}".format(best_val_loss),
                 self.args.logfile,
             )
-
 
     def gen_val_disp_maps(self, epoch: int):
         """
