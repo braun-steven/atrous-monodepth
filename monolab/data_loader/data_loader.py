@@ -80,6 +80,7 @@ def prepare_dataloader(
         augment_parameters: list of parameters for the data augmentation (only needed when mode="train"
                 and do_augmentation=True)
         do_augmentation: decides if data are augmented (only effective when mode="train")
+        shuffle: (bool) shuffle the dataset?
         batch_size: number of images per batch
         num_workers: number of workers in the data loader
 
