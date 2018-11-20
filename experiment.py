@@ -1,26 +1,16 @@
-import os
-import sys
-
-import collections
-import numpy as np
-import matplotlib.pyplot as plt
 import time
-from typing import Union, List, Dict
 from argparse import Namespace
 
 import torch
 
 from summarytracker import SummaryTracker
-from eval.eval_eigensplit import EvaluateEigen
-from eval.eval_kitti_gt import EvaluateKittiGT
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
-from monolab.networks.backbone import Backbone
-from monolab.networks.resnet_models import Resnet18_md, Resnet50_md
-from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
+from utils import get_model, to_device, setup_logging
 import logging
 
-from monolab.networks.test_model import TestModel
+
+from monolab.utils.utils import notify_mail
 
 logger = logging.getLogger(__name__)
 
@@ -57,29 +47,26 @@ class Experiment:
         if args.use_multiple_gpu:
             self.model = torch.nn.DataParallel(self.model)
 
-        if args.mode == "train":
-            self.loss_function = MonodepthLoss(
-                n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
-            ).to(self.device)
-            self.optimizer = torch.optim.Adam(
-                self.model.parameters(), lr=args.learning_rate
-            )
-            self.val_n_img, self.val_loader = prepare_dataloader(
-                args.data_dir,
-                args.val_filenames_file,
-                args.mode,
-                args.augment_parameters,
-                False,
-                args.batch_size,
-                (args.input_height, args.input_width),
-                args.num_workers,
-            )
-            logging.info("Using a validation set with {} images".format(self.val_n_img))
-        else:
-            self.load(args.model_path)
-            args.augment_parameters = None
-            args.do_augmentation = False
-            args.batch_size = 1
+        # Setup loss, optimizer and validation set
+        self.loss_function = MonodepthLoss(
+            n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
+        ).to(self.device)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=args.learning_rate
+        )
+        # the validation loader is a train loader but without data augmentation!
+        self.val_n_img, self.val_loader = prepare_dataloader(
+            root_dir=args.data_dir,
+            filenames_file=args.val_filenames_file,
+            mode="val",
+            augment_parameters=None,
+            do_augmentation=False,
+            shuffle=False,
+            batch_size=args.batch_size,
+            size=(args.input_height, args.input_width),
+            num_workers=args.num_workers,
+        )
+        logging.info("Using a validation set with {} images".format(self.val_n_img))
 
         # Load data
         self.output_dir = args.output_dir
@@ -87,18 +74,17 @@ class Experiment:
         self.input_width = args.input_width
 
         self.n_img, self.loader = prepare_dataloader(
-            args.data_dir,
-            args.filenames_file,
-            args.mode,
-            args.augment_parameters,
-            args.do_augmentation,
-            args.batch_size,
-            (args.input_height, args.input_width),
-            args.num_workers,
+            root_dir=args.data_dir,
+            filenames_file=args.filenames_file,
+            mode="train",
+            augment_parameters=args.augment_parameters,
+            do_augmentation=args.do_augmentation,
+            shuffle=True,
+            batch_size=args.batch_size,
+            size=(args.input_height, args.input_width),
+            num_workers=args.num_workers,
         )
-        logging.info(
-            "Using a {}ing data set with {} images".format(args.mode, self.n_img)
-        )
+        logging.info("Using a training data set with {} images".format(self.n_img))
 
         if "cuda" in self.device:
             torch.cuda.synchronize()
@@ -235,6 +221,17 @@ class Experiment:
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
         self.summary.save()
 
+
+        # notifies the user via e-mail and sends the log file
+        if self.args.notify is not None:
+            notify_mail(
+                self.args.notify,
+                "[MONOLAB] Training Finished!",
+                "Finished Training. Best loss: {}".format(best_val_loss),
+                self.args.logfile,
+            )
+
+
     def gen_val_disp_maps(self, epoch: int):
         """
         Generate n validation disparity maps
@@ -287,119 +284,6 @@ class Experiment:
         """
         self.model.load_state_dict(torch.load(path, map_location=self.device))
 
-    def test(self):
-        """ Test the model.
-
-        Returns:
-            None
-        """
-        self.model.eval()
-        disparities = np.zeros(
-            (self.n_img, self.input_height, self.input_width), dtype=np.float32
-        )
-        disparities_pp = np.zeros(
-            (self.n_img, self.input_height, self.input_width), dtype=np.float32
-        )
-        with torch.no_grad():
-            for (i, data) in enumerate(self.loader):
-                # Get the inputs
-                data = to_device(data, self.device)
-                left = data.squeeze()
-                # Do a forward pass
-                disps = self.model(left)
-                disp = disps[0][:, 0, :, :].unsqueeze(1)
-                disparities[i] = disp[0].squeeze().cpu().numpy()
-                disparities_pp[i] = post_process_disparity(
-                    disps[0][:, 0, :, :].cpu().numpy()
-                )
-
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-        np.save(os.path.join(self.output_dir, "disparities.npy"), disparities)
-        np.save(os.path.join(self.output_dir, "disparities_pp.npy"), disparities_pp)
-
-        for i in range(disparities.shape[0]):
-            plt.imsave(
-                os.path.join(self.output_dir, "pred_" + str(i) + ".png"),
-                disparities[i],
-                cmap="plasma",
-            )
-
-        logging.info("Finished Testing")
-
-    def evaluate(self):
-        """ Evaluates the model given either ground truth data or velodyne reprojected data
-
-        Returns:
-            None
-
-        """
-
-        # Evaluates on the Kitti Stereo 2015 Test Files
-        if self.args.eval == "kitti-gt":
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-                predicted_disp_path=self.output_dir + "disparities.npy",
-                gt_path=self.args.data_dir + "/data_scene_flow/",
-                min_depth=0,
-                max_depth=80,
-            ).evaluate()
-
-            logging.info()
-
-        # Evaluates on the 697 Eigen Test Files
-        elif self.args.eval == "eigen":
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-                self.output_dir + "disparities.npy",
-                test_file_path="resources/filenames/kitti_stereo_2015_test_files.txt",
-                gt_path=self.args.data_dir,
-                min_depth=0,
-                max_depth=80,
-            ).evaluate()
-        else:
-            pass
-
-        logging.info(
-            "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
-                "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
-            )
-        )
-        logging.info(
-            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
-                abs_rel.mean(),
-                sq_rel.mean(),
-                rms.mean(),
-                log_rms.mean(),
-                a1.mean(),
-                a2.mean(),
-                a3.mean(),
-            )
-        )
-
-
-def to_device(
-    x: Union[torch.Tensor, List[torch.tensor], Dict[str, torch.Tensor]], device: str
-):
-    """ Move a tensor or a collection of tensors to a device
-
-    Args:
-        x: tensor, dict of tensors or list of tensors
-        device: e.g. 'cuda' or 'cpu'
-
-    Returns:
-        same structure as input, but on device
-    """
-    if torch.is_tensor(x):
-        return x.to(device=device)
-    elif isinstance(x, str):
-        return x
-    elif isinstance(x, collections.Mapping):
-        return {k: to_device(sample, device=device) for k, sample in x.items()}
-    elif isinstance(x, collections.Sequence):
-        return [to_device(sample, device=device) for sample in x]
-    else:
-        raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
-
 
 def adjust_learning_rate(
     optimizer: torch.optim.Optimizer, epoch: int, learning_rate: float
@@ -422,72 +306,6 @@ def adjust_learning_rate(
         lr = learning_rate
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
-
-
-def post_process_disparity(disp: np.ndarray) -> np.ndarray:
-    """ Apply the post-processing step described in the paper
-
-    Args:
-        disp: [2, h, w] array, a disparity map
-
-    Returns:
-        post-processed disparity map
-    """
-    (_, h, w) = disp.shape
-    l_disp = disp[0, :, :]
-    r_disp = np.fliplr(disp[1, :, :])
-    m_disp = 0.5 * (l_disp + r_disp)
-    (l, _) = np.meshgrid(np.linspace(0, 1, w), np.linspace(0, 1, h))
-    l_mask = 1.0 - np.clip(20 * (l - 0.05), 0, 1)
-    r_mask = np.fliplr(l_mask)
-    return r_mask * l_disp + l_mask * r_disp + (1.0 - l_mask - r_mask) * m_disp
-
-
-def get_model(model: str, n_input_channels=3) -> Backbone:
-    """
-    Get model via name
-    Args:
-        model: Model name
-        n_input_channels: Number of input channels
-    Returns:
-        Instantiated model
-    """
-    if model == "deeplab":
-        out_model = DeepLabv3Plus(
-            DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
-        )
-    elif model == "resnet18_md":
-        out_model = Resnet18_md(num_in_layers=n_input_channels)
-    elif model == "resnet50_md":
-        out_model = Resnet50_md(num_in_layers=n_input_channels)
-    elif model == "testnet":
-        out_model = TestModel(n_in_layers=n_input_channels)
-    # elif and so on and so on
-    else:
-        raise NotImplementedError("Unknown model type")
-    return out_model
-
-
-def setup_logging(filename: str = "monolab.log", level: str = "INFO"):
-    """
-    Setup global loggers
-    Args:
-        filename: Log file destination
-        level: Log level
-    """
-
-    # Check if previous log exists since logging.FileHandler only appends
-    if os.path.exists(filename):
-        os.remove(filename)
-
-    logging.basicConfig(
-        level=logging.getLevelName(level.upper()),
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(stream=sys.stdout),
-            logging.FileHandler(filename=filename),
-        ],
-    )
 
 
 if __name__ == "__main__":

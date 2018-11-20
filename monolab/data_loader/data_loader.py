@@ -27,7 +27,7 @@ class KittiLoader(Dataset):
                 os.path.join(root_dir, fname.split()[0]) for fname in filenames
             )
 
-        if mode == "train":
+        if mode == "train" or mode == "val":
             with open(filenames_file) as filenames:
                 self.right_paths = sorted(
                     os.path.join(root_dir, fname.split()[1]) for fname in filenames
@@ -41,7 +41,7 @@ class KittiLoader(Dataset):
 
     def __getitem__(self, idx):
         left_image = Image.open(self.left_paths[idx])
-        if self.mode == "train":
+        if self.mode == "train" or self.mode == "val":
             right_image = Image.open(self.right_paths[idx])
             sample = {"left_image": left_image, "right_image": right_image}
 
@@ -61,23 +61,29 @@ def prepare_dataloader(
     filenames_file,
     mode,
     augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
-    do_augmentation=True,
+    do_augmentation=False,
+    shuffle=False,
     batch_size=256,
     size=(256, 512),
     num_workers=1,
 ):
-    """ Prepares a DataLoader that loads multiple Kitti sequences
-    
+    """ Prepares a DataLoader that loads Kitti images from file names and performs transforms
+
     Args:
-    
+
         root_dir: data directory
         filenames_file: file, where each line contains left and right image paths (separated by whitespace)
-        mode: (str) 'test' or 'train'
-        augment_parameters: list of parameters for the data augmentation
-        do_augmentation: decides if data are augmented
+        mode: "train", "val" or "test"
+                "train": do data augmentation and resize
+                "val": resize
+                "test": resize and stack the image with its flipped version (for post-processing)
+        augment_parameters: list of parameters for the data augmentation (only needed when mode="train"
+                and do_augmentation=True)
+        do_augmentation: decides if data are augmented (only effective when mode="train")
+        shuffle: (bool) shuffle the dataset?
         batch_size: number of images per batch
         num_workers: number of workers in the data loader
-        
+
     Returns:
         n_img : int
             total number of images
@@ -93,23 +99,15 @@ def prepare_dataloader(
         size=size,
     )
 
-    dataset = KittiLoader(root_dir, filenames_file, mode, transform=data_transform)
+    dataset = KittiLoader(root_dir, filenames_file, mode=mode, transform=data_transform)
 
     n_img = len(dataset)
-    if mode == "train":
-        loader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=num_workers,
-            pin_memory=True,
-        )
-    else:
-        loader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=True,
-        )
+
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
     return n_img, loader

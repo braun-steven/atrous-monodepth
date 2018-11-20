@@ -32,6 +32,14 @@ def image_transforms(
             ]
         )
         return data_transform
+    elif mode == "val":
+        data_transform = transforms.Compose(
+            [
+                ResizeImage(train=True, size=size),
+                ToTensor(train=True),
+            ]
+        )
+        return data_transform
     elif mode == "test":
         data_transform = transforms.Compose(
             [ResizeImage(train=False, size=size), ToTensor(train=False), DoTest()]

@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--filenames-file",
-        help="File that contains a list of filenames for training/testing. \
+        help="File that contains a list of filenames for training. \
                         Each line should contain left and right image paths \
                         separated by a space.",
     )
@@ -41,9 +41,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--input-height", type=int, help="input height", default=256)
     parser.add_argument("--input-width", type=int, help="input width", default=512)
-    parser.add_argument(
-        "--mode", default="train", help="mode: train or test (default: train)"
-    )
     parser.add_argument(
         "--epochs", type=int, default=50, help="number of total " "epochs to run"
     )
@@ -92,11 +89,9 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--eval",
-        default="none",
-        type=str,
-        help="Either evaluate on eigensplit or on kitti gt",
-        choices=["kitti-gt", "eigen", "none"],
+        "--notify",
+        default=None,
+        help="Put in email-address to notify when training has finished"
     )
 
     parser.add_argument(
