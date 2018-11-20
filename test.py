@@ -107,9 +107,7 @@ class TestRunner:
             num_workers=args.num_workers,
         )
 
-        logging.info(
-            "Using a testing data set with {} images".format(self.n_img)
-        )
+        logging.info("Using a testing data set with {} images".format(self.n_img))
 
         if "cuda" in self.device:
             torch.cuda.synchronize()

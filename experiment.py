@@ -202,14 +202,13 @@ class Experiment:
 
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
 
-
-        #notifies the user via e-mail and sends the log file
+        # notifies the user via e-mail and sends the log file
         if self.args.notify is not None:
             notify_mail(
                 self.args.notify,
                 "[MONOLAB] Training Finished!",
                 "Finished Training. Best loss: {}".format(best_val_loss),
-                self.args.logfile
+                self.args.logfile,
             )
 
         self.eval.save()
@@ -235,8 +234,6 @@ class Experiment:
             None
         """
         self.model.load_state_dict(torch.load(path, map_location=self.device))
-
-
 
 
 def adjust_learning_rate(
