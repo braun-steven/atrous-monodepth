@@ -27,7 +27,7 @@ class KittiLoader(Dataset):
                 os.path.join(root_dir, fname.split()[0]) for fname in filenames
             )
 
-        if mode == "train" or mode == "val":
+        if mode == "train":
             with open(filenames_file) as filenames:
                 self.right_paths = sorted(
                     os.path.join(root_dir, fname.split()[1]) for fname in filenames
@@ -41,7 +41,7 @@ class KittiLoader(Dataset):
 
     def __getitem__(self, idx):
         left_image = Image.open(self.left_paths[idx])
-        if self.mode == "train" or self.mode == "val":
+        if self.mode == "train":
             right_image = Image.open(self.right_paths[idx])
             sample = {"left_image": left_image, "right_image": right_image}
 
