@@ -5,7 +5,7 @@ import logging
 import os
 from shutil import copyfile
 
-from typing import List
+from typing import List, Union
 from torch import nn
 from torch import Tensor
 import matplotlib
@@ -24,9 +24,9 @@ from tensorboardX import SummaryWriter
 logger = logging.getLogger(__name__)
 
 
-class Evaluator:
+class SummaryTracker:
     """
-    The evaluator stores all results and data that can be collected during an
+    The summary tracker stores all results and data that can be collected during an
     experiment.
     Main result locations are:
     - tensorboard: Tensorboard files
@@ -56,16 +56,16 @@ class Evaluator:
         self._metric_epochs_train = {name: [] for name in metric_names}
         self._metrics_epochs_val = {name: [] for name in metric_names}
 
-        # Store best loss for model checkpoints
-        self._best_val_loss = float("inf")
-        self._best_cpt_path = os.path.join(self._base_dir, "best-model.pth")
-        self._last_cpt_path = os.path.join(self._base_dir, "last-model.pth")
 
         # File/Directory names
         self._args_path = os.path.join(self._base_dir, "args.txt")
         self._tensorboard_dir = os.path.join(self._base_dir, "tensorboard/")
         self._checkpoints_dir = os.path.join(self._base_dir, "checkpoints/")
         self._plots_dir = os.path.join(self._base_dir, "plots/")
+        # Store best loss for model checkpoints
+        self._best_val_loss = float("inf")
+        self._best_cpt_path = os.path.join(self._checkpoints_dir, "best-model.pth")
+        self._last_cpt_path = os.path.join(self._checkpoints_dir, "last-model.pth")
         self._create_dirs()
 
         # Tensorboard
@@ -167,7 +167,8 @@ class Evaluator:
             f.write(content)
 
     def add_epoch_metric(
-        self, epoch: int, train_metric: float, val_metric, metric_name: str
+        self, epoch: int, train_metric: float, val_metric, metric_name: str,
+            train: bool=False
     ) -> None:
         """
         Add a specific metric for a single epoch.
@@ -176,6 +177,7 @@ class Evaluator:
             train_metric (float): Train metric value
             val_metric (float): Validation metric value
             metric_name (str): metric name
+            train (bool): Flag to indicate whether this is a train or validation value
         """
         # Store metric for plots
         self._metric_epochs_train[metric_name].append([epoch, train_metric])
@@ -199,7 +201,19 @@ class Evaluator:
             )
         )
 
-    def add_image(self, epoch: int, img: Tensor, tag: str):
+    def add_image(self, epoch: int, img: Union[Tensor, np.ndarray], tag: str):
+        """
+        Add an image to the evaluation results
+        Args:
+            epoch (int): Current epoch
+            img (Tensor or np.ndarray): Image
+            tag (str): Tag as short description/identifier of the image
+        """
+        self._summary_writer.add_image(
+            tag="image/" + tag, img_tensor=img, global_step=epoch
+        )
+
+    def add_disparity_map(self, epoch: int, disp: Tensor, tag: str):
         """
         Add an image to the evaluation results
         Args:
@@ -207,12 +221,8 @@ class Evaluator:
             img (Tensor): Image
             tag (str): Tag as short description/identifier of the image
         """
-        if isinstance(img, np.ndarray):
-            img = Tensor(img)
-
-        self._summary_writer.add_image(
-            tag="image/" + tag, img_tensor=img, global_step=epoch
-        )
+        colorized_image = self._colorize_image(disp, vmin=0.0, vmax=1.0, cmap="plasma")
+        self.add_image(epoch, colorized_image, tag)
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
         """
@@ -262,3 +272,44 @@ class Evaluator:
         directory = os.path.dirname(file)
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+    def _colorize_image(self, value: Tensor, vmin=None, vmax=None, cmap=None) -> \
+            np.ndarray:
+        """
+        A utility function for TensorFlow that maps a grayscale image to a matplotlib
+        colormap for use with TensorBoard image summaries.
+
+        By default it will normalize the input value to the range 0..1 before mapping
+        to a grayscale colormap.
+
+        Arguments:
+          - value: 2D Tensor of shape [height, width] or 3D Tensor of shape
+            [height, width, 1].
+          - vmin: the minimum value of the range used for normalization.
+            (Default: value minimum)
+          - vmax: the maximum value of the range used for normalization.
+            (Default: value maximum)
+          - cmap: a valid cmap named for use with matplotlib's `get_cmap`.
+            (Default: 'gray')
+
+
+        Returns a 3D tensor of shape [height, width, 3].
+        """
+
+        # normalize
+        vmin = value.min() if vmin is None else vmin
+        vmax = value.max() if vmax is None else vmax
+        value = (value - vmin) / (vmax - vmin)  # vmin..vmax
+
+        # squeeze last dim if it exists
+        value = value.squeeze()
+
+        # quantize
+        indices = (value * 255).long()
+
+        # gather
+        cm = matplotlib.cm.get_cmap(cmap if cmap is not None else "gray")
+        value = np.array(cm.colors).take(indices=indices, axis=0)
+
+        # Fix tensor shape to what the summary write expects (HCW)
+        return value.transpose(2, 0, 1)
