@@ -10,7 +10,7 @@ from argparse import Namespace
 
 import torch
 
-from evaluator import Evaluator
+from summarytracker import SummaryTracker
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
 from monolab.data_loader import prepare_dataloader
@@ -45,8 +45,10 @@ class Experiment:
             lr_consistency="lr-consistency-loss",
         )
 
-        # Setup Evaluator
-        self.eval = Evaluator(metric_names=list(self.loss_names.values()), args=args)
+        # Setup summary tracker
+        self.summary = SummaryTracker(
+            metric_names=list(self.loss_names.values()), args=args
+        )
 
         # Set up model
         self.device = args.device
@@ -125,6 +127,8 @@ class Experiment:
             running_lr_loss = 0.0
 
             self.model.train()
+
+            # TRAINING LOOP #
             for data in self.loader:
                 # Load data
                 data = to_device(data, self.device)
@@ -153,30 +157,44 @@ class Experiment:
             running_val_lr_loss = 0.0
 
             self.model.eval()
-            for data in self.val_loader:
-                data = to_device(data, self.device)
-                left = data["left_image"]
-                right = data["right_image"]
-                disps = self.model(left)
-                loss, image_loss, disp_gradient_loss, lr_loss = self.loss_function(
-                    disps, [left, right]
-                )
 
-                # Collect validation loss
-                running_val_loss += loss.item()
-                running_val_image_loss += image_loss.item()
-                running_val_disp_gradient_loss += disp_gradient_loss.item()
-                running_val_lr_loss += lr_loss.item()
+            # TODO: Remove when logic in
+            # SummaryTracker for train/val metrics has been separated
+            if self.args.validate_after_k_epochs != 1:
+                logger.warning("Validate after k epochs has not been implemented yet.")
+                self.args.validate_after_k_epochs = 1
+
+            if epoch % self.args.validate_after_k_epochs == 0:
+                # VALIDATION LOOP #
+                with torch.no_grad():
+                    for idx, data in enumerate(self.val_loader):
+                        data = to_device(data, self.device)
+                        left = data["left_image"]
+                        right = data["right_image"]
+                        disps = self.model(left)
+                        loss, image_loss, disp_gradient_loss, lr_loss = self.loss_function(
+                            disps, [left, right]
+                        )
+
+                        # Collect validation loss
+                        running_val_loss += loss.item()
+                        running_val_image_loss += image_loss.item()
+                        running_val_disp_gradient_loss += disp_gradient_loss.item()
+                        running_val_lr_loss += lr_loss.item()
+
+                running_val_loss /= self.val_n_img
+                running_val_image_loss /= self.val_n_img
+                running_val_disp_gradient_loss /= self.val_n_img
+                running_val_lr_loss /= self.val_n_img
+
+                # Generate 10 random disparity map predictions
+                self.gen_val_disp_maps(epoch)
 
             # Estimate loss per image
             running_loss /= self.n_img
             running_image_loss /= self.n_img
             running_disp_gradient_loss /= self.n_img
             running_lr_loss /= self.n_img
-            running_val_loss /= self.val_n_img
-            running_image_loss /= self.val_n_img
-            running_disp_gradient_loss /= self.val_n_img
-            running_lr_loss /= self.val_n_img
 
             # Update best loss
             if running_val_loss < best_val_loss:
@@ -187,35 +205,67 @@ class Experiment:
                     epoch, self.args.epochs, round(time.time() - c_time, 3)
                 )
             )
-            self.eval.add_epoch_metric(
+            self.summary.add_epoch_metric(
                 epoch=epoch,
                 train_metric=running_loss,
                 val_metric=running_val_loss,
                 metric_name=self.loss_names["full"],
             )
-            self.eval.add_epoch_metric(
+            self.summary.add_epoch_metric(
                 epoch=epoch,
                 train_metric=running_image_loss,
                 val_metric=running_val_image_loss,
                 metric_name=self.loss_names["images"],
             )
-            self.eval.add_epoch_metric(
+            self.summary.add_epoch_metric(
                 epoch=epoch,
                 train_metric=running_disp_gradient_loss,
                 val_metric=running_val_disp_gradient_loss,
                 metric_name=self.loss_names["disp_gp"],
             )
-            self.eval.add_epoch_metric(
+            self.summary.add_epoch_metric(
                 epoch=epoch,
                 train_metric=running_lr_loss,
                 val_metric=running_val_lr_loss,
                 metric_name=self.loss_names["lr_consistency"],
             )
 
-            self.eval.add_checkpoint(model=self.model, val_loss=running_val_loss)
+            self.summary.add_checkpoint(model=self.model, val_loss=running_val_loss)
 
         logging.info("Finished Training. Best loss: {}".format(best_val_loss))
-        self.eval.save()
+        self.summary.save()
+
+    def gen_val_disp_maps(self, epoch: int):
+        """
+        Generate n validation disparity maps
+        Args:
+            epoch (int): Current epoch
+        """
+        n_val_images = 10
+
+        with torch.no_grad():
+            for (i, data) in enumerate(self.val_loader):
+
+                # Stop after n_val_images
+                # TODO: How to reset the dataloader without finishing the iterations?
+                if i >= n_val_images:
+                    continue
+
+                # Get the inputs
+                data = to_device(data, self.device)
+                left = data["left_image"]
+                # Do a forward pass
+                disps = self.model(left)
+                disp = disps[0][:, 0, :, :].unsqueeze(1)
+                disp_i = disp[0].squeeze().cpu().numpy()
+                # TODO: Add disp postprocessing again
+                self.summary.add_disparity_map(
+                    epoch=epoch, disp=torch.Tensor(disp_i), tag="disp-{}".format(i)
+                )
+
+                # Stop after n_val_images
+                if i >= n_val_images:
+                    break
 
     def save(self, path: str) -> None:
         """ Save a .pth state dict from self.model
@@ -288,31 +338,45 @@ class Experiment:
 
         """
 
-        #Evaluates on the Kitti Stereo 2015 Test Files
-        if args.eval == 'kitti-gt':
+        # Evaluates on the Kitti Stereo 2015 Test Files
+        if self.args.eval == "kitti-gt":
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
                 predicted_disp_path=self.output_dir + "disparities.npy",
-                gt_path=self.data_dir + '/data_scene_flow/', min_depth=0, max_depth=80).evaluate()
+                gt_path=self.args.data_dir + "/data_scene_flow/",
+                min_depth=0,
+                max_depth=80,
+            ).evaluate()
 
             logging.info()
 
-        #Evaluates on the 697 Eigen Test Files
-        elif args.eval == 'eigen':
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(self.output_dir + "disparities.npy",
-                          test_file_path='resources/filenames/kitti_stereo_2015_test_files.txt',
-                          gt_path=self.data_dir, min_depth=0, max_depth= 80).evaluate()
+        # Evaluates on the 697 Eigen Test Files
+        elif self.args.eval == "eigen":
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
+                self.output_dir + "disparities.npy",
+                test_file_path="resources/filenames/kitti_stereo_2015_test_files.txt",
+                gt_path=self.args.data_dir,
+                min_depth=0,
+                max_depth=80,
+            ).evaluate()
         else:
             pass
 
-        logging.info("{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format('abs_rel', 'sq_rel', 'rms', 'log_rms',
-                                                                                       'a1', 'a2', 'a3'))
-        logging.info("{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(abs_rel.mean(),
-                                                                                                      sq_rel.mean(),
-                                                                                                      rms.mean(),
-                                                                                                      log_rms.mean(),
-                                                                                                      a1.mean(), a2.mean(),
-                                                                                                      a3.mean()))
-
+        logging.info(
+            "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
+                "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
+            )
+        )
+        logging.info(
+            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
+                abs_rel.mean(),
+                sq_rel.mean(),
+                rms.mean(),
+                log_rms.mean(),
+                a1.mean(),
+                a2.mean(),
+                a3.mean(),
+            )
+        )
 
 
 def to_device(
