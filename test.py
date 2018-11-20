@@ -168,12 +168,10 @@ class TestRunner:
                 raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
                 predicted_disps=self.disparities,
-                gt_path=self.data_dir + "/data_scene_flow/",
+                gt_path=self.args.data_dir,
                 min_depth=0,
                 max_depth=80,
             ).evaluate()
-
-            logging.info()
 
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
@@ -182,12 +180,12 @@ class TestRunner:
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 predicted_disps=self.disparities,
                 test_file_path=self.args.filenames_file,
-                gt_path=self.data_dir,
+                gt_path=self.args.data_dir,
                 min_depth=0,
                 max_depth=80,
             ).evaluate()
         else:
-            pass
+            raise ValueError("{} is not a valid evaluation procedure.".format(self.args.eval))
 
         logging.info(
             "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
@@ -195,7 +193,7 @@ class TestRunner:
             )
         )
         logging.info(
-            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
+            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
                 abs_rel.mean(),
                 sq_rel.mean(),
                 rms.mean(),

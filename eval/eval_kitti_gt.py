@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os
 
 from eval.eval_utils import compute_errors
 
@@ -11,7 +12,7 @@ class EvaluateKittiGT:
     How to use this class:
     Create an object of this class and then use the evaluate method to evaluate
     EvaluateKittiGT(
-    predicted_disp_path='../../data/kitti/disparities.npy',
+    predicted_disps= np.array containing predicted disparities
     gt_path='../../data/kitti/data_scene_flow/', min_depth=0, max_depth=80).evaluate()
 
     """
@@ -108,7 +109,7 @@ class EvaluateKittiGT:
         gt_disparities = []
         for i in range(200):
             disp = cv2.imread(
-                path + "/training/disp_noc_0/" + str(i).zfill(6) + "_10.png", -1
+                os.path.join(path, "training/disp_noc_0/", str(i).zfill(6) + "_10.jpg"), -1
             )
             disp = disp.astype(np.float32) / 256
             gt_disparities.append(disp)
