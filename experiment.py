@@ -6,7 +6,7 @@ import torch
 from evaluator import Evaluator
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
-from monolab.data_loader import prepare_dataloader
+from monolab.data_loader import prepare_train_loader
 from monolab.loss import MonodepthLoss
 from utils import get_model, to_device, setup_logging
 import logging
@@ -47,7 +47,6 @@ class Experiment:
         if args.use_multiple_gpu:
             self.model = torch.nn.DataParallel(self.model)
 
-
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
             n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
@@ -55,37 +54,33 @@ class Experiment:
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.learning_rate
         )
-        self.val_n_img, self.val_loader = prepare_dataloader(
-            args.data_dir,
-            args.val_filenames_file,
-            "train",
-            args.augment_parameters,
-            False,
-            args.batch_size,
-            (args.input_height, args.input_width),
-            args.num_workers,
+        # the validation loader is a train loader but without data augmentation!
+        self.val_n_img, self.val_loader = prepare_train_loader(
+            root_dir=args.data_dir,
+            filenames_file=args.val_filenames_file,
+            augment_parameters=args.augment_parameters,
+            do_augmentation=False,
+            batch_size=args.batch_size,
+            size=(args.input_height, args.input_width),
+            num_workers=args.num_workers,
         )
         logging.info("Using a validation set with {} images".format(self.val_n_img))
-
 
         # Load data
         self.output_dir = args.output_dir
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        self.n_img, self.loader = prepare_dataloader(
-            args.data_dir,
-            args.filenames_file,
-            "train",
-            args.augment_parameters,
-            args.do_augmentation,
-            args.batch_size,
-            (args.input_height, args.input_width),
-            args.num_workers,
+        self.n_img, self.loader = prepare_train_loader(
+            root_dir=args.data_dir,
+            filenames_file=args.filenames_file,
+            augment_parameters=args.augment_parameters,
+            do_augmentation=args.do_augmentation,
+            batch_size=args.batch_size,
+            size=(args.input_height, args.input_width),
+            num_workers=args.num_workers,
         )
-        logging.info(
-            "Using a training data set with {} images".format(self.n_img)
-        )
+        logging.info("Using a training data set with {} images".format(self.n_img))
 
         if "cuda" in self.device:
             torch.cuda.synchronize()

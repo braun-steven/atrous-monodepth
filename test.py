@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import get_model, to_device, setup_logging
-from monolab.data_loader import prepare_dataloader
+from monolab.data_loader import prepare_test_loader
 
 
 def parse_args() -> argparse.Namespace:
@@ -97,12 +97,9 @@ class TestRunner:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        self.n_img, self.loader = prepare_dataloader(
+        self.n_img, self.loader = prepare_test_loader(
             args.data_dir,
             args.filenames_file,
-            "test",
-            args.augment_parameters,
-            args.do_augmentation,
             args.batch_size,
             (args.input_height, args.input_width),
             args.num_workers,

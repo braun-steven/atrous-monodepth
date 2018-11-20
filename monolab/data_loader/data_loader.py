@@ -56,15 +56,59 @@ class KittiLoader(Dataset):
             return left_image
 
 
-def prepare_dataloader(
+def prepare_train_loader(
     root_dir,
     filenames_file,
-    mode,
     augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
     do_augmentation=True,
     batch_size=256,
     size=(256, 512),
     num_workers=1,
+):
+    """ Prepares a training DataLoader that loads Kitti images from file names and performs transforms
+
+        Args:
+
+            root_dir: data directory
+            filenames_file: file, where each line contains left and right image paths (separated by whitespace)
+            augment_parameters: list of parameters for the data augmentation
+            do_augmentation: decides if data are augmented
+            batch_size: number of images per batch
+            num_workers: number of workers in the data loader
+
+        Returns:
+            n_img : int
+                total number of images
+
+            loader : torch.utils.data.DataLoader
+                data loader
+        """
+
+    data_transform = image_transforms(
+        mode="train",
+        augment_parameters=augment_parameters,
+        do_augmentation=do_augmentation,
+        size=size,
+    )
+
+    dataset = KittiLoader(
+        root_dir, filenames_file, mode="train", transform=data_transform
+    )
+
+    n_img = len(dataset)
+
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+    return n_img, loader
+
+
+def prepare_test_loader(
+    root_dir, filenames_file, batch_size=256, size=(256, 512), num_workers=1
 ):
     """ Prepares a DataLoader that loads multiple Kitti sequences
     
@@ -72,9 +116,6 @@ def prepare_dataloader(
     
         root_dir: data directory
         filenames_file: file, where each line contains left and right image paths (separated by whitespace)
-        mode: (str) 'test' or 'train'
-        augment_parameters: list of parameters for the data augmentation
-        do_augmentation: decides if data are augmented
         batch_size: number of images per batch
         num_workers: number of workers in the data loader
         
@@ -87,29 +128,18 @@ def prepare_dataloader(
     """
 
     data_transform = image_transforms(
-        mode=mode,
-        augment_parameters=augment_parameters,
-        do_augmentation=do_augmentation,
-        size=size,
+        mode="test", augment_parameters=None, do_augmentation=None, size=size
     )
 
-    dataset = KittiLoader(root_dir, filenames_file, mode, transform=data_transform)
+    dataset = KittiLoader(root_dir, filenames_file, "test", transform=data_transform)
 
     n_img = len(dataset)
-    if mode == "train":
-        loader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=num_workers,
-            pin_memory=True,
-        )
-    else:
-        loader = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=True,
-        )
+
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
     return n_img, loader
