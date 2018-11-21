@@ -1,5 +1,5 @@
-# project-dlcv
-Project for the Deep Learning in Computer Vision practical course
+# Monocular Depth Estimation with Atrous Convolutions
+This repo contains code for the Deep Learning in Computer Vision practical course at TU Darmstadt.
 
 ## Useful Links
 ### Original implementations
@@ -12,3 +12,12 @@ Project for the Deep Learning in Computer Vision practical course
 ## Coding Style
 - Code Formatter: [black](https://github.com/ambv/black)
 - Docstring: [Google Style](https://www.chromium.org/chromium-os/python-style-guidelines)
+
+## How to run
+The code runs on Python 3.5, Pytorch 0.4.1 and has a couple of other requirements, which are stated in `requirements.txt` and can be easily installed by running `setup-env.sh`.
+
+### Training
+
+### Testing
+
+### Evaluation
