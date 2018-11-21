@@ -4,8 +4,9 @@ import torch.nn.functional as F
 
 
 class MonodepthLoss(nn.modules.Module):
-    def __init__(self, n=4, SSIM_w=0.85, disp_gradient_w=1.0, lr_w=1.0):
+    def __init__(self, device, n=4, SSIM_w=0.85, disp_gradient_w=1.0, lr_w=1.0):
         super(MonodepthLoss, self).__init__()
+        self.device = device
         self.SSIM_w = SSIM_w
         self.disp_gradient_w = disp_gradient_w
         self.lr_w = lr_w
@@ -78,13 +79,18 @@ class MonodepthLoss(nn.modules.Module):
         batch_size, _, height, width = img.size()
 
         # Original coordinates of pixels
-        x_base = torch.linspace(0, 1, width).repeat(batch_size, height, 1).type_as(img)
+        x_base = (
+            torch.linspace(0, 1, width)
+            .repeat(batch_size, height, 1)
+            .type_as(img)
+            .to(self.device)
+        )
         y_base = (
             torch.linspace(0, 1, height)
             .repeat(batch_size, width, 1)
             .transpose(1, 2)
             .type_as(img)
-        )
+        ).to(self.device)
 
         # Apply shift in X direction
         x_shifts = disp[:, 0, :, :]  # Disparity is passed in NCHW format with 1 channel

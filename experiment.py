@@ -7,7 +7,7 @@ import torch
 from summarytracker import SummaryTracker
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
-from utils import get_model, to_device, setup_logging, notify_mail
+from utils import get_model, setup_logging, notify_mail, to_device
 import logging
 
 
@@ -54,7 +54,7 @@ class Experiment:
 
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
-            n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
+            device=self.device, n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
         ).to(self.device)
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.learning_rate
