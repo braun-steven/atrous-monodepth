@@ -43,14 +43,35 @@ GREEN="\e[92m"
 BLUE="\e[94m"
 RED="\e[91m"
 DEFAULTCOLOR="\e[39m"
+GRAY="\e[37m"
+
+function printmeminfo {
+  # Get nvidia-smi output
+  result=$(ssh -o ConnectTimeout=5 ${username}@lab$1.visinf.informatik.tu-darmstadt.de nvidia-smi)
+  # Get GPU indices
+  idxs=( $(echo "$result" | grep GeForce | cut -d'G' -f1 | cut -d' ' -f4) )
+  # Get GPU memory info
+  memory=$(echo "$result" | grep MiB | grep % | cut -d'|' -f3 )
+  # Parse GPU memory info
+  memarr=()
+  while read -r line; do
+    memarr+=("$line")
+  done <<< "$memory"
+
+  # Print info
+  for i in "${!idxs[@]}"
+  do
+    echo -e "${GRAY}GPU (${idxs[$i]}):${NC} ${memarr[$i]}"
+  done
+}
+
 
 # Loop through each server
 for i in "${arr[@]}"
 do
-  server="${username}@lab${i}.visinf.informatik.tu-darmstadt.de" 
   echo -e "\n"
   echo -e "${BOLD}## (${BLUE}lab${i}${DEFAULTCOLOR}) Current status: ${NC}\n"
-  ssh -o ConnectTimeout=5 $server nvidia-smi | grep MiB | grep % | cut -d'|' -f3
+  printmeminfo $i
 done
 
 echo -e "\n\n"
