@@ -3,7 +3,7 @@ import collections
 import torch
 
 from monolab.networks.backbone import Backbone
-from monolab.networks.resnet_models import Resnet18_md, Resnet50_md
+from monolab.networks.resnet_md import MonoDepthResNet50
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
 from monolab.networks.test_model import TestModel
@@ -57,10 +57,8 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
         out_model = DeepLabv3Plus(
             DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
         )
-    elif model == "resnet18_md":
-        out_model = Resnet18_md(num_in_layers=n_input_channels)
     elif model == "resnet50_md":
-        out_model = Resnet50_md(num_in_layers=n_input_channels)
+        out_model = MonoDepthResNet50(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     elif model == "testnet":

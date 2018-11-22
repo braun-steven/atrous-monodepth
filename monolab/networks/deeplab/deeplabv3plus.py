@@ -43,6 +43,8 @@ class DeepLabv3Plus(Backbone):
         logger.debug("Number of Input Channels: {}".format(in_channels))
         super(DeepLabv3Plus, self).__init__(in_channels)
 
+        self.dcnn_type = dcnn_type
+
         # Setup DCNN
         self.dcnn, dcnn_feature_size = self._create_dcnn(
             dcnn_type, in_channels, output_stride, pretrained
@@ -173,7 +175,10 @@ class DeepLabv3Plus(Backbone):
 
     def forward(self, input):
         # Apply DCNN
-        x, low_level_features = self.dcnn(input)
+        if self.dcnn_type == DCNNType.RESNET:
+            _1, _pool1, low_level_features, _3, _4, x = self.dcnn(input)
+        elif self.dcnn_type == DCNNType.XCEPTION:
+            x, low_level_features = self.dcnn(input)
 
         # Get ASPP outputs
         x1 = self.aspp1(x)

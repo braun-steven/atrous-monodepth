@@ -34,7 +34,21 @@ class ResNet(nn.Module):
         """
         self.inplanes = 64
         super(ResNet, self).__init__()
-        if output_stride == 16:
+        # output_stride = 64 is the basic case
+        # of resnet50_md from Godard et al
+        # if blocks is set to  [1, 1, 1], then
+        # this is equivalent to calling _make_layer in the last block instead of __make_multigrid_unit
+        if output_stride == 64:
+            strides = [2, 2, 2, 2]
+            rates = [1, 1, 1, 1]
+            blocks = [1, 1, 1]
+        # output_stride = 32 starts decreasing the size one block later
+        elif output_stride == 32:
+            strides = [1, 2, 2, 2]
+            rates = [1, 1, 1, 1]
+            blocks = [1, 1, 1]
+        # output_stride = 16 is the standard for deeplabv3+
+        elif output_stride == 16:
             strides = [1, 2, 2, 1]
             rates = [1, 1, 1, 2]
             blocks = [1, 2, 4]
@@ -185,17 +199,16 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
+        x1 = self.conv1(x)
+        x_pool1 = self.bn1(x1)
+        x_pool1 = self.relu(x_pool1)
+        x_pool1 = self.maxpool(x_pool1)
 
-        x = self.layer1(x)
-        low_level_feat = x
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-        return x, low_level_feat
+        x2 = self.layer1(x_pool1)
+        x3 = self.layer2(x2)
+        x4 = self.layer3(x3)
+        x_out = self.layer4(x4)
+        return x1, x_pool1, x2, x3, x4, x_out
 
     def _load_pretrained_model_state(self):
         """Load the pretrained ResNet101 model state."""
