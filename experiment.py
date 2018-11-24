@@ -119,7 +119,7 @@ class Experiment:
         # Start training
         logger.info(
             "Starting training for {} epochs on {} images".format(
-                self.args.epochs, len(self.n_img)
+                self.args.epochs, self.n_img
             )
         )
         for epoch in range(1, self.args.epochs + 1):
