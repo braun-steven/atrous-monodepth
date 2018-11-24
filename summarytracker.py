@@ -56,7 +56,6 @@ class SummaryTracker:
         self._metric_epochs_train = {name: [] for name in metric_names}
         self._metrics_epochs_val = {name: [] for name in metric_names}
 
-
         # File/Directory names
         self._args_path = os.path.join(self._base_dir, "args.txt")
         self._tensorboard_dir = os.path.join(self._base_dir, "tensorboard/")
@@ -167,8 +166,12 @@ class SummaryTracker:
             f.write(content)
 
     def add_epoch_metric(
-        self, epoch: int, train_metric: float, val_metric, metric_name: str,
-            train: bool=False
+        self,
+        epoch: int,
+        train_metric: float,
+        val_metric,
+        metric_name: str,
+        train: bool = False,
     ) -> None:
         """
         Add a specific metric for a single epoch.
@@ -221,7 +224,7 @@ class SummaryTracker:
             img (Tensor): Image
             tag (str): Tag as short description/identifier of the image
         """
-        colorized_image = self._colorize_image(disp, vmin=0.0, vmax=1.0, cmap="plasma")
+        colorized_image = self._colorize_image(disp, vmin=0.0, vmax=1.0)
         self.add_image(epoch, colorized_image, tag)
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
@@ -273,43 +276,18 @@ class SummaryTracker:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def _colorize_image(self, value: Tensor, vmin=None, vmax=None, cmap=None) -> \
-            np.ndarray:
+    def _colorize_image(self, value: Tensor) -> np.ndarray:
         """
-        A utility function for TensorFlow that maps a grayscale image to a matplotlib
-        colormap for use with TensorBoard image summaries.
-
-        By default it will normalize the input value to the range 0..1 before mapping
-        to a grayscale colormap.
-
-        Arguments:
-          - value: 2D Tensor of shape [height, width] or 3D Tensor of shape
-            [height, width, 1].
-          - vmin: the minimum value of the range used for normalization.
-            (Default: value minimum)
-          - vmax: the maximum value of the range used for normalization.
-            (Default: value maximum)
-          - cmap: a valid cmap named for use with matplotlib's `get_cmap`.
-            (Default: 'gray')
-
-
-        Returns a 3D tensor of shape [height, width, 3].
+        Maps a tensor (disparity map) to a colorized array in RGB form.
+        Args:
+            value: Input disparity map
+        Returns:
+            Numpy array in RGB form with plasma cmap
         """
-
-        # normalize
-        vmin = value.min() if vmin is None else vmin
-        vmax = value.max() if vmax is None else vmax
-        value = (value - vmin) / (vmax - vmin)  # vmin..vmax
-
-        # squeeze last dim if it exists
-        value = value.squeeze()
-
-        # quantize
-        indices = (value * 255).long()
-
-        # gather
-        cm = matplotlib.cm.get_cmap(cmap if cmap is not None else "gray")
-        value = np.array(cm.colors).take(indices=indices, axis=0)
+        mapper = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(), cmap=matplotlib.cm.get_cmap("plasma")
+        )
+        result = mapper.to_rgba(value.cpu().numpy())
 
         # Fix tensor shape to what the summary write expects (HCW)
-        return value.transpose(2, 0, 1)
+        return result[:, :, :3].transpose(2, 0, 1)  # Drop alpha values
