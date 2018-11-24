@@ -2,7 +2,6 @@ import logging
 import torch
 from torch import nn
 import torch.nn.functional as F
-from monolab.networks.utils import init_weights
 
 logger = logging.getLogger(__name__)
 
