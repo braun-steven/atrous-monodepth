@@ -2,8 +2,7 @@ from typing import Union, List, Dict
 import collections
 import torch
 
-from monolab.networks.backbones import Backbone
-from monolab.networks.resnet_md import MonoDepthResNet50
+from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
 from monolab.networks.test_model import TestModel
@@ -59,6 +58,8 @@ def get_model(model: str, n_input_channels=3) -> Backbone:
         )
     elif model == "resnet50_md":
         out_model = MonoDepthResNet50(num_in_layers=n_input_channels)
+    elif model == "resnet18_md":
+        out_model = MonoDepthResNet18(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     elif model == "testnet":

@@ -243,6 +243,21 @@ def ResNet50(output_stride, num_in_layers=3, pretrained=False):
     return model
 
 
+def Resnet18(output_stride, num_in_layers=3, pretrained=False):
+    """Constructs a ResNet-101 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(
+        [2, 2, 2, 2],
+        output_stride,
+        num_in_layers=num_in_layers,
+        block=Bottleneck,
+        pretrained=pretrained,
+    )
+    return model
+
+
 if __name__ == "__main__":
     import torch
 
