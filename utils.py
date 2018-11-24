@@ -7,7 +7,7 @@ import torch
 
 from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
 from monolab.networks.vgg_md import VGGMonodepth
-from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
+from monolab.networks.deeplab import DeepLab
 from monolab.networks.test_model import TestModel
 
 
@@ -56,9 +56,7 @@ def get_model(model: str, n_input_channels=3) -> torch.nn.Module:
         Instantiated model
     """
     if model == "deeplab":
-        out_model = DeepLabv3Plus(
-            DCNNType.XCEPTION, in_channels=n_input_channels, output_stride=16
-        )
+        out_model = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
     elif model == "resnet50_md":
         out_model = MonoDepthResNet50(num_in_layers=n_input_channels)
     elif model == "resnet18_md":
