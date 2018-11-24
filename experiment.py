@@ -51,7 +51,7 @@ class Experiment:
         if args.use_multiple_gpu:
             if torch.cuda.device_count() > 1:
                 logger.info(
-                    "Running experiment on ", torch.cuda.device_count(), "GPUs ..."
+                    "Running experiment on {} GPUs ...".format(torch.cuda.device_count())
                 )
             self.model = torch.nn.DataParallel(self.model)
         self.model = self.model.to(self.device)
