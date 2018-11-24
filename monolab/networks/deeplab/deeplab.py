@@ -7,6 +7,8 @@ from monolab.networks.backbones.xception import Xception
 from monolab.networks.deeplab.deeplab_decoder import Decoder
 from monolab.networks.deeplab.aspp import ASPP
 
+from monolab.networks.utils import get_disp
+
 
 class DeepLab(nn.Module):
     def __init__(
@@ -29,8 +31,10 @@ class DeepLab(nn.Module):
 
         self.aspp = ASPP(backbone, output_stride, BatchNorm=nn.BatchNorm2d)
         self.decoder = Decoder(
-            num_classes=2, backbone=backbone, BatchNorm=nn.BatchNorm2d
+            num_classes=16, backbone=backbone, BatchNorm=nn.BatchNorm2d
         )
+
+        self.disp_layer = get_disp(16)
 
         if freeze_bn:
             self.freeze_bn()
@@ -44,6 +48,8 @@ class DeepLab(nn.Module):
         x = self.aspp(x)
         x = self.decoder(x, low_level_feat)
         x = F.interpolate(x, size=input.size()[2:], mode="bilinear", align_corners=True)
+
+        x = self.disp_layer(x)
 
         return [x]
 
