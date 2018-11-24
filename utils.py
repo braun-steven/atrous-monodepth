@@ -43,7 +43,7 @@ def to_device(
         raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
 
 
-def get_model(model: str, n_input_channels=3) -> Backbone:
+def get_model(model: str, n_input_channels=3) -> torch.nn.Module:
     """
     Get model via name
     Args:
