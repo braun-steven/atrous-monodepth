@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from enum import Enum
 from typing import List, Tuple
 
-from monolab.networks.deeplab.submodules import ASPPModule
+from monolab.networks.deeplab.aspp import ASPPModule
 from monolab.networks.backbones.resnet import ResNet
 from monolab.networks.backbones.xception import Xception
 
