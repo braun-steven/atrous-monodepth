@@ -7,10 +7,10 @@ import torch.nn.functional as F
 from enum import Enum
 from typing import List, Tuple
 
-from monolab.networks.deeplab.submodules import ASPPModule, Bottleneck
-from monolab.networks.deeplab.resnet import ResNet
+from monolab.networks.deeplab.submodules import ASPPModule
+from monolab.networks.backbones.resnet import ResNet
 from monolab.networks.deeplab.xception import Xception
-from monolab.networks.backbone import Backbone
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class DCNNType(Enum):
     RESNET = 2
 
 
-class DeepLabv3Plus(Backbone):
+class DeepLabv3Plus(nn.Module):
     """
     DeepLabv3+ Model.
     """
@@ -41,7 +41,7 @@ class DeepLabv3Plus(Backbone):
         logger.debug("Constructing DeepLabv3+ model...")
         logger.debug("Output stride: {}".format(output_stride))
         logger.debug("Number of Input Channels: {}".format(in_channels))
-        super(DeepLabv3Plus, self).__init__(in_channels)
+        super(DeepLabv3Plus, self).__init__()
 
         self.dcnn_type = dcnn_type
 
@@ -162,10 +162,9 @@ class DeepLabv3Plus(Backbone):
             dcnn_feature_size = 128
         elif dcnn_type == DCNNType.RESNET:
             dcnn = ResNet(
-                in_channels=in_channels,
-                block=Bottleneck,
-                n_layer_blocks=[3, 4, 23, 3],
+                layers=[3, 4, 23, 3],
                 output_stride=output_stride,
+                num_in_layers=in_channels,
                 pretrained=pretrained,
             )
             dcnn_feature_size = 256
@@ -211,3 +210,13 @@ class DeepLabv3Plus(Backbone):
 
         low_level_features = self.low_level_features_reduction(low_level_features)
         return x, low_level_features
+
+
+if __name__ == "__main__":
+    x = torch.rand(1, 3, 512, 512)
+
+    net = DeepLabv3Plus(in_channels=3, output_stride=16, dcnn_type=DCNNType.RESNET)
+
+    net.eval()
+
+    y = net.forward(x)

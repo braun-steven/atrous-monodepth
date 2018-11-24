@@ -2,7 +2,7 @@ from typing import Union, List, Dict
 import collections
 import torch
 
-from monolab.networks.backbone import Backbone
+from monolab.networks.backbones import Backbone
 from monolab.networks.resnet_md import MonoDepthResNet50
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab.deeplabv3plus import DeepLabv3Plus, DCNNType
