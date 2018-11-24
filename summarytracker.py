@@ -45,7 +45,7 @@ class SummaryTracker:
         """
 
         # Generate base path: ".../$(args.output_dir)/run-$(date)-$(tag)"
-        _date_str = datetime.datetime.today().strftime("%y-%b-%d_%Hh:%Mm")
+        _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
         tagstr = args.tag if args.tag == "" else "_" + args.tag
 
         self._base_dir = os.path.join(
