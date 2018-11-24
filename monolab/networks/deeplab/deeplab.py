@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from enum import Enum
 
 from monolab.networks.backbones.resnet import ResNet101
 from monolab.networks.backbones.xception import Xception
@@ -39,6 +38,9 @@ class DeepLab(nn.Module):
     def forward(self, input):
         if self.dcnn_type == "resnet":
             _1, _pool1, low_level_feat, _3, _4, x = self.backbone(input)
+        elif self.dcnn_type == "xception":
+            x, low_level_feat = self.backbone(input)
+
         x = self.aspp(x)
         x = self.decoder(x, low_level_feat)
         x = F.interpolate(x, size=input.size()[2:], mode="bilinear", align_corners=True)
