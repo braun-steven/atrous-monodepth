@@ -213,9 +213,11 @@ class ResNet(nn.Module):
         self.load_state_dict(state_dict)
 
 
-def ResNet101(output_stride, num_in_layers=3, pretrained=False):
+def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
     """Constructs a ResNet-101 model.
     Args:
+        output_stride (int): input_size / output_size
+        num_in_layers (int): input channels (3 for rgb)
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
@@ -228,9 +230,11 @@ def ResNet101(output_stride, num_in_layers=3, pretrained=False):
     return model
 
 
-def ResNet50(output_stride, num_in_layers=3, pretrained=False):
-    """Constructs a ResNet-101 model.
+def ResNet50(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
+    """Constructs a ResNet-50 model.
     Args:
+        output_stride (int): input_size / output_size
+        num_in_layers (int): input channels (3 for rgb)
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
@@ -243,9 +247,11 @@ def ResNet50(output_stride, num_in_layers=3, pretrained=False):
     return model
 
 
-def Resnet18(output_stride, num_in_layers=3, pretrained=False):
-    """Constructs a ResNet-101 model.
+def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
+    """Constructs a ResNet-18 model.
     Args:
+        output_stride (int): input_size / output_size
+        num_in_layers (int): input channels (3 for rgb)
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(

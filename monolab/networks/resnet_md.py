@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from monolab.networks.backbones.resnet import ResNet50, Resnet18
+from monolab.networks.backbones.resnet import ResNet50, ResNet18
 from monolab.networks.decoder import MonoDepthDecoder
 
 
@@ -25,7 +25,7 @@ class MonoDepthResNet18(nn.Module):
     def __init__(self, num_in_layers=3):
         super(MonoDepthResNet18, self).__init__()
 
-        self.encoder = ResNet50(output_stride=64)
+        self.encoder = ResNet18(output_stride=64)
 
         self.decoder = MonoDepthDecoder()
 
