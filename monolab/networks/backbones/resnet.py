@@ -1,4 +1,5 @@
 import math
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
@@ -136,7 +137,25 @@ class ResNet(nn.Module):
         if pretrained:
             self._load_pretrained_model()
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilation=1, BatchNorm=None):
+    def _make_layer(
+        self,
+        block: Bottleneck,
+        planes: int,
+        blocks: int,
+        stride=1,
+        dilation=1,
+        BatchNorm=None,
+    ) -> nn.Sequential:
+        """
+        Generate a layer block
+        Args:
+            block: Block type
+            planes: Number of planes
+            blocks: Number of blocks
+            stride: Convolution stride for each convolution layer
+            dilation: Atrous rate
+        :return: Sequential model
+        """
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -160,7 +179,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         x1 = self.conv1(input)
         x_pool1 = self.bn1(x1)
         x_pool1 = self.relu(x_pool1)
