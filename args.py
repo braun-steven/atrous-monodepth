@@ -80,7 +80,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--num-workers", default=4, type=int, help="Number of workers in dataloader"
     )
-    parser.add_argument("--use-multiple-gpu", default=False)
+    parser.add_argument(
+        "--use-multiple-gpu",
+        default=False,
+        action="store_true",
+        help="Whether to use multiple GPUs",
+    )
+
     parser.add_argument(
         "--log-level",
         default="info",
@@ -91,7 +97,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--notify",
         default=None,
-        help="Put in email-address to notify when training has finished"
+        help="Put in email-address to notify when training has finished",
     )
 
     parser.add_argument(

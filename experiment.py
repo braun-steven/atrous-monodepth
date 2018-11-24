@@ -25,7 +25,7 @@ class Experiment:
     """
 
     def __init__(self, args: Namespace):
-        # Set seed for reproducability
+        # Set seed for reproducibility
         torch.manual_seed(7)
         np.random.seed(7)
         if torch.cuda.is_available():
@@ -48,9 +48,13 @@ class Experiment:
         # Set up model
         self.device = args.device
         self.model = get_model(args.model, n_input_channels=args.input_channels)
-        self.model = self.model.to(self.device)
         if args.use_multiple_gpu:
+            if torch.cuda.device_count() > 1:
+                logger.info(
+                    "Running experiment on ", torch.cuda.device_count(), "GPUs ..."
+                )
             self.model = torch.nn.DataParallel(self.model)
+        self.model = self.model.to(self.device)
 
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
@@ -258,7 +262,7 @@ class Experiment:
                 disp_i = disp[0].squeeze().cpu().numpy()
                 # TODO: Add disp postprocessing again
                 self.summary.add_disparity_map(
-                    epoch=epoch, disp=torch.Tensor(disp_i), tag="disp-{}".format(i)
+                    epoch=epoch, disp=torch.Tensor(disp_i), tag="disp-{:0>2}".format(i)
                 )
 
     def save(self, path: str) -> None:
