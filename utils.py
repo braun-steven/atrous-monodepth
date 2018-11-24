@@ -1,3 +1,6 @@
+import time
+from datetime import datetime
+
 from typing import Union, List, Dict
 import collections
 import torch
@@ -134,3 +137,15 @@ def notify_mail(address, subject, message, filename=None):
     text = msg.as_string()
     server.sendmail(email, address, text)
     server.quit()
+
+
+def time_delta_now(ts: float) -> str:
+    """
+    Convert a timestamp into a human readable timestring (%H:%M:%S).
+    Args:
+        ts (float): Timestamp
+
+    Returns:
+        Human readable timestring (%H:%M:%S)
+    """
+    return datetime.utcfromtimestamp(time.time() - ts).strftime("%H:%M:%S")
