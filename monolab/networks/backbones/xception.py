@@ -2,8 +2,6 @@ import logging
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
-from monolab.networks.utils import fixed_padding, init_weights
-
 logger = logging.getLogger(__name__)
 
 
@@ -378,3 +376,26 @@ class SeparableConv2dSame(nn.Module):
         x = self.conv1(x)
         x = self.pointwise(x)
         return x
+
+
+def init_weights(model: nn.Module):
+    """
+    Initialize all weights.
+    Conv2d: He init
+    BatchNorm2d: Weights: He init, Bias: zeros
+    """
+    for m in model.modules():
+        if isinstance(m, nn.Conv2d):
+            torch.nn.init.kaiming_normal_(m.weight)
+        elif isinstance(m, nn.BatchNorm2d):
+            m.weight.data.fill_(1)
+            m.bias.data.zero_()
+
+
+def fixed_padding(inputs, kernel_size, rate):
+    kernel_size_effective = kernel_size + (kernel_size - 1) * (rate - 1)
+    pad_total = kernel_size_effective - 1
+    pad_beg = pad_total // 2
+    pad_end = pad_total - pad_beg
+    padded_inputs = F.pad(inputs, (pad_beg, pad_end, pad_beg, pad_end))
+    return padded_inputs
