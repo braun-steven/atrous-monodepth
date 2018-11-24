@@ -25,7 +25,7 @@ class MonoDepthResNet18(nn.Module):
     def __init__(self, num_in_layers=3):
         super(MonoDepthResNet18, self).__init__()
 
-        self.encoder = ResNet50(output_stride=64)
+        self.encoder = ResNet18(output_stride=64)
 
         self.decoder = MonoDepthDecoder()
 

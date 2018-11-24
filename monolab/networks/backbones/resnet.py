@@ -243,7 +243,7 @@ def ResNet50(output_stride, num_in_layers=3, pretrained=False):
     return model
 
 
-def Resnet18(output_stride, num_in_layers=3, pretrained=False):
+def ResNet18(output_stride, num_in_layers=3, pretrained=False):
     """Constructs a ResNet-101 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
