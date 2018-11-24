@@ -72,7 +72,7 @@ class DeepLab(nn.Module):
 
 
 if __name__ == "__main__":
-    x = torch.rand(1, 3, 512, 512)
+    x = torch.rand(1, 3, 256, 512)
 
     net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
 
