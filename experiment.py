@@ -7,7 +7,7 @@ import torch
 from summarytracker import SummaryTracker
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
-from utils import get_model, setup_logging, notify_mail, to_device
+from utils import get_model, setup_logging, notify_mail, to_device, time_delta_now
 import logging
 
 
@@ -117,14 +117,17 @@ class Experiment:
         best_val_loss = float("Inf")
 
         # Start training
-        logger.info("Starting training for {} epochs on {} images".format(
-            self.args.epochs, len(self.n_img)))
+        logger.info(
+            "Starting training for {} epochs on {} images".format(
+                self.args.epochs, len(self.n_img)
+            )
+        )
         for epoch in range(1, self.args.epochs + 1):
             # Adjust learning rate if flag is set
             if self.args.adjust_lr:
                 adjust_learning_rate(self.optimizer, epoch, self.args.learning_rate)
 
-            c_time = time.time()
+            epoch_time = time.time()
 
             # Init training loss
             running_loss = 0.0
@@ -132,9 +135,17 @@ class Experiment:
             running_disp_gradient_loss = 0.0
             running_lr_loss = 0.0
 
+            # Init validation loss
+            running_val_loss = 0.0
+            running_val_image_loss = 0.0
+            running_val_disp_gradient_loss = 0.0
+            running_val_lr_loss = 0.0
+
             self.model.train()
 
-            # TRAINING LOOP #
+            #################
+            # Training loop #
+            #################
             for data in self.loader:
                 # Load data
                 data = to_device(data, self.device)
@@ -156,49 +167,45 @@ class Experiment:
                 running_disp_gradient_loss += disp_gradient_loss.item()
                 running_lr_loss += lr_loss.item()
 
-            # Init validation loss
-            running_val_loss = 0.0
-            running_val_image_loss = 0.0
-            running_val_disp_gradient_loss = 0.0
-            running_val_lr_loss = 0.0
-
-            self.model.eval()
-
-            # TODO: Remove when logic in
-            # SummaryTracker for train/val metrics has been separated
-            if self.args.val_after_k_epochs != 1:
-                logger.warning("Validate after k epochs has not been implemented yet.")
-                self.args.val_after_k_epochs = 1
-
-            if epoch % self.args.val_after_k_epochs == 0:
-                # VALIDATION LOOP #
-                val_time = time.time()
-                with torch.no_grad():
-                    for idx, data in enumerate(self.val_loader):
-                        data = to_device(data, self.device)
-                        left = data["left_image"]
-                        right = data["right_image"]
-                        disps = self.model(left)
-                        loss, image_loss, disp_gradient_loss, lr_loss = self.loss_function(
-                            disps, [left, right]
-                        )
-
-                        # Collect validation loss
-                        running_val_loss += loss.item()
-                        running_val_image_loss += image_loss.item()
-                        running_val_disp_gradient_loss += disp_gradient_loss.item()
-                        running_val_lr_loss += lr_loss.item()
-                logger.info(
-                    "Validation took {}s".format(round(time.time() - val_time, 3))
+            # Training finished #
+            logger.info(
+                "Epoch [{}/{}] time: {} s".format(
+                    epoch, self.args.epochs, time_delta_now(epoch_time)
                 )
+            )
 
-                running_val_loss /= self.val_n_img
-                running_val_image_loss /= self.val_n_img
-                running_val_disp_gradient_loss /= self.val_n_img
-                running_val_lr_loss /= self.val_n_img
+            ###################
+            # Validation loop #
+            ###################
+            self.model.eval()
+            val_time = time.time()
+            with torch.no_grad():
+                for idx, data in enumerate(self.val_loader):
+                    data = to_device(data, self.device)
+                    left = data["left_image"]
+                    right = data["right_image"]
+                    disps = self.model(left)
+                    loss, image_loss, disp_gradient_loss, lr_loss = self.loss_function(
+                        disps, [left, right]
+                    )
 
-                # Generate 10 random disparity map predictions
-                self.gen_val_disp_maps(epoch)
+                    # Collect validation loss
+                    running_val_loss += loss.item()
+                    running_val_image_loss += image_loss.item()
+                    running_val_disp_gradient_loss += disp_gradient_loss.item()
+                    running_val_lr_loss += lr_loss.item()
+            logger.info("Validation took {}s".format(time_delta_now(val_time)))
+
+            #################
+            # Track results #
+            #################
+            running_val_loss /= self.val_n_img
+            running_val_image_loss /= self.val_n_img
+            running_val_disp_gradient_loss /= self.val_n_img
+            running_val_lr_loss /= self.val_n_img
+
+            # Generate 10 random disparity map predictions
+            self.gen_val_disp_maps(epoch)
 
             # Estimate loss per image
             running_loss /= self.n_img
@@ -210,11 +217,6 @@ class Experiment:
             if running_val_loss < best_val_loss:
                 best_val_loss = running_val_loss
 
-            logger.info(
-                "Epoch [{}/{}] time: {} s".format(
-                    epoch, self.args.epochs, round(time.time() - c_time, 3)
-                )
-            )
             self.summary.add_epoch_metric(
                 epoch=epoch,
                 train_metric=running_loss,
