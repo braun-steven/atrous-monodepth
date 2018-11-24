@@ -171,7 +171,6 @@ class SummaryTracker:
         train_metric: float,
         val_metric,
         metric_name: str,
-        train: bool = False,
     ) -> None:
         """
         Add a specific metric for a single epoch.
@@ -188,7 +187,7 @@ class SummaryTracker:
 
         # Tensorboard
         self._summary_writer.add_scalars(
-            main_tag=metric_name,
+            main_tag="loss/" + metric_name,
             tag_scalar_dict={"train": train_metric, "val": val_metric},
             global_step=epoch,
         )
