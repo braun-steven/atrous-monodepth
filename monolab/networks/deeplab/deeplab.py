@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from monolab.networks.backbones.resnet import ResNet101
+from monolab.networks.backbones.resnet import ResNet50
 from monolab.networks.backbones.xception import Xception
 from monolab.networks.deeplab.deeplab_decoder import Decoder
 from monolab.networks.deeplab.aspp import ASPP
@@ -17,7 +17,7 @@ class DeepLab(nn.Module):
         self.dcnn_type = backbone
 
         if backbone == "resnet":
-            self.backbone = ResNet101(
+            self.backbone = ResNet50(
                 output_stride=output_stride, num_in_layers=num_in_layers
             )
         elif backbone == "xception":
