@@ -51,18 +51,23 @@ class Experiment:
         if args.use_multiple_gpu:
             if torch.cuda.device_count() > 1:
                 logger.info(
-                    "Running experiment on ", torch.cuda.device_count(), "GPUs ..."
+                    "Running experiment on {} GPUs ...".format(
+                        torch.cuda.device_count()
+                    )
                 )
             self.model = torch.nn.DataParallel(self.model)
+        logger.debug("Sending model to device: {}".format(self.device))
         self.model = self.model.to(self.device)
 
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
             device=self.device, n=4, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
         ).to(self.device)
+        logger.debug("Using loss function: {}".format(self.loss_function))
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=args.learning_rate
         )
+        logger.debug("Using optimizer: {}".format(self.optimizer))
         # the validation loader is a train loader but without data augmentation!
         self.val_n_img, self.val_loader = prepare_dataloader(
             root_dir=args.data_dir,
@@ -108,6 +113,7 @@ class Experiment:
         best_val_loss = float("Inf")
 
         # Start training
+        logger.info("Starting training for {} epochs".format(self.args.epochs))
         for epoch in range(1, self.args.epochs + 1):
             # Adjust learning rate if flag is set
             if self.args.adjust_lr:
@@ -161,6 +167,7 @@ class Experiment:
 
             if epoch % self.args.val_after_k_epochs == 0:
                 # VALIDATION LOOP #
+                val_time = time.time()
                 with torch.no_grad():
                     for idx, data in enumerate(self.val_loader):
                         data = to_device(data, self.device)
@@ -176,6 +183,9 @@ class Experiment:
                         running_val_image_loss += image_loss.item()
                         running_val_disp_gradient_loss += disp_gradient_loss.item()
                         running_val_lr_loss += lr_loss.item()
+                logger.info(
+                    "Validation took {}s".format(round(time.time() - val_time, 3))
+                )
 
                 running_val_loss /= self.val_n_img
                 running_val_image_loss /= self.val_n_img
