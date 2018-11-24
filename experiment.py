@@ -49,13 +49,17 @@ class Experiment:
         self.device = args.device
         self.model = get_model(args.model, n_input_channels=args.input_channels)
         if args.use_multiple_gpu:
-            if torch.cuda.device_count() > 1:
+            num_cuda_devices = torch.cuda.device_count()
+            if num_cuda_devices > 1:
                 logger.info(
-                    "Running experiment on {} GPUs ...".format(
-                        torch.cuda.device_count()
-                    )
+                    "Running experiment on {} GPUs ...".format(num_cuda_devices)
                 )
-            self.model = torch.nn.DataParallel(self.model)
+                self.model = torch.nn.DataParallel(self.model)
+            else:
+                logger.warning(
+                    "Attempted to run the experiment on multiple GPUs while "
+                    "only {} GPU was available".format(num_cuda_devices)
+                )
         logger.debug("Sending model to device: {}".format(self.device))
         self.model = self.model.to(self.device)
 
@@ -113,7 +117,8 @@ class Experiment:
         best_val_loss = float("Inf")
 
         # Start training
-        logger.info("Starting training for {} epochs".format(self.args.epochs))
+        logger.info("Starting training for {} epochs on {} images".format(
+            self.args.epochs, len(self.n_img)))
         for epoch in range(1, self.args.epochs + 1):
             # Adjust learning rate if flag is set
             if self.args.adjust_lr:
