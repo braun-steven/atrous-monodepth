@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from monolab.networks.backbones.resnet import ResNet50, Resnet18
+from monolab.networks.backbones.resnet import ResNet50, ResNet18
 from monolab.networks.decoder import MonoDepthDecoder
 
 
