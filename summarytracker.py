@@ -88,7 +88,12 @@ class SummaryTracker:
 
     def _create_dirs(self):
         """Create necessary directories"""
-        for d in [self._tensorboard_dir, self._checkpoints_dir, self._plots_dir]:
+        for d in [
+            self._tensorboard_dir,
+            self._checkpoints_dir,
+            self._plots_dir,
+            self._val_disp_dir,
+        ]:
             self._ensure_dir(d)
 
     def _plot_loss(self):
@@ -232,7 +237,21 @@ class SummaryTracker:
 
         fname = os.path.join(self._val_disp_dir, tag, "epoch-{:0>3}".format(epoch))
         self._ensure_dir(fname)
-        plt.imsave(fname, disp, cmap="plasma")
+
+
+        # Add epoch number to image
+        ymax, xmax = disp.shape
+        dpi = ymax
+        fig = plt.figure(figsize=(2, 1), frameon=False)
+        ax = plt.Axes(fig, [0, 0, 1, 1])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        ax.imshow(disp, aspect="auto", cmap="plasma")
+        ax.text(
+            x=25, y=ymax - 15, s="Epoch: {}".format(epoch), fontsize=4,
+            color="w"
+        )
+        plt.savefig(fname, dpi=dpi)
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
         """
@@ -293,7 +312,7 @@ class SummaryTracker:
             )
 
             # Command using ffmpeg
-            cmd = "ffmpeg -f image2 -framerate 10 -i {}/epoch-%003d.png {}".format(
+            cmd = "ffmpeg -f image2 -framerate 5 -i {}/epoch-%003d.png {}".format(
                 d, gif_out_path
             )
 
