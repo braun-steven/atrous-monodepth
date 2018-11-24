@@ -4,6 +4,7 @@ import torch
 import logging
 import os
 from shutil import copyfile
+from subprocess import Popen, PIPE
 
 from typing import List, Union
 from torch import nn
@@ -15,6 +16,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 from argparse import Namespace
 
@@ -61,6 +63,7 @@ class SummaryTracker:
         self._tensorboard_dir = os.path.join(self._base_dir, "tensorboard/")
         self._checkpoints_dir = os.path.join(self._base_dir, "checkpoints/")
         self._plots_dir = os.path.join(self._base_dir, "plots/")
+        self._val_disp_dir = os.path.join(self._plots_dir, "validation-disparities/")
         # Store best loss for model checkpoints
         self._best_val_loss = float("inf")
         self._best_cpt_path = os.path.join(self._checkpoints_dir, "best-model.pth")
@@ -166,11 +169,7 @@ class SummaryTracker:
             f.write(content)
 
     def add_epoch_metric(
-        self,
-        epoch: int,
-        train_metric: float,
-        val_metric,
-        metric_name: str,
+        self, epoch: int, train_metric: float, val_metric, metric_name: str
     ) -> None:
         """
         Add a specific metric for a single epoch.
@@ -215,23 +214,23 @@ class SummaryTracker:
             tag="image/" + tag, img_tensor=img, global_step=epoch
         )
 
-    def add_disparity_map(self, epoch: int, disp: Tensor, tag: str):
+    def add_disparity_map(self, epoch: int, disp: Tensor, idx: int):
         """
         Add an image to the evaluation results
         Args:
             epoch (int): Current epoch
             disp (Tensor): Image
-            tag (str): Tag as short description/identifier of the image
+            idx (int): Validation set index of this disparity map
         """
+        tag = "disp-{:0>2}".format(idx)
+
         colorized_image = self._colorize_image(disp)
         self.add_image(epoch, colorized_image, tag)
 
         if isinstance(disp, Tensor):
             disp = disp.cpu().numpy()
 
-        fname = os.path.join(
-            self._plots_dir, "validation-disparities", tag, "epoch-{:0>3}".format(epoch)
-        )
+        fname = os.path.join(self._val_disp_dir, tag, "epoch-{:0>3}".format(epoch))
         self._ensure_dir(fname)
         plt.imsave(fname, disp, cmap="plasma")
 
@@ -272,6 +271,35 @@ class SummaryTracker:
         # Save plots
         self._plot_metric_epochs()
         self._plot_loss()
+
+        # Generate gifs
+        self._generate_disp_gifs()
+
+    def _generate_disp_gifs(self):
+        """Generate disparity animations for each image that has been validated"""
+
+        # Iterate every disp directory
+        for disp_name in os.listdir(self._val_disp_dir):
+            # Get absolute path
+            d = os.path.join(self._val_disp_dir, disp_name)
+
+            # Skip files if there are any
+            if not os.path.isdir(d):
+                continue
+
+            # Create gif output path
+            gif_out_path = os.path.join(
+                self._val_disp_dir, disp_name, "{}.gif".format(disp_name)
+            )
+
+            # Command using ffmpeg
+            cmd = "ffmpeg -f image2 -framerate 10 -i {}/epoch-%003d.png {}".format(
+                d, gif_out_path
+            )
+
+            # Run command
+            process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
+            process.communicate()
 
     def _ensure_dir(self, file: str) -> None:
         """

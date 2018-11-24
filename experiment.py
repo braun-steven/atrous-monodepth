@@ -279,7 +279,7 @@ class Experiment:
                 disp_i = disp[0].squeeze().cpu().numpy()
                 # TODO: Add disp postprocessing again
                 self.summary.add_disparity_map(
-                    epoch=epoch, disp=torch.Tensor(disp_i), tag="disp-{:0>2}".format(i)
+                    epoch=epoch, disp=torch.Tensor(disp_i), idx=i
                 )
 
     def save(self, path: str) -> None:
