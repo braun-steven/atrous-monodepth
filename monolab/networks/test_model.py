@@ -6,18 +6,23 @@ import torch.nn.functional as F
 class TestModel(nn.Module):
     def __init__(self, n_in_layers):
         super(TestModel, self).__init__()
+        sizes = [5, 4, 3, 2]
         self.conv1 = nn.Conv2d(
-            in_channels=n_in_layers, out_channels=32, kernel_size=3, padding=1
+            in_channels=n_in_layers, out_channels=sizes[0], kernel_size=3, padding=1
         )
-        self.disp1 = get_disp(32)
+        self.disp1 = get_disp(sizes[0])
         self.conv2 = nn.Conv2d(
-            in_channels=32, out_channels=16, kernel_size=3, padding=1
+            in_channels=sizes[0], out_channels=sizes[1], kernel_size=3, padding=1
         )
-        self.disp2 = get_disp(16)
-        self.conv3 = nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, padding=1)
-        self.disp3 = get_disp(8)
-        self.conv4 = nn.Conv2d(in_channels=8, out_channels=4, kernel_size=3, padding=1)
-        self.disp4 = get_disp(4)
+        self.disp2 = get_disp(sizes[1])
+        self.conv3 = nn.Conv2d(in_channels=sizes[1], out_channels=sizes[2],
+                               kernel_size=3,
+                               padding=1)
+        self.disp3 = get_disp(sizes[2])
+        self.conv4 = nn.Conv2d(in_channels=sizes[2], out_channels=sizes[3],
+                               kernel_size=3,
+                               padding=1)
+        self.disp4 = get_disp(sizes[3])
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

@@ -107,11 +107,5 @@ def parse_args() -> argparse.Namespace:
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
-    parser.add_argument(
-        "--val-after-k-epochs",
-        default=5,
-        type=int,
-        help="Validate after each k epochs.",
-    )
     args = parser.parse_args()
     return args
