@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 from monolab.networks.deeplab.submodules import ASPPModule
 from monolab.networks.backbones.resnet import ResNet
-from monolab.networks.deeplab.xception import Xception
+from monolab.networks.backbones.xception import Xception
 
 
 logger = logging.getLogger(__name__)
