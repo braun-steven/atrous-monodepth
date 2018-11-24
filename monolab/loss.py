@@ -4,13 +4,13 @@ import torch.nn.functional as F
 
 
 class MonodepthLoss(nn.modules.Module):
-    def __init__(self, device, n=4, SSIM_w=0.85, disp_gradient_w=1.0, lr_w=1.0):
+    def __init__(self, device, SSIM_w=0.85, disp_gradient_w=1.0, lr_w=1.0):
         super(MonodepthLoss, self).__init__()
         self.device = device
         self.SSIM_w = SSIM_w
         self.disp_gradient_w = disp_gradient_w
         self.lr_w = lr_w
-        self.n = n
+        self.n = None
 
     def scale_pyramid(self, img, num_scales):
         """ Compute a pyramid of an image at different scales.
@@ -203,6 +203,8 @@ class MonodepthLoss(nn.modules.Module):
         ################
         # Preparations #
         ################
+        self.n = len(input)
+
         left, right = target
         left_pyramid = self.scale_pyramid(left, self.n)
         right_pyramid = self.scale_pyramid(right, self.n)
