@@ -221,11 +221,20 @@ class SummaryTracker:
         Add an image to the evaluation results
         Args:
             epoch (int): Current epoch
-            img (Tensor): Image
+            disp (Tensor): Image
             tag (str): Tag as short description/identifier of the image
         """
-        colorized_image = self._colorize_image(disp, vmin=0.0, vmax=1.0)
+        colorized_image = self._colorize_image(disp)
         self.add_image(epoch, colorized_image, tag)
+
+        if isinstance(disp, Tensor):
+            disp = disp.cpu().numpy()
+
+        fname = os.path.join(
+            self._plots_dir, "validation-disparities", tag, "epoch-{:0>3}".format(epoch)
+        )
+        self._ensure_dir(fname)
+        plt.imsave(fname, disp, cmap="plasma")
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
         """
