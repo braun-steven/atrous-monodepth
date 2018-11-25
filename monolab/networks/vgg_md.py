@@ -10,9 +10,9 @@ import torch.nn.functional as F
 from monolab.networks.decoder import MonoDepthDecoder
 
 
-class mono_net(nn.Module):  # vgg version
+class VGGMonodepth(nn.Module):  # vgg version
     def __init__(self, num_in_layers=3):
-        super(mono_net, self).__init__()
+        super(VGGMonodepth, self).__init__()
 
         self.output_nc = 2
 
