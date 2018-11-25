@@ -109,7 +109,7 @@ class EvaluateKittiGT:
         gt_disparities = []
         for i in range(200):
             disp = cv2.imread(
-                path + "/training/disp_noc_0/" + str(i).zfill(6) + "_10.jpg", -1
+                path + "/training/disp_noc_0/" + str(i).zfill(6) + "_10.png", -1
             )
             disp = disp.astype(np.float32) / 256
             gt_disparities.append(disp)
