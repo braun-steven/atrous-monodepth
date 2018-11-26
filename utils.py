@@ -8,7 +8,7 @@ import torch
 from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
-from monolab.networks.test_model import TestModel
+from monolab.networks.dummy_model import DummyModel
 
 
 import os
