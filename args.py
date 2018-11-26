@@ -57,10 +57,14 @@ def parse_args() -> argparse.Namespace:
                             (default: True)",
     )
     parser.add_argument(
-        "--batch-size", default=256, type=int, help="mini-batch size (default: 256)"
+        "--batch-size", default=16, type=int, help="mini-batch size (default: 256)"
     )
     parser.add_argument(
-        "--device", default="cuda:0", help='choose cpu or cuda:0 device"'
+        "--cuda-device-ids",
+        nargs="+",
+        type=int,
+        default=[0],
+        help="Cuda device ids. E.g. [0,1,2]",
     )
     parser.add_argument(
         "--do-augmentation", default=True, help="do augmentation of images or not"
@@ -79,12 +83,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--num-workers", default=4, type=int, help="Number of workers in dataloader"
-    )
-    parser.add_argument(
-        "--use-multiple-gpu",
-        default=False,
-        action="store_true",
-        help="Whether to use multiple GPUs",
     )
 
     parser.add_argument(

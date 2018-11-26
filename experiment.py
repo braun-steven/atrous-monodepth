@@ -46,13 +46,15 @@ class Experiment:
         )
 
         # Set up model
-        self.device = args.device
+        self.device = args.cuda_device_ids[0]
         self.model = get_model(args.model, n_input_channels=args.input_channels)
-        if args.use_multiple_gpu:
+        if len(args.cuda_device_ids) > 1:
             num_cuda_devices = torch.cuda.device_count()
             if num_cuda_devices > 1:
                 logger.info(f"Running experiment on {num_cuda_devices} GPUs ...")
-                self.model = torch.nn.DataParallel(self.model)
+                self.model = torch.nn.DataParallel(
+                    self.model, device_ids=args.cuda_device_ids
+                )
             else:
                 logger.warning(
                     f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
