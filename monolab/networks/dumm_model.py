@@ -3,9 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class TestModel(nn.Module):
+class DummyModel(nn.Module):
     def __init__(self, n_in_layers):
-        super(TestModel, self).__init__()
+        super(DummyModel, self).__init__()
         sizes = [5, 4, 3, 2]
         self.conv1 = nn.Conv2d(
             in_channels=n_in_layers, out_channels=sizes[0], kernel_size=3, padding=1

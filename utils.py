@@ -63,7 +63,7 @@ def get_model(model: str, n_input_channels=3) -> torch.nn.Module:
         out_model = MonoDepthResNet18(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
-    elif model == "testnet":
+    elif model == "dummy_model":
         out_model = TestModel(n_in_layers=n_input_channels)
     # elif and so on and so on
     else:
