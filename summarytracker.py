@@ -84,8 +84,8 @@ class SummaryTracker:
             + "}): Train = {train_metric:10f}, Validation = {val_metric:10f}"
         )
 
-        # Original validation image dict
-        self._orig_image_dict = {}
+        # Original validation image index set
+        self._orig_image_dict = set()
 
     def _create_dirs(self):
         """Create necessary directories"""
@@ -249,14 +249,22 @@ class SummaryTracker:
         plt.savefig(fname, dpi=dpi)
 
         # Save original image as well
-        if idx not in self._orig_image_dict.keys():
+        if idx not in self._orig_image_dict:
+            self._orig_image_dict.add(idx)
             if isinstance(input_img, Tensor):
                 input_img = input_img.cpu().numpy()
-
+            # Save image on disk
+            img = input_img.squeeze().transpose(1, 2, 0)
             plt.imsave(
                 fname=os.path.join(self._val_disp_dir, tag, "input.png"),
-                arr=input_img.squeeze().transpose(1, 2, 0),
+                arr=img,
             )
+
+            # Save image in tensorboard
+            self.add_image(0, input_img.squeeze(), f"{tag}/input")
+            # Add a second step with the same image to enfore the "slider" in
+            # tensorboard and align images with disparity maps
+            self.add_image(1, input_img.squeeze(), f"{tag}/input")
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
         """
