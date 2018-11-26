@@ -50,9 +50,7 @@ class SummaryTracker:
         _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
         tagstr = args.tag if args.tag == "" else "_" + args.tag
 
-        self._base_dir = os.path.join(
-            args.output_dir, "run_{0}{1}".format(_date_str, tagstr)
-        )
+        self._base_dir = os.path.join(args.output_dir, f"run_{_date_str}{tagstr}")
 
         self._metric_names = metric_names
         self._metric_epochs_train = {name: [] for name in metric_names}
@@ -86,6 +84,9 @@ class SummaryTracker:
             + "}): Train = {train_metric:10f}, Validation = {val_metric:10f}"
         )
 
+        # Original validation image dict
+        self._orig_image_dict = {}
+
     def _create_dirs(self):
         """Create necessary directories"""
         for d in [
@@ -100,8 +101,7 @@ class SummaryTracker:
         """Plot a 2x2 map of train/val loss values over the epochs"""
         if len(self._metric_names) != 4:
             logger.warning(
-                "Number of metrics != 4 (was {}), skipping 2x2 "
-                "plot.".format(len(self._metric_names))
+                f"Number of metrics != 4 (was {len(self._metric_names)}), skipping 2x2 plot."
             )
             return
 
@@ -136,9 +136,7 @@ class SummaryTracker:
         plt.legend(loc="upper right")
         plt.title(title)
         plt.savefig(
-            os.path.join(
-                self._plots_dir, "{}-metric-{}.png".format(xlabel.lower(), suffix)
-            )
+            os.path.join(self._plots_dir, f"{xlabel.lower()}-metric-{suffix}.png")
         )
 
     def _plot_metric_epochs(self):
@@ -203,7 +201,7 @@ class SummaryTracker:
                 metric_name=metric_name,
                 train_metric=train_metric,
                 val_metric=val_metric,
-                progress="[{}/{}]".format(epoch, self._max_epochs),
+                progress=f"[{epoch}/{self._max_epochs}]",
             )
         )
 
@@ -219,15 +217,16 @@ class SummaryTracker:
             tag="image/" + tag, img_tensor=img, global_step=epoch
         )
 
-    def add_disparity_map(self, epoch: int, disp: Tensor, idx: int):
+    def add_disparity_map(self, epoch: int, disp: Tensor, input_img: Tensor, idx: int):
         """
         Add an image to the evaluation results
         Args:
             epoch (int): Current epoch
-            disp (Tensor): Image
+            disp (Tensor): Disparity map
+            input_img (Tensor): Original image
             idx (int): Validation set index of this disparity map
         """
-        tag = "disp-{:0>2}".format(idx)
+        tag = f"disp-{idx:0>2}"
 
         colorized_image = self._colorize_image(disp)
         self.add_image(epoch, colorized_image, tag)
@@ -235,9 +234,8 @@ class SummaryTracker:
         if isinstance(disp, Tensor):
             disp = disp.cpu().numpy()
 
-        fname = os.path.join(self._val_disp_dir, tag, "epoch-{:0>3}".format(epoch))
+        fname = os.path.join(self._val_disp_dir, tag, f"epoch-{epoch:0>3}")
         self._ensure_dir(fname)
-
 
         # Add epoch number to image
         ymax, xmax = disp.shape
@@ -247,11 +245,18 @@ class SummaryTracker:
         ax.set_axis_off()
         fig.add_axes(ax)
         ax.imshow(disp, aspect="auto", cmap="plasma")
-        ax.text(
-            x=25, y=ymax - 15, s="Epoch: {}".format(epoch), fontsize=4,
-            color="w"
-        )
+        ax.text(x=25, y=ymax - 15, s=f"Epoch: {epoch}", fontsize=4, color="w")
         plt.savefig(fname, dpi=dpi)
+
+        # Save original image as well
+        if idx not in self._orig_image_dict.keys():
+            if isinstance(input_img, Tensor):
+                input_img = input_img.cpu().numpy()
+
+            plt.imsave(
+                fname=os.path.join(self._val_disp_dir, tag, "input.png"),
+                arr=input_img.squeeze().transpose(1, 2, 0),
+            )
 
     def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
         """
@@ -308,13 +313,11 @@ class SummaryTracker:
 
             # Create gif output path
             gif_out_path = os.path.join(
-                self._val_disp_dir, disp_name, "{}.gif".format(disp_name)
+                self._val_disp_dir, disp_name, f"{disp_name}.gif"
             )
 
             # Command using ffmpeg
-            cmd = "ffmpeg -f image2 -framerate 5 -i {}/epoch-%003d.png {}".format(
-                d, gif_out_path
-            )
+            cmd = f"ffmpeg -f image2 -framerate 5 -i {d}/epoch-%003d.png {gif_out_path}"
 
             # Run command
             process = Popen(cmd.split(), stdout=PIPE, stderr=PIPE)
