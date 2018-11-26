@@ -48,6 +48,7 @@ class Experiment:
         # Determine device
         if args.cuda_device_ids[0] == -1:
             self.device = "cpu"
+            logger.info("Running experiment on the CPU ...")
         else:
             self.device = f"cuda:{args.cuda_device_ids[0]}"
 
@@ -58,7 +59,9 @@ class Experiment:
             num_cuda_devices = torch.cuda.device_count()
             # Check if multiple cuda devices are available
             if num_cuda_devices > 1:
-                logger.info(f"Running experiment on {num_cuda_devices} GPUs ...")
+                logger.info(
+                    f"Running experiment on the following GPUs: {args.cuda_device_ids}"
+                )
                 # Transform model into data parallel model on all selected cuda deviecs
                 self.model = torch.nn.DataParallel(
                     self.model, device_ids=args.cuda_device_ids
@@ -331,4 +334,3 @@ def adjust_learning_rate(
         lr = learning_rate
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
-
