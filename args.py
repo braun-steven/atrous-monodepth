@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         type=int,
         default=[0],
-        help="Cuda device ids. E.g. [0,1,2]",
+        help="Cuda device ids. E.g. [0,1,2]. Use -1 for cpu only.",
     )
     parser.add_argument(
         "--do-augmentation", default=True, help="do augmentation of images or not"
@@ -107,3 +107,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="PyTorch Monolab: Monodepth x " "DeepLabv3+"
+    )
+    parser.add_argument(
+        "--cuda-device-ids",
+        nargs="+",
+        type=int,
+        default=[0],
+        help="Cuda device ids. E.g. [0,1,2]",
+    )
+
+    args = parser.parse_args()
+    print(args)

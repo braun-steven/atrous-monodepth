@@ -45,13 +45,21 @@ class Experiment:
             metric_names=list(self.loss_names.values()), args=args
         )
 
-        # Set up model
-        self.device = args.cuda_device_ids[0]
-        self.model = get_model(args.model, n_input_channels=args.input_channels)
+        # Determine device
+        if args.cuda_device_ids[0] == -1:
+            self.device = "cpu"
+        else:
+            self.device = f"cuda:{args.cuda_device_ids[0]}"
+
+        # Get model
+        self.model = get_model(model=args.model, n_input_channels=args.input_channels)
+        # Check if multiple cuda devices are selected
         if len(args.cuda_device_ids) > 1:
             num_cuda_devices = torch.cuda.device_count()
+            # Check if multiple cuda devices are available
             if num_cuda_devices > 1:
                 logger.info(f"Running experiment on {num_cuda_devices} GPUs ...")
+                # Transform model into data parallel model on all selected cuda deviecs
                 self.model = torch.nn.DataParallel(
                     self.model, device_ids=args.cuda_device_ids
                 )
