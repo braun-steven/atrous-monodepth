@@ -104,6 +104,31 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
+    parser.add_argument(
+        "--weight-ssim",
+        default=0.85,
+        type=float,
+        help="SSIM weight in Monodepth Loss"
+    )
+    parser.add_argument(
+        "--weight-disp-gradient",
+        default=1.0,
+        type=float,
+        help="Distparity gradient weight in Monodepth Loss"
+    )
+    parser.add_argument(
+        "--weight-lr-consistency",
+        default=1.0,
+        type=float,
+        help="Left-Right consistency weight in Monodepth Loss"
+    )
+    parser.add_argument(
+        "--seed",
+        default=7,
+        type=int,
+        help="Seed for random number generators"
+    )
+
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args

@@ -26,10 +26,10 @@ class Experiment:
 
     def __init__(self, args: Namespace):
         # Set seed for reproducibility
-        torch.manual_seed(7)
-        np.random.seed(7)
+        torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(7)
+            torch.cuda.manual_seed_all(args.seed)
 
         self.args = args
 
@@ -72,7 +72,10 @@ class Experiment:
 
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
-            device=self.device, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1
+            device=self.device,
+            SSIM_w=args.weight_ssim,
+            disp_gradient_w=args.weight_disp_gradient,
+            lr_w=args.weight_lr_consistency,
         ).to(self.device)
         logger.debug(f"Using loss function: {self.loss_function}")
         self.optimizer = torch.optim.Adam(
@@ -280,7 +283,6 @@ class Experiment:
                 disps = self.model(left)
                 disp = disps[0][:, 0, :, :].unsqueeze(1)
                 disp_i = disp[0].squeeze().cpu().numpy()
-                # TODO: Add disp postprocessing again
                 self.summary.add_disparity_map(
                     epoch=epoch, disp=torch.Tensor(disp_i), idx=i, input_img=left
                 )
@@ -330,6 +332,3 @@ def adjust_learning_rate(
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
 
-
-if __name__ == "__main__":
-    setup_logging("monolab.log", "info")
