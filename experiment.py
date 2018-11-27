@@ -262,7 +262,7 @@ class Experiment:
                 self.args.notify,
                 "[MONOLAB] Training Finished!",
                 f"Finished Training. Best loss: {best_val_loss}",
-                self.args.logfile,
+                self.args.log_file,
             )
 
     def gen_val_disp_maps(self, epoch: int):
