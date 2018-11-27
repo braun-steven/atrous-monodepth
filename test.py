@@ -82,11 +82,13 @@ class TestRunner:
         # Set up model
         self.device = args.device
         self.model = get_model(args.model, n_input_channels=args.input_channels)
-        self.model = self.model.to(self.device)
+
         if args.use_multiple_gpu:
             self.model = torch.nn.DataParallel(self.model)
 
         self.load(args.model_path)
+        self.model = self.model.to(self.device)
+
         args.augment_parameters = None
         args.do_augmentation = False
 
@@ -143,7 +145,9 @@ class TestRunner:
             os.makedirs(self.output_dir)
 
         np.save(os.path.join(self.output_dir, "disparities.npy"), self.disparities)
-        np.save(os.path.join(self.output_dir, "disparities_pp.npy"), self.disparities_pp)
+        np.save(
+            os.path.join(self.output_dir, "disparities_pp.npy"), self.disparities_pp
+        )
 
         for i in range(self.disparities.shape[0]):
             plt.imsave(
@@ -165,7 +169,9 @@ class TestRunner:
         # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if self.args.eval == "kitti-gt":
             if "kitti_stereo_2015_test_files" not in self.args.filenames_file:
-                raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
+                raise ValueError(
+                    "For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'"
+                )
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
                 predicted_disps=self.disparities,
                 gt_path=self.args.data_dir,
@@ -176,7 +182,9 @@ class TestRunner:
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
             if "eigen_test_files.txt" not in self.args.filenames_file:
-                raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
+                raise ValueError(
+                    "For Eigen split evaluation, the test set should be 'eigen_test_files.txt'"
+                )
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 predicted_disps=self.disparities,
                 test_file_path=self.args.filenames_file,
@@ -185,7 +193,9 @@ class TestRunner:
                 max_depth=80,
             ).evaluate()
         else:
-            raise ValueError("{} is not a valid evaluation procedure.".format(self.args.eval))
+            raise ValueError(
+                "{} is not a valid evaluation procedure.".format(self.args.eval)
+            )
 
         logging.info(
             "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
