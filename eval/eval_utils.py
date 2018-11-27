@@ -36,5 +36,6 @@ def compute_errors(gt, pred):
     return abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3
 
 
-
-
+def load_disparities(path):
+    disps = np.load(path)
+    return disps
