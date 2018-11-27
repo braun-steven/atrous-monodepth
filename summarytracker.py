@@ -250,7 +250,7 @@ class SummaryTracker:
 
         # Save original image as well
         # Disable validation input images until fixed (TODO)
-        if False and idx not in self._orig_image_dict:
+        if idx not in self._orig_image_dict:
             self._orig_image_dict.add(idx)
             if isinstance(input_img, Tensor):
                 input_img = input_img.cpu().numpy()

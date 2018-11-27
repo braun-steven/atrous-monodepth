@@ -284,11 +284,13 @@ class Experiment:
                 left = data["left_image"]
                 # Do a forward pass
                 disps = self.model(left)
-                disp = disps[0][:, 0, :, :].unsqueeze(1)
-                disp_i = disp[0].squeeze().cpu().numpy()
+                disp = disps[0][:, 0, :, :].unsqueeze(1)  # Get left disparity
+                disp_i = disp[0].squeeze().cpu().numpy()  # Use first left disparity
                 self.summary.add_disparity_map(
-                    epoch=epoch, disp=torch.Tensor(disp_i), idx=i, input_img=left[:,
-                                                                             0,:,:]
+                    epoch=epoch,
+                    disp=torch.Tensor(disp_i),
+                    idx=i,
+                    input_img=left[0],  # Use first image in batch
                 )
 
     def save(self, path: str) -> None:
