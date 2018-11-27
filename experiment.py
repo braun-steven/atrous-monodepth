@@ -287,7 +287,8 @@ class Experiment:
                 disp = disps[0][:, 0, :, :].unsqueeze(1)
                 disp_i = disp[0].squeeze().cpu().numpy()
                 self.summary.add_disparity_map(
-                    epoch=epoch, disp=torch.Tensor(disp_i), idx=i, input_img=left
+                    epoch=epoch, disp=torch.Tensor(disp_i), idx=i, input_img=left[:,
+                                                                             0,:,:]
                 )
 
     def save(self, path: str) -> None:

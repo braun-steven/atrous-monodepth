@@ -249,7 +249,8 @@ class SummaryTracker:
         plt.savefig(fname, dpi=dpi)
 
         # Save original image as well
-        if idx not in self._orig_image_dict:
+        # Disable validation input images until fixed (TODO)
+        if False and idx not in self._orig_image_dict:
             self._orig_image_dict.add(idx)
             if isinstance(input_img, Tensor):
                 input_img = input_img.cpu().numpy()
@@ -262,7 +263,7 @@ class SummaryTracker:
 
             # Save image in tensorboard
             self.add_image(0, input_img.squeeze(), f"{tag}/input")
-            # Add a second step with the same image to enfore the "slider" in
+            # Add a second step with the same image to enforce the "slider" in
             # tensorboard and align images with disparity maps
             self.add_image(1, input_img.squeeze(), f"{tag}/input")
 
