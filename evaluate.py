@@ -11,7 +11,7 @@ def parse_args() -> argparse.Namespace:
 
 
     parser.add_argument(
-        "--disparities-file",
+        "--disp-file",
         help="File that contains the model output disparities as .npy file",
         type=str,
     )
@@ -52,6 +52,9 @@ def parse_args() -> argparse.Namespace:
         type=int,
         help="the maximum depth that is used for evaluation"
     )
+    
+    args = parser.parse_args()
+    return args
 
 
 class Evaluator():
@@ -59,7 +62,7 @@ class Evaluator():
         self.args = args
 
     def evaluate(self):
-        disparities = load_disparities(self.args.disparities_file)
+        disparities = load_disparities(self.args.disp_file)
 
         # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if args.eval == "kitti-gt":
@@ -111,5 +114,6 @@ class Evaluator():
 if __name__ == "__main__":
     print("Starting to Evaluate")
     args = parse_args()
+    print(args.disp_file)
     evaluator = Evaluator(args)
     evaluator.evaluate()
