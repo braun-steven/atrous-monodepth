@@ -53,57 +53,63 @@ def parse_args() -> argparse.Namespace:
         help="the maximum depth that is used for evaluation"
     )
 
-def evaluate():
-    disparities = load_disparities(args.disparities_file)
 
-    # Evaluates on the 200 Kitti Stereo 2015 Test Files
-    if args.eval == "kitti-gt":
-        if "kitti_stereo_2015_test_files" not in args.filenames_file:
-            raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
-        abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-            predicted_disps=disparities,
-            gt_path=args.data_dir,
-            min_depth=args.min_depth,
-            max_depth=args.max_depth,
-        ).evaluate()
+class Evaluator():
+    def __init__(self, args):
+        self.args = args
 
-    # Evaluates on the 697 Eigen Test Files
-    elif args.eval == "eigen":
-        if "eigen_test_files.txt" not in args.filenames_file:
-            raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
-        abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-            predicted_disps=disparities,
-            test_file_path=args.filenames_file,
-            gt_path=args.data_dir,
-            min_depth=args.min_depth,
-            max_depth=args.max_depth,
-        ).evaluate()
-    else:
-        raise ValueError("{} is not a valid evaluation procedure.".format(args.eval))
+    def evaluate(self):
+        disparities = load_disparities(self.args.disparities_file)
+
+        # Evaluates on the 200 Kitti Stereo 2015 Test Files
+        if args.eval == "kitti-gt":
+            if "kitti_stereo_2015_test_files" not in self.args.filenames_file:
+                raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
+                predicted_disps=disparities,
+                gt_path=self.args.data_dir,
+                min_depth=self.args.min_depth,
+                max_depth=self.args.max_depth,
+            ).evaluate()
+
+        # Evaluates on the 697 Eigen Test Files
+        elif args.eval == "eigen":
+            if "eigen_test_files.txt" not in self.args.filenames_file:
+                raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
+                predicted_disps=disparities,
+                test_file_path=self.args.filenames_file,
+                gt_path=self.args.data_dir,
+                min_depth=self.args.min_depth,
+                max_depth=self.args.max_depth,
+            ).evaluate()
+        else:
+            raise ValueError("{} is not a valid evaluation procedure.".format(args.eval))
 
 
-    #TODO maybe do this with logging?
+        #TODO maybe do this with logging?
 
-    print(
-        "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
-            "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
+        print(
+            "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
+                "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
+            )
         )
-    )
 
-    print(
-        "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
-            abs_rel.mean(),
-            sq_rel.mean(),
-            rms.mean(),
-            log_rms.mean(),
-            a1.mean(),
-            a2.mean(),
-            a3.mean(),
+        print(
+            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
+                abs_rel.mean(),
+                sq_rel.mean(),
+                rms.mean(),
+                log_rms.mean(),
+                a1.mean(),
+                a2.mean(),
+                a3.mean(),
+            )
         )
-    )
 
 
 if __name__ == "__main__":
     print("Starting to Evaluate")
     args = parse_args()
-    evaluate()
+    evaluator = Evaluator(args)
+    evaluator.evaluate()
