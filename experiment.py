@@ -53,7 +53,11 @@ class Experiment:
             self.device = f"cuda:{args.cuda_device_ids[0]}"
 
         # Get model
-        self.model = get_model(model=args.model, n_input_channels=args.input_channels)
+        self.model = get_model(
+            model=args.model,
+            n_input_channels=args.input_channels,
+            pretrained=args.imagenet_pretrained,
+        )
         # Check if multiple cuda devices are selected
         if len(args.cuda_device_ids) > 1:
             num_cuda_devices = torch.cuda.device_count()
