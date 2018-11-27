@@ -302,7 +302,7 @@ class Experiment:
         Returns:
             None
         """
-        torch.save(self.model.state_dict(), path)
+        torch.save(self.model.module.state_dict(), path)
 
     def load(self, path: str) -> None:
         """ Load a .pth state dict into self.model
