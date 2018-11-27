@@ -58,8 +58,10 @@ class Experiment:
             n_input_channels=args.input_channels,
             pretrained=args.imagenet_pretrained,
         )
+
+        self.multi_gpu = len(args.cuda_device_ids) > 1
         # Check if multiple cuda devices are selected
-        if len(args.cuda_device_ids) > 1:
+        if self.multi_gpu:
             num_cuda_devices = torch.cuda.device_count()
             # Check if multiple cuda devices are available
             if num_cuda_devices > 1:
@@ -257,7 +259,9 @@ class Experiment:
                 metric_name=self.loss_names["lr_consistency"],
             )
 
-            self.summary.add_checkpoint(model=self.model, val_loss=running_val_loss)
+            self.summary.add_checkpoint(
+                model=self.model, val_loss=running_val_loss, multi_gpu=self.multi_gpu
+            )
 
         logging.info(f"Finished Training. Best loss: {best_val_loss}")
         self.summary.save()
@@ -308,7 +312,10 @@ class Experiment:
         Returns:
             None
         """
-        torch.save(self.model.module.state_dict(), path)
+        if self.multi_gpu:
+            torch.save(self.model.module.state_dict(), path)
+        else:
+            torch.save(self.model.state_dict(), path)
 
     def load(self, path: str) -> None:
         """ Load a .pth state dict into self.model
