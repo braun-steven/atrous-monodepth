@@ -193,7 +193,7 @@ class TestRunner:
                 max_depth=80,
             ).evaluate()
         else:
-            raise ValueError(
+            logging.warning(
                 "{} is not a valid evaluation procedure.".format(self.args.eval)
             )
 
