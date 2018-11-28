@@ -119,7 +119,7 @@ class Experiment:
         model = get_model(model=args.model, n_input_channels=args.input_channels)
 
         # Check if multiple CUDA devices are selected
-        if cuda_device_ids > 1:
+        if len(cuda_device_ids) > 1:
             num_cuda_devices = torch.cuda.device_count()
 
             # Check if multiple CUDA devices are available
@@ -135,7 +135,7 @@ class Experiment:
                     f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
                 )
 
-        logger.debug(f"Sending model to device: {self.device}")
+        logger.info(f"Sending model to device: {self.device}")
         model = model.to(self.device)
         return model
 
