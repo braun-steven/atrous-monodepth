@@ -79,9 +79,9 @@ class SummaryTracker:
         # Log template
         max_metric_name_len = max(map(len, metric_names))
         self._log_template = (
-            "{progress: <10}{name: <10} ({metric_name: <"
+            "{progress: <10} ({metric_name: <"
             + str(max_metric_name_len)
-            + "}): Train = {train_metric:10f}, Validation = {val_metric:10f}"
+            + "}): Train = {train_metric:10f}, Val = {val_metric:10f}"
         )
 
         # Original validation image index set
@@ -197,7 +197,6 @@ class SummaryTracker:
         # Log
         logging.info(
             self._log_template.format(
-                name="Epoch",
                 metric_name=metric_name,
                 train_metric=train_metric,
                 val_metric=val_metric,
