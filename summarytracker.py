@@ -138,6 +138,7 @@ class SummaryTracker:
         plt.savefig(
             os.path.join(self._plots_dir, f"{xlabel.lower()}-metric-{suffix}.png")
         )
+        plt.close()
 
     def _plot_metric_epochs(self):
         """Plot metrics"""
@@ -246,6 +247,7 @@ class SummaryTracker:
         ax.imshow(disp, aspect="auto", cmap="plasma")
         ax.text(x=25, y=ymax - 15, s=f"Epoch: {epoch}", fontsize=4, color="w")
         plt.savefig(fname, dpi=dpi)
+        plt.close()
 
         # Save original image as well
         # Disable validation input images until fixed (TODO)
