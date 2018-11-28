@@ -2,6 +2,8 @@ import math
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+from torch import Tensor
+from typing import Tuple
 
 
 class Bottleneck(nn.Module):
@@ -90,7 +92,11 @@ class ResNet(nn.Module):
             strides = [1, 2, 1, 1]
             dilations = [1, 1, 2, 4]
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Output stride {output_stride} has not been implemented yet."
+            )
+
+        layer_planes = [64, 128, 256, 512]
 
         # Modules
         self.conv1 = nn.Conv2d(
@@ -101,33 +107,33 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(
-            block,
-            64,
-            layers[0],
+            block=block,
+            planes=layer_planes[0],
+            num_blocks=layers[0],
             stride=strides[0],
             dilation=dilations[0],
             BatchNorm=BatchNorm,
         )
         self.layer2 = self._make_layer(
-            block,
-            128,
-            layers[1],
+            block=block,
+            planes=layer_planes[1],
+            num_blocks=layers[1],
             stride=strides[1],
             dilation=dilations[1],
             BatchNorm=BatchNorm,
         )
         self.layer3 = self._make_layer(
-            block,
-            256,
-            layers[2],
+            block=block,
+            planes=layer_planes[2],
+            num_blocks=layers[2],
             stride=strides[2],
             dilation=dilations[2],
             BatchNorm=BatchNorm,
         )
         self.layer4 = self._make_layer(
-            block,
-            512,
-            layers[3],
+            block=block,
+            planes=layer_planes[3],
+            num_blocks=layers[3],
             stride=strides[3],
             dilation=dilations[3],
             BatchNorm=BatchNorm,
@@ -141,7 +147,7 @@ class ResNet(nn.Module):
         self,
         block: Bottleneck,
         planes: int,
-        blocks: int,
+        num_blocks: int,
         stride=1,
         dilation=1,
         BatchNorm=None,
@@ -151,7 +157,7 @@ class ResNet(nn.Module):
         Args:
             block: Block type
             planes: Number of planes
-            blocks: Number of blocks
+            num_blocks: Number of blocks
             stride: Convolution stride for each convolution layer
             dilation: Atrous rate
         :return: Sequential model
@@ -174,12 +180,14 @@ class ResNet(nn.Module):
             block(self.inplanes, planes, stride, dilation, downsample, BatchNorm)
         )
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
+        for i in range(1, num_blocks):
             layers.append(block(self.inplanes, planes, BatchNorm=BatchNorm))
 
         return nn.Sequential(*layers)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, input: torch.Tensor
+    ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
         x1 = self.conv1(input)
         x_pool1 = self.bn1(x1)
         x_pool1 = self.relu(x_pool1)
