@@ -85,7 +85,7 @@ class Experiment:
             mode="train",
             augment_parameters=args.augment_parameters,
             do_augmentation=args.do_augmentation,
-            shuffle=True,
+            shuffle=not args.overfit, # Don't shuffle when overfitting
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
