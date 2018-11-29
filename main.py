@@ -59,7 +59,7 @@ def generate_run_base_dir(tag: str, output_dir: str) -> str:
     _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
     tagstr = tag if tag == "" else "_" + tag
     base_dir = os.path.join(output_dir, f"run_{_date_str}{tagstr}")
-    os.mkdir(base_dir)
+    os.makedirs(base_dir)
     return base_dir
 
 
