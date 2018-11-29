@@ -24,7 +24,7 @@ class Experiment:
         - args.val_filenames_file is only used during training
     """
 
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace, base_dir: str):
         # Set seed for reproducibility
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
@@ -42,7 +42,7 @@ class Experiment:
 
         # Setup summary tracker
         self.summary = SummaryTracker(
-            metric_names=list(self.loss_names.values()), args=args
+            metric_names=list(self.loss_names.values()), args=args, base_dir=base_dir
         )
 
         # Get the model
@@ -159,6 +159,8 @@ class Experiment:
         Returns:
             None
         """
+        train_start_time = time.time()
+
         # Store the best validation loss
         best_val_loss = float("Inf")
 
@@ -299,14 +301,10 @@ class Experiment:
         logging.info(f"Finished Training. Best loss: {best_val_loss}")
         self.summary.save()
 
-        # notifies the user via e-mail and sends the log file
-        if self.args.notify is not None:
-            notify_mail(
-                address=self.args.notify,
-                subject=f"[MONOLAB {self.args.tag}] Training Finished!",
-                message=f"Finished Training. Best loss: {best_val_loss}",
-                filename=self.args.log_file,
-            )
+        # Store best validation loss
+        self.best_val_loss = best_val_loss
+        self.time_str = time_delta_now(train_start_time)
+
 
     def gen_val_disp_maps(self, epoch: int):
         """

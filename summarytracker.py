@@ -38,7 +38,7 @@ class SummaryTracker:
     experiment has been started
     """
 
-    def __init__(self, metric_names: List[str], args: Namespace):
+    def __init__(self, metric_names: List[str], args: Namespace, base_dir: str):
         """
         Initialize the Evaluator object.
         Args:
@@ -46,11 +46,7 @@ class SummaryTracker:
             args: Command line arguments
         """
 
-        # Generate base path: ".../$(args.output_dir)/run-$(date)-$(tag)"
-        _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
-        tagstr = args.tag if args.tag == "" else "_" + args.tag
-
-        self._base_dir = os.path.join(args.output_dir, f"run_{_date_str}{tagstr}")
+        self._base_dir = base_dir
 
         self._metric_names = metric_names
         self._metric_epochs_train = {name: [] for name in metric_names}
