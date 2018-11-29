@@ -286,10 +286,10 @@ class Experiment:
         # notifies the user via e-mail and sends the log file
         if self.args.notify is not None:
             notify_mail(
-                self.args.notify,
-                "[MONOLAB] Training Finished!",
-                f"Finished Training. Best loss: {best_val_loss}",
-                self.args.log_file,
+                address=self.args.notify,
+                subject=f"[MONOLAB {self.args.tag}] Training Finished!",
+                message=f"Finished Training. Best loss: {best_val_loss}",
+                filename=self.args.log_file,
             )
 
     def gen_val_disp_maps(self, epoch: int):
