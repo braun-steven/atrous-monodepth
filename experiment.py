@@ -45,7 +45,6 @@ class Experiment:
             metric_names=list(self.loss_names.values()), args=args
         )
 
-
         # Get the model
         self.model = self._get_model(args)
 
@@ -111,21 +110,34 @@ class Experiment:
         if args.cuda_device_ids[0] == -2:
             self.device = "cpu"
             logger.info("Running experiment on the CPU ...")
-            cuda_device_ids = None
-        elif args.cuda_device_ids[0] == -1:
-            self.device = "cuda:0"
-            cuda_device_ids = list(range(torch.cuda.device_count()))
         else:
             self.device = f"cuda:{args.cuda_device_ids[0]}"
-            cuda_device_ids = args.cuda_device_ids
-        # Get model
-        model = get_model(model=args.model, n_input_channels=args.input_channels)
 
-        # Check if multiple CUDA devices are selected
-        if len(cuda_device_ids) > 1:
+        # Get model
+        model = get_model(
+            model=args.model,
+            n_input_channels=args.input_channels,
+            pretrained=args.imagenet_pretrained,
+        )
+        logger.info(
+            "Training a {} model with {} parameters".format(
+                args.model, sum(p.numel() for p in model.parameters())
+            )
+        )
+
+        self.multi_gpu = len(args.cuda_device_ids) > 1 or args.cuda_device_ids[0] == -1
+
+        # Check if multiple cuda devices are selected
+        if self.multi_gpu:
             num_cuda_devices = torch.cuda.device_count()
 
-            # Check if multiple CUDA devices are available
+            if args.cuda_device_ids[0] == -1:
+                # Select all devices
+                cuda_device_ids = list(range(num_cuda_devices))
+            else:
+                cuda_device_ids = args.cuda_device_ids
+
+            # Check if multiple cuda devices are available
             if num_cuda_devices > 1:
                 logger.info(
                     f"Running experiment on the following GPUs: {cuda_device_ids}"
@@ -138,9 +150,8 @@ class Experiment:
                     f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
                 )
 
-        logger.info(f"Sending model to device: {self.device}")
-        model = model.to(self.device)
-        return model
+        logger.debug(f"Sending model to device: {self.device}")
+        return model.to(self.device)
 
     def train(self) -> None:
         """ Train the model for self.args.epochs epochs
