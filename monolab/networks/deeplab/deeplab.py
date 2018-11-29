@@ -13,7 +13,12 @@ from monolab.networks.utils import DisparityOut
 
 class DeepLab(nn.Module):
     def __init__(
-        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False
+        self,
+        num_in_layers=3,
+        backbone="resnet",
+        output_stride=16,
+        freeze_bn=False,
+        pretrained=False,
     ):
         super(DeepLab, self).__init__()
 
@@ -22,11 +27,15 @@ class DeepLab(nn.Module):
         # Define backbone DCNN in encoder
         if backbone == "resnet":
             self.backbone = ResNet50(
-                output_stride=output_stride, num_in_layers=num_in_layers
+                output_stride=output_stride,
+                num_in_layers=num_in_layers,
+                pretrained=pretrained,
             )
         elif backbone == "xception":
             self.backbone = Xception(
-                inplanes=num_in_layers, output_stride=output_stride, pretrained=False
+                inplanes=num_in_layers,
+                output_stride=output_stride,
+                pretrained=pretrained,
             )
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")

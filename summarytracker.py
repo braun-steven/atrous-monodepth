@@ -258,8 +258,7 @@ class SummaryTracker:
             # Save image on disk
             img = input_img.squeeze().transpose(1, 2, 0)
             plt.imsave(
-                fname=os.path.join(self._val_disp_dir, tag, "input.png"),
-                arr=img,
+                fname=os.path.join(self._val_disp_dir, tag, "input.png"), arr=img
             )
 
             # Save image in tensorboard
@@ -268,7 +267,9 @@ class SummaryTracker:
             # tensorboard and align images with disparity maps
             self.add_image(1, input_img.squeeze(), f"{tag}/input")
 
-    def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
+    def add_checkpoint(
+        self, model: nn.Module, val_loss: float, multi_gpu=False
+    ) -> None:
         """
         Add a new checkpoint. Store latest model weights in checkpoints/last-model.pth
         and best model based on the current validation metric in
@@ -277,10 +278,16 @@ class SummaryTracker:
             model (nn.Module): PyTorch model
             val_loss (float): Latest validation loss
         """
-        torch.save(model.state_dict(), f=self._last_cpt_path)
-        if val_loss < self._best_val_loss:
-            self._best_val_loss = val_loss
-            torch.save(model.state_dict(), f=self._best_cpt_path)
+        if multi_gpu:
+            torch.save(model.module.state_dict(), f=self._last_cpt_path)
+            if val_loss < self._best_val_loss:
+                self._best_val_loss = val_loss
+                torch.save(model.module.state_dict(), f=self._best_cpt_path)
+        else:
+            torch.save(model.state_dict(), f=self._last_cpt_path)
+            if val_loss < self._best_val_loss:
+                self._best_val_loss = val_loss
+                torch.save(model.state_dict(), f=self._best_cpt_path)
 
     def save(self):
         """

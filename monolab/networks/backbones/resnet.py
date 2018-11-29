@@ -69,7 +69,6 @@ class ResNet(nn.Module):
         num_in_layers=3,
         block=Bottleneck,
         BatchNorm=nn.BatchNorm2d,
-        pretrained=False,
     ):
         self.inplanes = 64
         super(ResNet, self).__init__()
@@ -140,9 +139,6 @@ class ResNet(nn.Module):
         )
         self._init_weight()
 
-        if pretrained:
-            self._load_pretrained_model()
-
     def _make_layer(
         self,
         block: Bottleneck,
@@ -208,10 +204,8 @@ class ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def _load_pretrained_model(self):
-        pretrain_dict = model_zoo.load_url(
-            "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth"
-        )
+    def load_pretrained_model(self, model_url):
+        pretrain_dict = model_zoo.load_url(model_url)
         model_dict = {}
         state_dict = self.state_dict()
         for k, v in pretrain_dict.items():
@@ -219,6 +213,15 @@ class ResNet(nn.Module):
                 model_dict[k] = v
         state_dict.update(model_dict)
         self.load_state_dict(state_dict)
+
+
+MODEL_URLS = {
+    "resnet18": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
+    "resnet34": "https://download.pytorch.org/models/resnet34-333f7ec4.pth",
+    "resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth",
+    "resnet101": "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth",
+    "resnet152": "https://download.pytorch.org/models/resnet152-b121ed2d.pth",
+}
 
 
 def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
@@ -229,12 +232,10 @@ def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 23, 3],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [3, 4, 23, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet101"])
     return model
 
 
@@ -246,12 +247,10 @@ def ResNet50(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 6, 3],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [3, 4, 6, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet50"])
     return model
 
 
@@ -263,12 +262,10 @@ def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [2, 2, 2, 2],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [2, 2, 2, 2], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet18"])
     return model
 
 

@@ -45,6 +45,7 @@ class Experiment:
             metric_names=list(self.loss_names.values()), args=args
         )
 
+
         # Get the model
         self.model = self._get_model(args)
 
@@ -68,6 +69,7 @@ class Experiment:
             augment_parameters=None,
             do_augmentation=False,
             shuffle=False,
+            shuffle_before=True,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
@@ -85,7 +87,8 @@ class Experiment:
             mode="train",
             augment_parameters=args.augment_parameters,
             do_augmentation=args.do_augmentation,
-            shuffle=not args.overfit, # Don't shuffle when overfitting
+            shuffle=not args.overfit,
+            shuffle_before=False,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
@@ -278,7 +281,9 @@ class Experiment:
                 metric_name=self.loss_names["lr_consistency"],
             )
 
-            self.summary.add_checkpoint(model=self.model, val_loss=running_val_loss)
+            self.summary.add_checkpoint(
+                model=self.model, val_loss=running_val_loss, multi_gpu=self.multi_gpu
+            )
 
         logging.info(f"Finished Training. Best loss: {best_val_loss}")
         self.summary.save()
@@ -329,7 +334,10 @@ class Experiment:
         Returns:
             None
         """
-        torch.save(self.model.state_dict(), path)
+        if self.multi_gpu:
+            torch.save(self.model.module.state_dict(), path)
+        else:
+            torch.save(self.model.state_dict(), path)
 
     def load(self, path: str) -> None:
         """ Load a .pth state dict into self.model

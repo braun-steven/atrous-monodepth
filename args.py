@@ -35,6 +35,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model-path", help="path to the trained model")
     parser.add_argument(
+        "--imagenet-pretrained",
+        default=False,
+        help="load imagenet-pretrained state dict for resnet backend",
+    )
+    parser.add_argument(
         "--output-dir",
         default="/visinf/projects_students/monolab/results/",
         help="Output directory for all results generated during an experiment run",
@@ -105,7 +110,10 @@ def parse_args() -> argparse.Namespace:
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
     parser.add_argument(
-        "--weight-ssim", default=0.85, type=float, help="SSIM weight in Monodepth Loss"
+        "--weight-ssim",
+        default=0.85,
+        type=float,
+        help="SSIM weight in Monodepth Loss"
     )
     parser.add_argument(
         "--weight-disp-gradient",

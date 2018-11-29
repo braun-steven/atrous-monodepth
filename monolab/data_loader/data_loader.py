@@ -1,4 +1,6 @@
 import os
+import random
+
 from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader
@@ -12,13 +14,17 @@ class KittiLoader(Dataset):
         If mode='train', each element is a dict containing 'left_image' and 'right_image'
     """
 
-    def __init__(self, root_dir, filenames_file, mode, transform=None):
+    def __init__(
+        self, root_dir, filenames_file, mode, shuffle=False, seed=9001, transform=None
+    ):
         """ Setup a Kitti sequence dataset.
 
         Args:
             root_dir: data directory
             filenames_file: file, where each line contains left and right image paths (separated by whitespace)
             mode: 'train' or 'test'
+            shuffle: shuffle the dataset beforehand (fixed permutation)
+            seed: (int) random seed for the permutation
             transform: a torchvision.transforms type transform
         """
 
@@ -32,6 +38,16 @@ class KittiLoader(Dataset):
                 self.right_paths = sorted(
                     os.path.join(root_dir, fname.split()[1]) for fname in filenames
                 )
+
+        if shuffle:
+            perm = list(range(len(self.left_paths)))
+            random.seed(seed)
+            random.shuffle(perm)
+
+            self.left_paths = [self.left_paths[i] for i in perm]
+
+            if mode == "train" or mode == "val":
+                self.right_paths = [self.right_paths[i] for i in perm]
 
         self.transform = transform
         self.mode = mode
@@ -63,6 +79,7 @@ def prepare_dataloader(
     augment_parameters=[0.8, 1.2, 0.5, 2.0, 0.8, 1.2],
     do_augmentation=False,
     shuffle=False,
+    shuffle_before=False,
     batch_size=256,
     size=(256, 512),
     num_workers=1,
@@ -70,7 +87,6 @@ def prepare_dataloader(
     """ Prepares a DataLoader that loads Kitti images from file names and performs transforms
 
     Args:
-
         root_dir: data directory
         filenames_file: file, where each line contains left and right image paths (separated by whitespace)
         mode: "train", "val" or "test"
@@ -80,8 +96,10 @@ def prepare_dataloader(
         augment_parameters: list of parameters for the data augmentation (only needed when mode="train"
                 and do_augmentation=True)
         do_augmentation: decides if data are augmented (only effective when mode="train")
-        shuffle: (bool) shuffle the dataset?
+        shuffle: (bool) shuffle the dataloader? new order on every data loader iteration
+        shuffle_before: (bool) shuffle the dataset? shuffle once, then dataloader has the same order everytime
         batch_size: number of images per batch
+        size: (tuple) x and y dimension of input images (inputs are rescaled to this dimension)
         num_workers: number of workers in the data loader
 
     Returns:
@@ -99,7 +117,13 @@ def prepare_dataloader(
         size=size,
     )
 
-    dataset = KittiLoader(root_dir, filenames_file, mode=mode, transform=data_transform)
+    dataset = KittiLoader(
+        root_dir,
+        filenames_file,
+        mode=mode,
+        shuffle=shuffle_before,
+        transform=data_transform,
+    )
 
     n_img = len(dataset)
 

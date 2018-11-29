@@ -6,10 +6,12 @@ from monolab.networks.decoder import MonoDepthDecoder
 
 
 class MonoDepthResNet50(nn.Module):
-    def __init__(self, num_in_layers=3):
+    def __init__(self, num_in_layers=3, pretrained=False):
         super(MonoDepthResNet50, self).__init__()
 
-        self.encoder = ResNet50(output_stride=64)
+        self.encoder = ResNet50(
+            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
+        )
 
         self.decoder = MonoDepthDecoder()
 
@@ -22,10 +24,12 @@ class MonoDepthResNet50(nn.Module):
 
 
 class MonoDepthResNet18(nn.Module):
-    def __init__(self, num_in_layers=3):
+    def __init__(self, num_in_layers=3, pretrained=False):
         super(MonoDepthResNet18, self).__init__()
 
-        self.encoder = ResNet18(output_stride=64)
+        self.encoder = ResNet18(
+            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
+        )
 
         self.decoder = MonoDepthDecoder()
 
@@ -41,7 +45,7 @@ if __name__ == "__main__":
 
     x = torch.rand(1, 3, 256, 512)
 
-    net = MonoDepthResNet50(num_in_layers=3)
+    net = MonoDepthResNet50(num_in_layers=3, pretrained=True)
 
     d1, d2, d3, d4 = net.forward(x)
 
