@@ -58,6 +58,11 @@ class Experiment:
             n_input_channels=args.input_channels,
             pretrained=args.imagenet_pretrained,
         )
+        logger.info(
+            "Training a {} model with {} parameters".format(
+                args.model, sum(p.numel() for p in self.model.parameters())
+            )
+        )
 
         self.multi_gpu = len(args.cuda_device_ids) > 1
         # Check if multiple cuda devices are selected
