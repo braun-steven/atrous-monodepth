@@ -2,10 +2,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from typing import List
+from typing import List, Tuple
 
 
 class Decoder(nn.Module):
+    """
+    Decoder module that has skip connections from the encoder:
+
+    img-> (encoder: x_1 --> x_2 --> x_3 --> x_4 --> encout)
+                     |       |       |       |        |
+                     |       |       |       |        |
+                     v       v       v       v        v
+        (decout <-- ski <-- ski <-- ski <-- ski <-- decoder)
+
+    """
     def __init__(
         self,
         x_low_inplanes_list: List[int],
@@ -32,29 +42,31 @@ class Decoder(nn.Module):
         else:
             raise NotImplementedError
 
-        x_prev_inplanes_list = [encoder_out_planes] + [encoder_out_planes // 2**i for
-                                                       i in range(1, 4)]
+        # Reduce input channels by a factor of 1/2 at each skip connection
+        x_prev_inplanes_list = [encoder_out_planes] + [
+            encoder_out_planes // 2 ** i for i in range(1, 4)
+        ]
 
         # Create skip connections
-        self.skip1 = SkipConnection(
+        self.skip4 = SkipConnection(
             x_low_inplanes=x_low_inplanes_list[0],
             x_prev_inplanes=x_prev_inplanes_list[0],
             num_out_planes=num_outplanes_list[0],
             BatchNorm=BatchNorm,
         )
-        self.skip2 = SkipConnection(
+        self.skip3 = SkipConnection(
             x_low_inplanes=x_low_inplanes_list[1],
             x_prev_inplanes=x_prev_inplanes_list[1],
             num_out_planes=num_outplanes_list[1],
             BatchNorm=BatchNorm,
         )
-        self.skip3 = SkipConnection(
+        self.skip2 = SkipConnection(
             x_low_inplanes=x_low_inplanes_list[2],
             x_prev_inplanes=x_prev_inplanes_list[2],
             num_out_planes=num_outplanes_list[2],
             BatchNorm=BatchNorm,
         )
-        self.skip4 = SkipConnection(
+        self.skip1 = SkipConnection(
             x_low_inplanes=x_low_inplanes_list[3],
             x_prev_inplanes=x_prev_inplanes_list[3],
             num_out_planes=num_outplanes_list[3],
@@ -63,30 +75,26 @@ class Decoder(nn.Module):
         self._init_weight()
 
     def forward(
-        self, x_aspp_out: Tensor, low_level_feats: List[Tensor]
-    ) -> List[Tensor]:
+        self, x_aspp_out: Tensor, x_low1, x_low2, x_low3, x_low4
+    ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """
         Forward pass in decoder.
         Args:
             x_aspp_out (Tensor): Output from ASPP module
-            low_level_feats (List[Tensor]): List of low level features from the encoder
-            DCNN
-
+            x_low1 (Tensor): Low level features 1 from encoder
+            x_low2 (Tensor): Low level features 2 from encoder
+            x_low3 (Tensor): Low level features 3 from encoder
+            x_low4 (Tensor): Low level features 4 from encoder
         Returns:
-            List of all skip connection outputs
+            Tuple of all four skip connection outputs
         """
-        result = []
 
-        x = self.skip1(x_aspp_out, low_level_feats[0])
-        result.append(x)
-        x = self.skip2(x, low_level_feats[1])
-        result.append(x)
-        x = self.skip3(x, low_level_feats[2])
-        result.append(x)
-        x = self.skip4(x, low_level_feats[3])
-        result.append(x)
+        x_skip1 = self.skip4(x_aspp_out, x_low4)
+        x_skip2 = self.skip3(x_skip1, x_low3)
+        x_skip3 = self.skip2(x_skip2, x_low2)
+        x_skip4 = self.skip1(x_skip3, x_low1)
 
-        return result
+        return x_skip1, x_skip2, x_skip3, x_skip4
 
     def _init_weight(self):
         for m in self.modules():
@@ -98,6 +106,10 @@ class Decoder(nn.Module):
 
 
 class SkipConnection(nn.Module):
+    """
+    Skip connection module that takes one input from the encoder and one input from
+    the decoder pipeline and generates the next tensor in the decoder.
+    """
     def __init__(
         self,
         x_prev_inplanes: int,

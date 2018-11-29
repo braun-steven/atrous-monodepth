@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from typing import List
+from typing import List, Tuple
 
 from monolab.networks.backbones.resnet import ResNet50, Bottleneck
 from monolab.networks.backbones.xception import Xception
@@ -57,7 +57,7 @@ class DeepLab(nn.Module):
         if freeze_bn:
             self.freeze_bn()
 
-    def forward(self, x):
+    def forward(self, x) -> List[Tensor]:
         if self.dcnn_type == "resnet":
             x1, x1_pool, x2, x3, x4, x_dcnn_out = self.backbone(x)
         elif self.dcnn_type == "xception":
@@ -74,13 +74,13 @@ class DeepLab(nn.Module):
         x = self.aspp(x_dcnn_out)
 
         # List of decoder results of size num_disparity_maps
-        x_decoder_results: List[Tensor] = self.decoder(x, [x4, x3, x2, x1])
+        x_skip1, x_skip2, x_skip3, x_skip4 = self.decoder(x, x1, x2, x3, x4)
 
         # Compute disparity maps
-        disp1 = self.disp1(x_decoder_results[0])
-        disp2 = self.disp2(x_decoder_results[1])
-        disp3 = self.disp3(x_decoder_results[2])
-        disp4 = self.disp4(x_decoder_results[3])
+        disp1 = self.disp1(x_skip1)
+        disp2 = self.disp2(x_skip2)
+        disp3 = self.disp3(x_skip3)
+        disp4 = self.disp4(x_skip4)
         return [disp4, disp3, disp2, disp1]
 
     def freeze_bn(self):
