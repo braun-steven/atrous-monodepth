@@ -275,7 +275,8 @@ def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
 if __name__ == "__main__":
     import torch
 
-    x = torch.rand(1, 3, 512, 512)
+    in_size = 512
+    x = torch.rand(1, 3, in_size, in_size)
 
     for out_stride in [16, 32, 64]:
         net = ResNet(block=Bottleneck, layers=[3, 4, 6, 3], output_stride=out_stride)
@@ -283,5 +284,8 @@ if __name__ == "__main__":
         y = net.forward(x)
 
         print("Output stride: {}".format(out_stride))
-        for yi in y:
-            print(yi.size())
+        for i, yi in enumerate(y):
+            print("Skip{}".format(i))
+            print("Stride = {}".format(in_size / yi.size()[3]))
+            print("Dimension = {}".format(yi.size()[1]))
+        print("\n")
