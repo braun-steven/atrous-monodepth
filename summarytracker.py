@@ -293,10 +293,6 @@ class SummaryTracker:
         - Scalar values as JSON
         - Plots
         """
-        # Copy log to the output-dir
-        log_path = os.path.join(self._base_dir, "log.txt")
-        copyfile(self._args.log_file, log_path)
-
         # Save arguments with which the current experiment has been started
         self._save_args()
 
