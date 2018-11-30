@@ -3,12 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from monolab.networks.utils import get_disp
+from monolab.networks.utils import DisparityOut
 
 
-class conv(nn.Module):
+class Conv(nn.Module):
     def __init__(self, num_in_layers, num_out_layers, kernel_size, stride):
-        super(conv, self).__init__()
+        super(Conv, self).__init__()
         self.kernel_size = kernel_size
         self.conv_base = nn.Conv2d(
             num_in_layers, num_out_layers, kernel_size=kernel_size, stride=stride
@@ -23,11 +23,11 @@ class conv(nn.Module):
         return F.elu(x, inplace=True)
 
 
-class upconv(nn.Module):
+class UpConv(nn.Module):
     def __init__(self, num_in_layers, num_out_layers, kernel_size, scale):
-        super(upconv, self).__init__()
+        super(UpConv, self).__init__()
         self.scale = scale
-        self.conv1 = conv(num_in_layers, num_out_layers, kernel_size, 1)
+        self.conv1 = Conv(num_in_layers, num_out_layers, kernel_size, 1)
 
     def forward(self, x):
         x = nn.functional.interpolate(
@@ -41,27 +41,27 @@ class MonoDepthDecoder(nn.Module):
         super(MonoDepthDecoder, self).__init__()
 
         # decoder
-        self.upconv6 = upconv(2048, 512, 3, 2)
-        self.iconv6 = conv(1024 + 512, 512, 3, 1)
+        self.upconv6 = UpConv(2048, 512, 3, 2)
+        self.iconv6 = Conv(1024 + 512, 512, 3, 1)
 
-        self.upconv5 = upconv(512, 256, 3, 2)
-        self.iconv5 = conv(512 + 256, 256, 3, 1)
+        self.upconv5 = UpConv(512, 256, 3, 2)
+        self.iconv5 = Conv(512 + 256, 256, 3, 1)
 
-        self.upconv4 = upconv(256, 128, 3, 2)
-        self.iconv4 = conv(256 + 128, 128, 3, 1)
-        self.disp4_layer = get_disp(128)
+        self.upconv4 = UpConv(256, 128, 3, 2)
+        self.iconv4 = Conv(256 + 128, 128, 3, 1)
+        self.disp4_layer = DisparityOut(128)
 
-        self.upconv3 = upconv(128, 64, 3, 2)
-        self.iconv3 = conv(64 + 64 + 2, 64, 3, 1)
-        self.disp3_layer = get_disp(64)
+        self.upconv3 = UpConv(128, 64, 3, 2)
+        self.iconv3 = Conv(64 + 64 + 2, 64, 3, 1)
+        self.disp3_layer = DisparityOut(64)
 
-        self.upconv2 = upconv(64, 32, 3, 2)
-        self.iconv2 = conv(32 + 64 + 2, 32, 3, 1)
-        self.disp2_layer = get_disp(32)
+        self.upconv2 = UpConv(64, 32, 3, 2)
+        self.iconv2 = Conv(32 + 64 + 2, 32, 3, 1)
+        self.disp2_layer = DisparityOut(32)
 
-        self.upconv1 = upconv(32, 16, 3, 2)
-        self.iconv1 = conv(16 + 2, 16, 3, 1)
-        self.disp1_layer = get_disp(16)
+        self.upconv1 = UpConv(32, 16, 3, 2)
+        self.iconv1 = Conv(16 + 2, 16, 3, 1)
+        self.disp1_layer = DisparityOut(16)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

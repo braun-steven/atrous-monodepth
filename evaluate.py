@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
         type=int,
         help="the maximum depth that is used for evaluation"
     )
-    
+
     args = parser.parse_args()
     return args
 

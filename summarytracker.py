@@ -38,7 +38,7 @@ class SummaryTracker:
     experiment has been started
     """
 
-    def __init__(self, metric_names: List[str], args: Namespace):
+    def __init__(self, metric_names: List[str], args: Namespace, base_dir: str):
         """
         Initialize the Evaluator object.
         Args:
@@ -46,11 +46,7 @@ class SummaryTracker:
             args: Command line arguments
         """
 
-        # Generate base path: ".../$(args.output_dir)/run-$(date)-$(tag)"
-        _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
-        tagstr = args.tag if args.tag == "" else "_" + args.tag
-
-        self._base_dir = os.path.join(args.output_dir, f"run_{_date_str}{tagstr}")
+        self._base_dir = base_dir
 
         self._metric_names = metric_names
         self._metric_epochs_train = {name: [] for name in metric_names}
@@ -79,9 +75,9 @@ class SummaryTracker:
         # Log template
         max_metric_name_len = max(map(len, metric_names))
         self._log_template = (
-            "{progress: <10}{name: <10} ({metric_name: <"
+            "{progress: <10} ({metric_name: <"
             + str(max_metric_name_len)
-            + "}): Train = {train_metric:10f}, Validation = {val_metric:10f}"
+            + "}): Train = {train_metric:10f}, Val = {val_metric:10f}"
         )
 
         # Original validation image index set
@@ -138,6 +134,7 @@ class SummaryTracker:
         plt.savefig(
             os.path.join(self._plots_dir, f"{xlabel.lower()}-metric-{suffix}.png")
         )
+        plt.close()
 
     def _plot_metric_epochs(self):
         """Plot metrics"""
@@ -197,7 +194,6 @@ class SummaryTracker:
         # Log
         logging.info(
             self._log_template.format(
-                name="Epoch",
                 metric_name=metric_name,
                 train_metric=train_metric,
                 val_metric=val_metric,
@@ -247,8 +243,10 @@ class SummaryTracker:
         ax.imshow(disp, aspect="auto", cmap="plasma")
         ax.text(x=25, y=ymax - 15, s=f"Epoch: {epoch}", fontsize=4, color="w")
         plt.savefig(fname, dpi=dpi)
+        plt.close()
 
         # Save original image as well
+        # Disable validation input images until fixed (TODO)
         if idx not in self._orig_image_dict:
             self._orig_image_dict.add(idx)
             if isinstance(input_img, Tensor):
@@ -256,17 +254,18 @@ class SummaryTracker:
             # Save image on disk
             img = input_img.squeeze().transpose(1, 2, 0)
             plt.imsave(
-                fname=os.path.join(self._val_disp_dir, tag, "input.png"),
-                arr=img,
+                fname=os.path.join(self._val_disp_dir, tag, "input.png"), arr=img
             )
 
             # Save image in tensorboard
             self.add_image(0, input_img.squeeze(), f"{tag}/input")
-            # Add a second step with the same image to enfore the "slider" in
+            # Add a second step with the same image to enforce the "slider" in
             # tensorboard and align images with disparity maps
             self.add_image(1, input_img.squeeze(), f"{tag}/input")
 
-    def add_checkpoint(self, model: nn.Module, val_loss: float) -> None:
+    def add_checkpoint(
+        self, model: nn.Module, val_loss: float, multi_gpu=False
+    ) -> None:
         """
         Add a new checkpoint. Store latest model weights in checkpoints/last-model.pth
         and best model based on the current validation metric in
@@ -275,10 +274,16 @@ class SummaryTracker:
             model (nn.Module): PyTorch model
             val_loss (float): Latest validation loss
         """
-        torch.save(model.state_dict(), f=self._last_cpt_path)
-        if val_loss < self._best_val_loss:
-            self._best_val_loss = val_loss
-            torch.save(model.state_dict(), f=self._best_cpt_path)
+        if multi_gpu:
+            torch.save(model.module.state_dict(), f=self._last_cpt_path)
+            if val_loss < self._best_val_loss:
+                self._best_val_loss = val_loss
+                torch.save(model.module.state_dict(), f=self._best_cpt_path)
+        else:
+            torch.save(model.state_dict(), f=self._last_cpt_path)
+            if val_loss < self._best_val_loss:
+                self._best_val_loss = val_loss
+                torch.save(model.state_dict(), f=self._best_cpt_path)
 
     def save(self):
         """
@@ -288,10 +293,6 @@ class SummaryTracker:
         - Scalar values as JSON
         - Plots
         """
-        # Copy log to the output-dir
-        log_path = os.path.join(self._base_dir, "log.txt")
-        copyfile(self._args.log_file, log_path)
-
         # Save arguments with which the current experiment has been started
         self._save_args()
 

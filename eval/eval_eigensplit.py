@@ -5,7 +5,7 @@ from collections import Counter
 from scipy.interpolate import LinearNDInterpolator
 
 
-from evaluate.eval_utils import compute_errors
+from eval.eval_utils import compute_errors
 
 
 class EvaluateEigen:

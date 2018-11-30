@@ -2,6 +2,8 @@ import math
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+from torch import Tensor
+from typing import Tuple
 
 
 class Bottleneck(nn.Module):
@@ -67,7 +69,6 @@ class ResNet(nn.Module):
         num_in_layers=3,
         block=Bottleneck,
         BatchNorm=nn.BatchNorm2d,
-        pretrained=False,
     ):
         self.inplanes = 64
         super(ResNet, self).__init__()
@@ -90,7 +91,11 @@ class ResNet(nn.Module):
             strides = [1, 2, 1, 1]
             dilations = [1, 1, 2, 4]
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Output stride {output_stride} has not been implemented yet."
+            )
+
+        layer_planes = [64, 128, 256, 512]
 
         # Modules
         self.conv1 = nn.Conv2d(
@@ -101,47 +106,44 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(
-            block,
-            64,
-            layers[0],
+            block=block,
+            planes=layer_planes[0],
+            num_blocks=layers[0],
             stride=strides[0],
             dilation=dilations[0],
             BatchNorm=BatchNorm,
         )
         self.layer2 = self._make_layer(
-            block,
-            128,
-            layers[1],
+            block=block,
+            planes=layer_planes[1],
+            num_blocks=layers[1],
             stride=strides[1],
             dilation=dilations[1],
             BatchNorm=BatchNorm,
         )
         self.layer3 = self._make_layer(
-            block,
-            256,
-            layers[2],
+            block=block,
+            planes=layer_planes[2],
+            num_blocks=layers[2],
             stride=strides[2],
             dilation=dilations[2],
             BatchNorm=BatchNorm,
         )
         self.layer4 = self._make_layer(
-            block,
-            512,
-            layers[3],
+            block=block,
+            planes=layer_planes[3],
+            num_blocks=layers[3],
             stride=strides[3],
             dilation=dilations[3],
             BatchNorm=BatchNorm,
         )
         self._init_weight()
 
-        if pretrained:
-            self._load_pretrained_model()
-
     def _make_layer(
         self,
         block: Bottleneck,
         planes: int,
-        blocks: int,
+        num_blocks: int,
         stride=1,
         dilation=1,
         BatchNorm=None,
@@ -151,7 +153,7 @@ class ResNet(nn.Module):
         Args:
             block: Block type
             planes: Number of planes
-            blocks: Number of blocks
+            num_blocks: Number of blocks
             stride: Convolution stride for each convolution layer
             dilation: Atrous rate
         :return: Sequential model
@@ -174,12 +176,14 @@ class ResNet(nn.Module):
             block(self.inplanes, planes, stride, dilation, downsample, BatchNorm)
         )
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
+        for i in range(1, num_blocks):
             layers.append(block(self.inplanes, planes, BatchNorm=BatchNorm))
 
         return nn.Sequential(*layers)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, input: torch.Tensor
+    ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
         x1 = self.conv1(input)
         x_pool1 = self.bn1(x1)
         x_pool1 = self.relu(x_pool1)
@@ -200,10 +204,8 @@ class ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def _load_pretrained_model(self):
-        pretrain_dict = model_zoo.load_url(
-            "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth"
-        )
+    def load_pretrained_model(self, model_url):
+        pretrain_dict = model_zoo.load_url(model_url)
         model_dict = {}
         state_dict = self.state_dict()
         for k, v in pretrain_dict.items():
@@ -211,6 +213,15 @@ class ResNet(nn.Module):
                 model_dict[k] = v
         state_dict.update(model_dict)
         self.load_state_dict(state_dict)
+
+
+MODEL_URLS = {
+    "resnet18": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
+    "resnet34": "https://download.pytorch.org/models/resnet34-333f7ec4.pth",
+    "resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth",
+    "resnet101": "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth",
+    "resnet152": "https://download.pytorch.org/models/resnet152-b121ed2d.pth",
+}
 
 
 def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
@@ -221,12 +232,10 @@ def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 23, 3],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [3, 4, 23, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet101"])
     return model
 
 
@@ -238,12 +247,10 @@ def ResNet50(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 6, 3],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [3, 4, 6, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet50"])
     return model
 
 
@@ -255,19 +262,18 @@ def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [2, 2, 2, 2],
-        output_stride,
-        num_in_layers=num_in_layers,
-        block=Bottleneck,
-        pretrained=pretrained,
+        [2, 2, 2, 2], output_stride, num_in_layers=num_in_layers, block=Bottleneck
     )
+    if pretrained:
+        model.load_pretrained_model(MODEL_URLS["resnet18"])
     return model
 
 
 if __name__ == "__main__":
     import torch
 
-    x = torch.rand(1, 3, 512, 512)
+    in_size = 512
+    x = torch.rand(1, 3, in_size, in_size)
 
     for out_stride in [16, 32, 64]:
         net = ResNet(block=Bottleneck, layers=[3, 4, 6, 3], output_stride=out_stride)
@@ -275,5 +281,8 @@ if __name__ == "__main__":
         y = net.forward(x)
 
         print("Output stride: {}".format(out_stride))
-        for yi in y:
-            print(yi.size())
+        for i, yi in enumerate(y):
+            print("Skip{}".format(i))
+            print("Stride = {}".format(in_size / yi.size()[3]))
+            print("Dimension = {}".format(yi.size()[1]))
+        print("\n")

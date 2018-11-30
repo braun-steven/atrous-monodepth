@@ -33,7 +33,15 @@ def parse_args() -> argparse.Namespace:
         + "(default: resnet18)"
         + "or torchvision version of any resnet model",
     )
-    parser.add_argument("--model-path", help="path to the trained model")
+    parser.add_argument(
+        "--checkpoint",
+        help="Checkpoint of previously trained model to start from (used for pretraining on a different dataset)",
+    )
+    parser.add_argument(
+        "--imagenet-pretrained",
+        default=False,
+        help="load imagenet-pretrained state dict for resnet backend",
+    )
     parser.add_argument(
         "--output-dir",
         default="/visinf/projects_students/monolab/results/",
@@ -64,7 +72,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         type=int,
         default=[0],
-        help="Cuda device ids. E.g. [0,1,2]. Use -1 for cpu only.",
+        help="Cuda device ids. E.g. [0,1,2]. Use -1 for all GPUs available and -2 for cpu only.",
     )
     parser.add_argument(
         "--do-augmentation", default=True, help="do augmentation of images or not"
@@ -105,45 +113,31 @@ def parse_args() -> argparse.Namespace:
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
     parser.add_argument(
-        "--weight-ssim",
-        default=0.85,
-        type=float,
-        help="SSIM weight in Monodepth Loss"
+        "--weight-ssim", default=0.85, type=float, help="SSIM weight in Monodepth Loss"
     )
     parser.add_argument(
         "--weight-disp-gradient",
         default=1.0,
         type=float,
-        help="Distparity gradient weight in Monodepth Loss"
+        help="Distparity gradient weight in Monodepth Loss",
     )
     parser.add_argument(
         "--weight-lr-consistency",
         default=1.0,
         type=float,
-        help="Left-Right consistency weight in Monodepth Loss"
+        help="Left-Right consistency weight in Monodepth Loss",
     )
     parser.add_argument(
-        "--seed",
-        default=7,
-        type=int,
-        help="Seed for random number generators"
+        "--seed", default=7, type=int, help="Seed for random number generators"
+    )
+    parser.add_argument(
+        "--overfit",
+        action="store_true",
+        help="Whether to overfit on a small (10 batches) subset of the "
+        "training "
+        "images.",
     )
 
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description="PyTorch Monolab: Monodepth x " "DeepLabv3+"
-    )
-    parser.add_argument(
-        "--cuda-device-ids",
-        nargs="+",
-        type=int,
-        default=[0],
-        help="Cuda device ids. E.g. [0,1,2]",
-    )
-
-    args = parser.parse_args()
-    print(args)

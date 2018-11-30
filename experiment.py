@@ -24,7 +24,7 @@ class Experiment:
         - args.val_filenames_file is only used during training
     """
 
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace, base_dir: str):
         # Set seed for reproducibility
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
@@ -42,36 +42,16 @@ class Experiment:
 
         # Setup summary tracker
         self.summary = SummaryTracker(
-            metric_names=list(self.loss_names.values()), args=args
+            metric_names=list(self.loss_names.values()), args=args, base_dir=base_dir
         )
 
-        # Determine device
-        if args.cuda_device_ids[0] == -1:
-            self.device = "cpu"
-            logger.info("Running experiment on the CPU ...")
-        else:
-            self.device = f"cuda:{args.cuda_device_ids[0]}"
+        # Get the model
+        self.model = self._get_model(args)
 
-        # Get model
-        self.model = get_model(model=args.model, n_input_channels=args.input_channels)
-        # Check if multiple cuda devices are selected
-        if len(args.cuda_device_ids) > 1:
-            num_cuda_devices = torch.cuda.device_count()
-            # Check if multiple cuda devices are available
-            if num_cuda_devices > 1:
-                logger.info(
-                    f"Running experiment on the following GPUs: {args.cuda_device_ids}"
-                )
-                # Transform model into data parallel model on all selected cuda deviecs
-                self.model = torch.nn.DataParallel(
-                    self.model, device_ids=args.cuda_device_ids
-                )
-            else:
-                logger.warning(
-                    f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
-                )
-        logger.debug(f"Sending model to device: {self.device}")
-        self.model = self.model.to(self.device)
+        # Load pretrained model
+        if args.checkpoint:
+            logging.info(f"Loading pretrained model from {args.checkpoint}")
+            self.load(args.checkpoint)
 
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
@@ -96,6 +76,7 @@ class Experiment:
             augment_parameters=None,
             do_augmentation=False,
             shuffle=False,
+            shuffle_before=True,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
@@ -115,7 +96,8 @@ class Experiment:
             mode="train",
             augment_parameters=args.augment_parameters,
             do_augmentation=args.do_augmentation,
-            shuffle=True,
+            shuffle=not args.overfit,
+            shuffle_before=False,
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
@@ -126,12 +108,70 @@ class Experiment:
         if "cuda" in self.device:
             torch.cuda.synchronize()
 
+    def _get_model(self, args) -> torch.nn.Module:
+        """
+        Get the model. Automatically moves model to specified device(s).
+        Args:
+            args: Experiment args
+
+        Returns:
+            Model
+        """
+        # Determine device
+        if args.cuda_device_ids[0] == -2:
+            self.device = "cpu"
+            logger.info("Running experiment on the CPU ...")
+        else:
+            self.device = f"cuda:{args.cuda_device_ids[0]}"
+
+        # Get model
+        model = get_model(
+            model=args.model,
+            n_input_channels=args.input_channels,
+            pretrained=args.imagenet_pretrained,
+        )
+        logger.info(
+            "Training a {} model with {} parameters".format(
+                args.model, sum(p.numel() for p in model.parameters())
+            )
+        )
+
+        self.multi_gpu = len(args.cuda_device_ids) > 1 or args.cuda_device_ids[0] == -1
+
+        # Check if multiple cuda devices are selected
+        if self.multi_gpu:
+            num_cuda_devices = torch.cuda.device_count()
+
+            if args.cuda_device_ids[0] == -1:
+                # Select all devices
+                cuda_device_ids = list(range(num_cuda_devices))
+            else:
+                cuda_device_ids = args.cuda_device_ids
+
+            # Check if multiple cuda devices are available
+            if num_cuda_devices > 1:
+                logger.info(
+                    f"Running experiment on the following GPUs: {cuda_device_ids}"
+                )
+
+                # Transform model into data parallel model on all selected cuda deviecs
+                model = torch.nn.DataParallel(model, device_ids=cuda_device_ids)
+            else:
+                logger.warning(
+                    f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
+                )
+
+        logger.debug(f"Sending model to device: {self.device}")
+        return model.to(self.device)
+
     def train(self) -> None:
         """ Train the model for self.args.epochs epochs
 
         Returns:
             None
         """
+        train_start_time = time.time()
+
         # Store the best validation loss
         best_val_loss = float("Inf")
 
@@ -163,7 +203,7 @@ class Experiment:
             #################
             # Training loop #
             #################
-            for data in self.loader:
+            for iteration, data in enumerate(self.loader):
                 # Load data
                 data = to_device(data, self.device)
                 left = data["left_image"]
@@ -184,6 +224,10 @@ class Experiment:
                 running_disp_gradient_loss += disp_gradient_loss.item()
                 running_lr_loss += lr_loss.item()
 
+                # Stop after 10 batches if overfitting is enabled
+                if self.args.overfit and iteration >= 5:
+                    break
+
             # Training finished #
             logger.info(
                 f"Epoch [{epoch}/{self.args.epochs}] time: {time_delta_now(epoch_time)} s"
@@ -195,7 +239,7 @@ class Experiment:
             self.model.eval()
             val_time = time.time()
             with torch.no_grad():
-                for idx, data in enumerate(self.val_loader):
+                for iteration, data in enumerate(self.val_loader):
                     data = to_device(data, self.device)
                     left = data["left_image"]
                     right = data["right_image"]
@@ -209,6 +253,10 @@ class Experiment:
                     running_val_image_loss += image_loss.item()
                     running_val_disp_gradient_loss += disp_gradient_loss.item()
                     running_val_lr_loss += lr_loss.item()
+
+                    # Stop after 10 batches if overfitting is enabled
+                    if self.args.overfit and iteration >= 5:
+                        break
             logger.info(f"Validation took {time_delta_now(val_time)}s")
 
             #################
@@ -257,19 +305,16 @@ class Experiment:
                 metric_name=self.loss_names["lr_consistency"],
             )
 
-            self.summary.add_checkpoint(model=self.model, val_loss=running_val_loss)
+            self.summary.add_checkpoint(
+                model=self.model, val_loss=running_val_loss, multi_gpu=self.multi_gpu
+            )
 
         logging.info(f"Finished Training. Best loss: {best_val_loss}")
         self.summary.save()
 
-        # notifies the user via e-mail and sends the log file
-        if self.args.notify is not None:
-            notify_mail(
-                self.args.notify,
-                "[MONOLAB] Training Finished!",
-                f"Finished Training. Best loss: {best_val_loss}",
-                self.args.logfile,
-            )
+        # Store best validation loss
+        self.best_val_loss = best_val_loss
+        self.time_str = time_delta_now(train_start_time)
 
     def gen_val_disp_maps(self, epoch: int):
         """
@@ -290,10 +335,13 @@ class Experiment:
                 left = data["left_image"]
                 # Do a forward pass
                 disps = self.model(left)
-                disp = disps[0][:, 0, :, :].unsqueeze(1)
-                disp_i = disp[0].squeeze().cpu().numpy()
+                disp = disps[0][:, 0, :, :].unsqueeze(1)  # Get left disparity
+                disp_i = disp[0].squeeze().cpu().numpy()  # Use first left disparity
                 self.summary.add_disparity_map(
-                    epoch=epoch, disp=torch.Tensor(disp_i), idx=i, input_img=left
+                    epoch=epoch,
+                    disp=torch.Tensor(disp_i),
+                    idx=i,
+                    input_img=left[0],  # Use first image in batch
                 )
 
     def save(self, path: str) -> None:
@@ -305,7 +353,10 @@ class Experiment:
         Returns:
             None
         """
-        torch.save(self.model.state_dict(), path)
+        if self.multi_gpu:
+            torch.save(self.model.module.state_dict(), path)
+        else:
+            torch.save(self.model.state_dict(), path)
 
     def load(self, path: str) -> None:
         """ Load a .pth state dict into self.model
