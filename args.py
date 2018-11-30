@@ -33,7 +33,10 @@ def parse_args() -> argparse.Namespace:
         + "(default: resnet18)"
         + "or torchvision version of any resnet model",
     )
-    parser.add_argument("--model-path", help="path to the trained model")
+    parser.add_argument(
+        "--checkpoint",
+        help="Checkpoint of previously trained model to start from (used for pretraining on a different dataset)",
+    )
     parser.add_argument(
         "--imagenet-pretrained",
         default=False,
@@ -69,7 +72,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         type=int,
         default=[0],
-        help="Cuda device ids. E.g. [0,1,2]. Use -1 for cpu only.",
+        help="Cuda device ids. E.g. [0,1,2]. Use -1 for all GPUs available and -2 for cpu only.",
     )
     parser.add_argument(
         "--do-augmentation", default=True, help="do augmentation of images or not"
@@ -110,10 +113,7 @@ def parse_args() -> argparse.Namespace:
         help="Tag to identify runs in the result directory and tensorboard overviews",
     )
     parser.add_argument(
-        "--weight-ssim",
-        default=0.85,
-        type=float,
-        help="SSIM weight in Monodepth Loss"
+        "--weight-ssim", default=0.85, type=float, help="SSIM weight in Monodepth Loss"
     )
     parser.add_argument(
         "--weight-disp-gradient",

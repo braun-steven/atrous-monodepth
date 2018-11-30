@@ -48,6 +48,11 @@ class Experiment:
         # Get the model
         self.model = self._get_model(args)
 
+        # Load pretrained model
+        if args.checkpoint:
+            logging.info(f"Loading pretrained model from {args.checkpoint}")
+            self.load(args.checkpoint)
+
         # Setup loss, optimizer and validation set
         self.loss_function = MonodepthLoss(
             device=self.device,
@@ -304,7 +309,6 @@ class Experiment:
         # Store best validation loss
         self.best_val_loss = best_val_loss
         self.time_str = time_delta_now(train_start_time)
-
 
     def gen_val_disp_maps(self, epoch: int):
         """
