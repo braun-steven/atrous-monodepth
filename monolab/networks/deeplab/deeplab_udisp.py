@@ -78,7 +78,7 @@ class DeepLab(nn.Module):
         # List of decoder results of size num_disparity_maps
         disp1, disp2, disp3, disp4 = self.decoder(x, x1, x2, x3, x4)
 
-        return [disp4, disp3, disp2, disp1]
+        return [disp1, disp2, disp3, disp4]
 
     def freeze_bn(self):
         for m in self.modules():
@@ -87,7 +87,7 @@ class DeepLab(nn.Module):
 
 
 if __name__ == "__main__":
-    x = torch.rand(1, 3, 256, 512)
+    x = torch.rand(8, 3, 256, 512)
 
     net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
     # print(net)
