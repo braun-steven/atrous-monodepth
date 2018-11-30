@@ -14,7 +14,7 @@ class ImageLoader(Dataset):
         If mode='train', each element is a dict containing 'left_image' and 'right_image'
     """
 
-    def __init__(self, root_dir, filenames_file, mode, shuffle = false, seed=9001, transform=None, dataset = 'kitti'):
+    def __init__(self, root_dir, filenames_file, mode, shuffle=False, seed=9001, transform=None, dataset='kitti'):
         """ Setup a Kitti sequence dataset.
 
         Args:

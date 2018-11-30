@@ -77,8 +77,8 @@ class Evaluator():
 
         # Evaluates on the 697 Eigen Test Files
         elif args.eval == "eigen":
-            if "eigen_test_files.txt" not in self.args.filenames_file:
-                raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
+            if "kitti_eigen_test_files.txt" not in self.args.filenames_file:
+                raise ValueError("For Eigen split evaluation, the test set should be 'kitti_eigen_test_files.txt'")
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 predicted_disps=disparities,
                 test_file_path=self.args.filenames_file,
