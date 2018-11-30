@@ -57,23 +57,20 @@ class ImageLoader(Dataset):
 
     def __getitem__(self, idx):
 
-
-        if self.dataset == 'kitti':
-            left_image = Image.open(self.left_paths[idx])
-
         if self.dataset == 'cityscapes':
             left_image = Image.open('left/' + self.left_paths[idx])
             left_image = crop_cityscapes(left_image)
 
+        else:
+            left_image = Image.open(self.left_paths[idx])  #default kitti case
 
         if self.mode == "train" or self.mode == "val":
-
-            if self.dataset == 'kitti':
-                right_image = Image.open(self.right_paths[idx])
 
             if self.dataset == 'cityscapes':
                 right_image = Image.open('right/' + self.right_paths[idx])
                 right_image = crop_cityscapes(right_image)
+            else:
+                right_image = Image.open(self.right_paths[idx]) #default kitti case
 
             sample = {"left_image": left_image, "right_image": right_image}
 
