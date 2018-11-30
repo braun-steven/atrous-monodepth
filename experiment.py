@@ -85,6 +85,9 @@ class Experiment:
             self.model.parameters(), lr=args.learning_rate
         )
         logger.debug(f"Using optimizer: {self.optimizer}")
+
+        self.dataset_val = args.val_filenames_file.split('_')[0]
+
         # the validation loader is a train loader but without data augmentation!
         self.val_n_img, self.val_loader = prepare_dataloader(
             root_dir=args.data_dir,
@@ -96,6 +99,7 @@ class Experiment:
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
+            dataset=self.dataset_val
         )
         logging.info(f"Using a validation set with {self.val_n_img} images")
 
@@ -103,6 +107,7 @@ class Experiment:
         self.output_dir = args.output_dir
         self.input_height = args.input_height
         self.input_width = args.input_width
+        self.dataset_train = args.filenames_file.split('_')[0]
 
         self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,
@@ -114,6 +119,7 @@ class Experiment:
             batch_size=args.batch_size,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
+            dataset=self.dataset_train
         )
         logging.info(f"Using a training data set with {self.n_img} images")
 

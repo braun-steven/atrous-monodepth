@@ -7,8 +7,8 @@ import numpy as np
 
 from utils import get_model, to_device, setup_logging
 from monolab.data_loader import prepare_dataloader
-from eval.eval_eigensplit import EvaluateEigen
-from eval.eval_kitti_gt import EvaluateKittiGT
+from evaluate.eval_eigensplit import EvaluateEigen
+from evaluate.eval_kitti_gt import EvaluateKittiGT
 
 
 def parse_args() -> argparse.Namespace:
@@ -95,6 +95,8 @@ class TestRunner:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
+        dataset = args.filenames_file.split('_')[0]
+
         self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,
             filenames_file=args.filenames_file,
@@ -105,6 +107,7 @@ class TestRunner:
             batch_size=1,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
+            dataset=dataset
         )
 
         logging.info("Using a testing data set with {} images".format(self.n_img))
@@ -175,8 +178,8 @@ class TestRunner:
 
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
-            if "eigen_test_files.txt" not in self.args.filenames_file:
-                raise ValueError("For Eigen split evaluation, the test set should be 'eigen_test_files.txt'")
+            if "kitti_eigen_test_files.txt" not in self.args.filenames_file:
+                raise ValueError("For Eigen split evaluation, the test set should be 'kitti_eigen_test_files.txt'")
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 predicted_disps=self.disparities,
                 test_file_path=self.args.filenames_file,

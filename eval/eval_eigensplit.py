@@ -5,7 +5,7 @@ from collections import Counter
 from scipy.interpolate import LinearNDInterpolator
 
 
-from eval.eval_utils import compute_errors
+from evaluate.eval_utils import compute_errors
 
 
 class EvaluateEigen:
@@ -61,15 +61,15 @@ class EvaluateEigen:
 
         pred_disparities = self.predicted_disps
 
-        num_samples = 697
+        #num_samples = 697
         test_files = self.__read_text_lines(
-            self.test_file_path + "eigen_test_files.txt"
+            self.test_file_path
         )
         gt_files, gt_calib, im_sizes, im_files, cams = self.__read_file_data(
             test_files, self.gt_path
         )
 
-        num_test = len(im_files)
+        num_samples = len(im_files)
         gt_depths = []
         pred_depths = []
 
