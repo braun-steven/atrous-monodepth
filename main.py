@@ -1,5 +1,6 @@
 import datetime
 import os
+import logging
 
 from args import parse_args
 from experiment import Experiment, setup_logging
@@ -34,6 +35,9 @@ def main():
                 address=args.notify, subject=subject, message=message, filename=log_file
             )
     except Exception as e:
+        # Log error message
+        logging.warning(str(e))
+
         # Notify exception
         if args.notify:
             subject = f"[MONOLAB {args.tag}] Training Error!"
