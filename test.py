@@ -97,7 +97,7 @@ class TestRunner:
         self.input_height = args.input_height
         self.input_width = args.input_width
 
-        dataset = args.filenames_file.split('_')[0]
+        dataset = args.filenames_file.split('_')[0].split('/')[2]
 
         self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,

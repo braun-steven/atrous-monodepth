@@ -57,12 +57,9 @@ class ImageLoader(Dataset):
 
     def __getitem__(self, idx):
 
-        print("Loading Image from: " + self.dataset)
-
         left_image = Image.open(self.left_paths[idx])
 
         if self.dataset == 'cityscapes':
-            print("Cropping Image")
             left_image = crop_cityscapes(left_image)
 
         if self.mode == "train" or self.mode == "val":
