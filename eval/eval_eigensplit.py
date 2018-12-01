@@ -188,7 +188,7 @@ class EvaluateEigen:
                 splits[0], splits[1], im_id
             )
 
-            if os.path.isfile(data_root + im):
+            if os.path.isfile(data_root + "/" + im):
                 gt_files.append(data_root + "/" + vel)
                 gt_calib.append(data_root + "/" + date + "/")
                 im_sizes.append(cv2.imread(data_root + "/" + im).shape[:2])
