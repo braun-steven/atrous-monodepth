@@ -53,6 +53,7 @@ def image_transforms(
 
 
 def crop_cityscapes(img):
+    print('Cropping CityScape Image')
     return transforms.functional.crop(img, 0, 0, img.size[1]*0.8,img.size[0])
 
 
