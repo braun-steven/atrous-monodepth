@@ -32,7 +32,7 @@ class EvaluateEigen:
         Args:
             -predicted_disp_path (string): path for the predicted disparities
             -gt_path (string: path for the ground truth / root directory of the kitti dataset
-            -test_file_path (string): path where the 'eigen_test_files.txt' can be found
+            -test_file_path (string): path where the 'kitti_kitti_eigen_test_files.txt' can be found
             -crop (string): either 'eigen' or 'garg' depending on which crop to use
             -min_depth (int): minimal depth that will be used
             -max_depth (int): maximal depth that will be used
@@ -189,14 +189,14 @@ class EvaluateEigen:
             )
 
             if os.path.isfile(data_root + im):
-                gt_files.append(data_root + vel)
-                gt_calib.append(data_root + date + "/")
-                im_sizes.append(cv2.imread(data_root + im).shape[:2])
-                im_files.append(data_root + im)
+                gt_files.append(data_root + "/" + vel)
+                gt_calib.append(data_root + "/" + date + "/")
+                im_sizes.append(cv2.imread(data_root + "/" + im).shape[:2])
+                im_files.append(data_root + "/" + im)
                 cams.append(2)
             else:
                 num_probs += 1
-                print("{} missing".format(data_root + im))
+                print("{} missing".format(data_root + "/" + im))
 
         print(num_probs, "files missing")
 
