@@ -122,7 +122,7 @@ class Experiment:
             self.device = f"cuda:{args.cuda_device_ids[0]}"
 
         # Get model
-        model = get_model(
+        self.model = get_model(
             model=args.model,
             n_input_channels=args.input_channels,
             pretrained=args.imagenet_pretrained,
@@ -157,14 +157,16 @@ class Experiment:
                 )
 
                 # Transform model into data parallel model on all selected cuda deviecs
-                model = torch.nn.DataParallel(model, device_ids=cuda_device_ids)
+                self.model = torch.nn.DataParallel(
+                    self.model, device_ids=cuda_device_ids
+                )
             else:
                 logger.warning(
                     f"Attempted to run the experiment on multiple GPUs while only {num_cuda_devices} GPU was available"
                 )
 
         logger.debug(f"Sending model to device: {self.device}")
-        return model.to(self.device)
+        return self.model.to(self.device)
 
     def train(self) -> None:
         """ Train the model for self.args.epochs epochs
