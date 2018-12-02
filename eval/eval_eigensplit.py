@@ -126,7 +126,7 @@ class EvaluateEigen:
                 # if used on gt_size 370x1224 produces a crop of [-218, -3, 44, 1180]
                 if (self.crop == "garg"):
                     print("Apply Garg Crop")
-                    self.crop = np.array(
+                    crop = np.array(
                         [
                             0.40810811 * gt_height,
                             0.99189189 * gt_height,
@@ -136,7 +136,7 @@ class EvaluateEigen:
                     ).astype(np.int32)
                     # crop we found by trial and error to reproduce Eigen NIPS14 results
                 elif self.crop == "eigen":
-                    self.crop = np.array(
+                    crop = np.array(
                         [
                             0.3324324 * gt_height,
                             0.91351351 * gt_height,
@@ -147,7 +147,7 @@ class EvaluateEigen:
 
                 # apply a mask to look only at certain pixels that lie within the crop and are valid pixels to evaluate
                 crop_mask = np.zeros(mask.shape)
-                crop_mask[self.crop[0] : self.crop[1], self.crop[2] : self.crop[3]] = 1
+                crop_mask[crop[0] : crop[1], crop[2] : crop[3]] = 1
                 mask = np.logical_and(mask, crop_mask)
 
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
