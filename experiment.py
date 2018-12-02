@@ -129,7 +129,7 @@ class Experiment:
         )
         logger.info(
             "Training a {} model with {} parameters".format(
-                args.model, sum(p.numel() for p in model.parameters())
+                args.model, sum(p.numel() for p in self.model.parameters())
             )
         )
 
