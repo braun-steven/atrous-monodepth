@@ -24,7 +24,7 @@ class EvaluateEigen:
         predicted_disps,
         gt_path,
         test_file_path,
-        crop="None",
+        crop="garg",
         min_depth=0,
         max_depth=80,
     ):
@@ -124,7 +124,7 @@ class EvaluateEigen:
 
                 # crop used by Garg ECCV16
                 # if used on gt_size 370x1224 produces a crop of [-218, -3, 44, 1180]
-                if self.crop == "garg":
+                if (self.crop == "garg"):
                     print("Apply Garg Crop")
                     self.crop = np.array(
                         [
