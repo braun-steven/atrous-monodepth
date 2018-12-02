@@ -24,7 +24,7 @@ class EvaluateEigen:
         predicted_disps,
         gt_path,
         test_file_path,
-        crop="None",
+        crop="garg",
         min_depth=0,
         max_depth=80,
     ):
@@ -32,7 +32,7 @@ class EvaluateEigen:
         Args:
             -predicted_disp_path (string): path for the predicted disparities
             -gt_path (string: path for the ground truth / root directory of the kitti dataset
-            -test_file_path (string): path where the 'eigen_test_files.txt' can be found
+            -test_file_path (string): path where the 'kitti_kitti_eigen_test_files.txt' can be found
             -crop (string): either 'eigen' or 'garg' depending on which crop to use
             -min_depth (int): minimal depth that will be used
             -max_depth (int): maximal depth that will be used
@@ -43,6 +43,27 @@ class EvaluateEigen:
         self.min_depth = min_depth
         self.max_depth = max_depth
         self.crop = crop
+        self.gt_depths = []
+
+        test_files = self.__read_text_lines(
+            self.test_file_path
+        )
+
+        self.gt_files, self.gt_calib, self.im_sizes, self.im_files, self.cams = self.__read_file_data(
+            test_files, self.gt_path
+        )
+
+        self.num_samples = len(self.im_files)
+        self.camera_ids = []
+
+        # generate the depth map from the ground truth velodyne laser scans
+        for t_id in range(len(self.im_files)):
+            camera_id = self.cams[t_id]  # 2 is left, 3 is right
+            depth = self.__generate_depth_map(
+                self.gt_calib[t_id], self.gt_files[t_id], self.im_sizes[t_id], camera_id, False, True
+            )
+            self.gt_depths.append(depth.astype(np.float32))
+
 
     def evaluate(self):
         """ Evaluates the predicted depth data for the KITI dataset on 697 images of the Eigensplit, by using the Velodyne
@@ -60,38 +81,22 @@ class EvaluateEigen:
         """
 
         pred_disparities = self.predicted_disps
-
-        num_samples = 697
-        test_files = self.__read_text_lines(
-            self.test_file_path + "eigen_test_files.txt"
-        )
-        gt_files, gt_calib, im_sizes, im_files, cams = self.__read_file_data(
-            test_files, self.gt_path
-        )
-
-        num_test = len(im_files)
-        gt_depths = []
         pred_depths = []
 
-        for t_id in range(num_samples):
-            # generate the depth map from the ground truth velodyne laser scans
-            camera_id = cams[t_id]  # 2 is left, 3 is right
-            depth = self.__generate_depth_map(
-                gt_calib[t_id], gt_files[t_id], im_sizes[t_id], camera_id, False, True
-            )
-            gt_depths.append(depth.astype(np.float32))
-
+        for t_id in range(self.num_samples):
+            camera_id = self.cams[t_id]  # 2 is left, 3 is right
             # scale the predicted disparity map to the size of the ground truth and match the scale of the disparities
             disp_pred = cv2.resize(
                 pred_disparities[t_id],
-                (im_sizes[t_id][1], im_sizes[t_id][0]),
+                (self.im_sizes[t_id][1], self.im_sizes[t_id][0]),
                 interpolation=cv2.INTER_LINEAR,
             )
+
             disp_pred = disp_pred * disp_pred.shape[1]
 
             # convert from disparity to depth, by the depth formula (baseline*focal_length / disp_pred)
             focal_length, baseline = self.__get_focal_length_baseline(
-                gt_calib[t_id], camera_id
+                self.gt_calib[t_id], camera_id
             )
             depth_pred = (baseline * focal_length) / disp_pred
             depth_pred[np.isinf(depth_pred)] = 0
@@ -99,17 +104,17 @@ class EvaluateEigen:
             pred_depths.append(depth_pred)
 
         # initialize arrays for all the errors
-        rms = np.zeros(num_samples, np.float32)
-        log_rms = np.zeros(num_samples, np.float32)
-        abs_rel = np.zeros(num_samples, np.float32)
-        sq_rel = np.zeros(num_samples, np.float32)
-        d1_all = np.zeros(num_samples, np.float32)
-        a1 = np.zeros(num_samples, np.float32)
-        a2 = np.zeros(num_samples, np.float32)
-        a3 = np.zeros(num_samples, np.float32)
+        rms = np.zeros(self.num_samples, np.float32)
+        log_rms = np.zeros(self.num_samples, np.float32)
+        abs_rel = np.zeros(self.num_samples, np.float32)
+        sq_rel = np.zeros(self.num_samples, np.float32)
+        d1_all = np.zeros(self.num_samples, np.float32)
+        a1 = np.zeros(self.num_samples, np.float32)
+        a2 = np.zeros(self.num_samples, np.float32)
+        a3 = np.zeros(self.num_samples, np.float32)
 
-        for i in range(num_samples):
-            gt_depth = gt_depths[i]
+        for i in range(self.num_samples):
+            gt_depth = self.gt_depths[i]
             pred_depth = pred_depths[i]
 
             pred_depth[pred_depth < self.min_depth] = self.min_depth
@@ -119,13 +124,13 @@ class EvaluateEigen:
             mask = np.logical_and(gt_depth > self.min_depth, gt_depth < self.max_depth)
 
             # use different crops
-            if self.crop == "garg" or self.crop == "eigen":
+            if self.crop is not "None":
                 gt_height, gt_width = gt_depth.shape
 
                 # crop used by Garg ECCV16
                 # if used on gt_size 370x1224 produces a crop of [-218, -3, 44, 1180]
-                if self.crop == "garg":
-                    self.crop = np.array(
+                if (self.crop == "garg"):
+                    crop = np.array(
                         [
                             0.40810811 * gt_height,
                             0.99189189 * gt_height,
@@ -135,7 +140,7 @@ class EvaluateEigen:
                     ).astype(np.int32)
                     # crop we found by trial and error to reproduce Eigen NIPS14 results
                 elif self.crop == "eigen":
-                    self.crop = np.array(
+                    crop = np.array(
                         [
                             0.3324324 * gt_height,
                             0.91351351 * gt_height,
@@ -146,7 +151,7 @@ class EvaluateEigen:
 
                 # apply a mask to look only at certain pixels that lie within the crop and are valid pixels to evaluate
                 crop_mask = np.zeros(mask.shape)
-                crop_mask[self.crop[0] : self.crop[1], self.crop[2] : self.crop[3]] = 1
+                crop_mask[crop[0] : crop[1], crop[2] : crop[3]] = 1
                 mask = np.logical_and(mask, crop_mask)
 
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
@@ -188,15 +193,15 @@ class EvaluateEigen:
                 splits[0], splits[1], im_id
             )
 
-            if os.path.isfile(data_root + im):
-                gt_files.append(data_root + vel)
-                gt_calib.append(data_root + date + "/")
-                im_sizes.append(cv2.imread(data_root + im).shape[:2])
-                im_files.append(data_root + im)
+            if os.path.isfile(data_root + "/" + im):
+                gt_files.append(data_root + "/" + vel)
+                gt_calib.append(data_root + "/" + date + "/")
+                im_sizes.append(cv2.imread(data_root + "/" + im).shape[:2])
+                im_files.append(data_root + "/" + im)
                 cams.append(2)
             else:
                 num_probs += 1
-                print("{} missing".format(data_root + im))
+                print("{} missing".format(data_root + "/" + im))
 
         print(num_probs, "files missing")
 

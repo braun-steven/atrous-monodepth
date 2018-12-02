@@ -52,6 +52,10 @@ def image_transforms(
         print("Wrong mode")
 
 
+def crop_cityscapes(img):
+    return transforms.functional.crop(img, 0, 0, img.size[1]*0.8,img.size[0])
+
+
 class ResizeImage(object):
     """ Apply torchvision.transforms.Resize() to image (when train=False) or dict of left and right image (train=True)
     """
@@ -177,3 +181,5 @@ class AugmentImagePair(object):
         else:
             sample = {"left_image": left_image, "right_image": right_image}
         return sample
+
+

@@ -2,6 +2,7 @@ import argparse
 import logging
 import torch
 import os
+from os.path import dirname as path_up
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -39,7 +40,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-dir",
-        default="/visinf/projects_students/monolab/results/",
         help="Output directory for all results generated during an experiment run",
     )
     parser.add_argument("--input-height", type=int, help="input height", default=256)
@@ -92,10 +92,17 @@ class TestRunner:
         args.augment_parameters = None
         args.do_augmentation = False
 
+        # setup output directory
+        if args.output_dir is not None:
+            self.output_dir = args.output_dir
+        else:
+            self.output_dir = os.path.join(path_up(path_up(args.model_path)), "test")
+
         # Load data
-        self.output_dir = args.output_dir
         self.input_height = args.input_height
         self.input_width = args.input_width
+
+        dataset = args.filenames_file.split("_")[0].split("/")[2]
 
         self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,
@@ -107,6 +114,7 @@ class TestRunner:
             batch_size=1,
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
+            dataset=dataset,
         )
 
         logging.info("Using a testing data set with {} images".format(self.n_img))
@@ -181,10 +189,6 @@ class TestRunner:
 
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
-            if "eigen_test_files.txt" not in self.args.filenames_file:
-                raise ValueError(
-                    "For Eigen split evaluation, the test set should be 'eigen_test_files.txt'"
-                )
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
                 predicted_disps=self.disparities,
                 test_file_path=self.args.filenames_file,
