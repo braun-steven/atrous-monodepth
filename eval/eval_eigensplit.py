@@ -49,21 +49,20 @@ class EvaluateEigen:
             self.test_file_path
         )
 
-        self.gt_files, self.gt_calib, self.im_sizes, self.im_files, cams = self.__read_file_data(
+        self.gt_files, self.gt_calib, self.im_sizes, self.im_files, self.cams = self.__read_file_data(
             test_files, self.gt_path
         )
 
-        self.num_samples = len(im_files)
+        self.num_samples = len(self.im_files)
         self.camera_ids = []
 
         # generate the depth map from the ground truth velodyne laser scans
         for t_id in range(len(self.im_files)):
-            camera_id = cams[t_id]  # 2 is left, 3 is right
+            camera_id = self.cams[t_id]  # 2 is left, 3 is right
             depth = self.__generate_depth_map(
                 self.gt_calib[t_id], self.gt_files[t_id], self.im_sizes[t_id], camera_id, False, True
             )
             self.gt_depths.append(depth.astype(np.float32))
-            self.camera_ids.append(camera_id)
 
 
     def evaluate(self):
@@ -85,7 +84,7 @@ class EvaluateEigen:
         pred_depths = []
 
         for t_id in range(self.num_samples):
-            camera_id = self.camera_ids[t_id]  # 2 is left, 3 is right
+            camera_id = self.cams[t_id]  # 2 is left, 3 is right
             # scale the predicted disparity map to the size of the ground truth and match the scale of the disparities
             disp_pred = cv2.resize(
                 pred_disparities[t_id],
