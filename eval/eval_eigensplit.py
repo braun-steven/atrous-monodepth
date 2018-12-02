@@ -43,6 +43,28 @@ class EvaluateEigen:
         self.min_depth = min_depth
         self.max_depth = max_depth
         self.crop = crop
+        self.gt_depths = []
+
+        test_files = self.__read_text_lines(
+            self.test_file_path
+        )
+
+        self.gt_files, self.gt_calib, self.im_sizes, self.im_files, cams = self.__read_file_data(
+            test_files, self.gt_path
+        )
+
+        self.num_samples = len(im_files)
+        self.camera_ids = []
+
+        # generate the depth map from the ground truth velodyne laser scans
+        for t_id in range(len(self.im_files)):
+            camera_id = cams[t_id]  # 2 is left, 3 is right
+            depth = self.__generate_depth_map(
+                self.gt_calib[t_id], self.gt_files[t_id], self.im_sizes[t_id], camera_id, False, True
+            )
+            self.gt_depths.append(depth.astype(np.float32))
+            self.camera_ids.append(camera_id)
+
 
     def evaluate(self):
         """ Evaluates the predicted depth data for the KITI dataset on 697 images of the Eigensplit, by using the Velodyne
@@ -60,38 +82,22 @@ class EvaluateEigen:
         """
 
         pred_disparities = self.predicted_disps
-
-        #num_samples = 697
-        test_files = self.__read_text_lines(
-            self.test_file_path
-        )
-        gt_files, gt_calib, im_sizes, im_files, cams = self.__read_file_data(
-            test_files, self.gt_path
-        )
-
-        num_samples = len(im_files)
-        gt_depths = []
         pred_depths = []
 
-        for t_id in range(num_samples):
-            # generate the depth map from the ground truth velodyne laser scans
-            camera_id = cams[t_id]  # 2 is left, 3 is right
-            depth = self.__generate_depth_map(
-                gt_calib[t_id], gt_files[t_id], im_sizes[t_id], camera_id, False, True
-            )
-            gt_depths.append(depth.astype(np.float32))
-
+        for t_id in range(self.num_samples):
+            camera_id = self.camera_ids[t_id]  # 2 is left, 3 is right
             # scale the predicted disparity map to the size of the ground truth and match the scale of the disparities
             disp_pred = cv2.resize(
                 pred_disparities[t_id],
-                (im_sizes[t_id][1], im_sizes[t_id][0]),
+                (self.im_sizes[t_id][1], self.im_sizes[t_id][0]),
                 interpolation=cv2.INTER_LINEAR,
             )
+
             disp_pred = disp_pred * disp_pred.shape[1]
 
             # convert from disparity to depth, by the depth formula (baseline*focal_length / disp_pred)
             focal_length, baseline = self.__get_focal_length_baseline(
-                gt_calib[t_id], camera_id
+                self.gt_calib[t_id], camera_id
             )
             depth_pred = (baseline * focal_length) / disp_pred
             depth_pred[np.isinf(depth_pred)] = 0
@@ -99,14 +105,14 @@ class EvaluateEigen:
             pred_depths.append(depth_pred)
 
         # initialize arrays for all the errors
-        rms = np.zeros(num_samples, np.float32)
-        log_rms = np.zeros(num_samples, np.float32)
-        abs_rel = np.zeros(num_samples, np.float32)
-        sq_rel = np.zeros(num_samples, np.float32)
-        d1_all = np.zeros(num_samples, np.float32)
-        a1 = np.zeros(num_samples, np.float32)
-        a2 = np.zeros(num_samples, np.float32)
-        a3 = np.zeros(num_samples, np.float32)
+        rms = np.zeros(self.num_samples, np.float32)
+        log_rms = np.zeros(self.num_samples, np.float32)
+        abs_rel = np.zeros(self.num_samples, np.float32)
+        sq_rel = np.zeros(self.num_samples, np.float32)
+        d1_all = np.zeros(self.num_samples, np.float32)
+        a1 = np.zeros(self.num_samples, np.float32)
+        a2 = np.zeros(self.num_samples, np.float32)
+        a3 = np.zeros(self.num_samples, np.float32)
 
         for i in range(num_samples):
             gt_depth = gt_depths[i]
@@ -125,7 +131,6 @@ class EvaluateEigen:
                 # crop used by Garg ECCV16
                 # if used on gt_size 370x1224 produces a crop of [-218, -3, 44, 1180]
                 if (self.crop == "garg"):
-                    print("Apply Garg Crop")
                     crop = np.array(
                         [
                             0.40810811 * gt_height,
