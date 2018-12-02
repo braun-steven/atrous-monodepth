@@ -113,8 +113,8 @@ class EvaluateEigen:
         a2 = np.zeros(self.num_samples, np.float32)
         a3 = np.zeros(self.num_samples, np.float32)
 
-        for i in range(num_samples):
-            gt_depth = gt_depths[i]
+        for i in range(self.num_samples):
+            gt_depth = self.gt_depths[i]
             pred_depth = pred_depths[i]
 
             pred_depth[pred_depth < self.min_depth] = self.min_depth
