@@ -119,7 +119,7 @@ class EvaluateEigen:
             mask = np.logical_and(gt_depth > self.min_depth, gt_depth < self.max_depth)
 
             # use different crops
-            if (self.crop == "garg") or (self.crop == "eigen"):
+            if self.crop is not "None":
                 gt_height, gt_width = gt_depth.shape
 
                 # crop used by Garg ECCV16
