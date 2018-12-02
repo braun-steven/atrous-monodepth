@@ -24,6 +24,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--crop",
+        help="Crop that is applied to the images either",
+        type=str
+    )
+
+    parser.add_argument(
         "--eval",
         default="none",
         type=str,
@@ -85,6 +91,7 @@ class Evaluator():
                 gt_path=self.args.data_dir,
                 min_depth=self.args.min_depth,
                 max_depth=self.args.max_depth,
+                crop = self.args.crop
             ).evaluate()
         else:
             raise ValueError("{} is not a valid evaluation procedure.".format(args.eval))

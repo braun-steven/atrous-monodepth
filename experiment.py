@@ -103,7 +103,7 @@ class Experiment:
             num_workers=args.num_workers,
             dataset=self.dataset_train
         )
-        logging.info(f"Using a training data set from{self.dataset_train} with {self.n_img} images")
+        logging.info(f"Using a training data set from {self.dataset_train} with {self.n_img} images")
 
         if "cuda" in self.device:
             torch.cuda.synchronize()
