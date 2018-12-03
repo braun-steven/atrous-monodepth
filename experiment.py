@@ -378,7 +378,7 @@ def adjust_learning_rate(
     optimizer: torch.optim.Optimizer, epoch: int, learning_rate: float
 ):
     """ Sets the learning rate to the initial LR\
-        decayed by 2 every 10 epochs after 30 epochs
+        decayed by factor 0.5 every 10 epochs after 30 epochs
 
     Args:
         optimizer: torch.optim type optimizer
@@ -387,11 +387,8 @@ def adjust_learning_rate(
 
     """
 
-    if 30 <= epoch < 40:
-        lr = learning_rate / 2
-    elif epoch >= 40:
-        lr = learning_rate / 4
-    else:
-        lr = learning_rate
+    if epoch >= 30:
+        lr = learning_rate * (0.5 ** (epoch // 10))
+
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
