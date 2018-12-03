@@ -11,7 +11,7 @@ def main():
     args = parse_args()
 
     # Generate base path: ".../$(args.output_dir)/run-$(date)-$(tag)"
-    base_dir = generate_run_base_dir(args.tag, args.output_dir)
+    base_dir = generate_run_base_dir(args.model, args.tag, args.output_dir)
     log_file = os.path.join(base_dir, "log.txt")
 
     # Setup logging in base_dir/log.txt
@@ -50,10 +50,11 @@ def main():
             )
 
 
-def generate_run_base_dir(tag: str, output_dir: str) -> str:
+def generate_run_base_dir(model_name: str, tag: str, output_dir: str) -> str:
     """
     Generate a base directory for each experiment run.
     Args:
+        model_name (str): Model name
         tag (str): Experiment tag
         output_dir (str): Experiment output directory
 
@@ -62,7 +63,7 @@ def generate_run_base_dir(tag: str, output_dir: str) -> str:
     """
     _date_str = datetime.datetime.today().strftime("%y-%m-%d_%Hh:%Mm")
     tagstr = tag if tag == "" else "_" + tag
-    base_dir = os.path.join(output_dir, f"run_{_date_str}{tagstr}")
+    base_dir = os.path.join(output_dir, f"run_{_date_str}_{model_name}{tagstr}")
     os.makedirs(base_dir)
     return base_dir
 
