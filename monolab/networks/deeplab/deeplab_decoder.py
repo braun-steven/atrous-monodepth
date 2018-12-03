@@ -129,7 +129,7 @@ class SkipConnection(nn.Module):
             bias=False,
         )
         self.bn1 = BatchNorm(num_out_conv2)
-        self.relu = nn.ReLU()
+        self.relu = nn.ELU()
 
         # Conv2d block as of deeplabv3+
         self.last_conv = nn.Sequential(
@@ -142,7 +142,7 @@ class SkipConnection(nn.Module):
                 bias=False,
             ),
             BatchNorm(x_prev_inplanes),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Conv2d(
                 in_channels=x_prev_inplanes,
                 out_channels=x_prev_inplanes,
@@ -152,7 +152,7 @@ class SkipConnection(nn.Module):
                 bias=False,
             ),
             BatchNorm(x_prev_inplanes),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Conv2d(
                 in_channels=x_prev_inplanes,
                 out_channels=num_out_planes,

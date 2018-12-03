@@ -33,7 +33,7 @@ class Bottleneck(nn.Module):
         self.bn2 = BatchNorm(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = BatchNorm(planes * 4)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ELU(inplace=True)
         self.downsample = downsample
         self.stride = stride
         self.dilation = dilation
@@ -102,7 +102,7 @@ class ResNet(nn.Module):
             num_in_layers, 64, kernel_size=7, stride=2, padding=3, bias=False
         )
         self.bn1 = BatchNorm(64)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ELU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(
