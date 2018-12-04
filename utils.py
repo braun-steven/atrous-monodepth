@@ -6,6 +6,7 @@ import collections
 import torch
 
 from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
+from monolab.networks.resnet_reference import Resnet50_md
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
 from monolab.networks.deeplab.deeplab_udisp import DeepLab as DeepLabUpDisp
@@ -72,6 +73,8 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         out_model = MonoDepthResNet18(
             num_in_layers=n_input_channels, pretrained=pretrained
         )
+    elif model == "resnet50_ref":
+        out_model = Resnet50_md(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     elif model == "dummy_model":
