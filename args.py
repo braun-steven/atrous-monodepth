@@ -138,6 +138,49 @@ def parse_args() -> argparse.Namespace:
         "images.",
     )
 
+    kitti_name = "kitti"
+    cityscapes_name = "cityscapes"
+    parser.add_argument(
+        "--dataset-name-train",
+        type=str,
+        choices=[cityscapes_name, kitti_name],
+        help="Define the train dataset name.",
+    )
+    parser.add_argument(
+        "--dataset-name-val",
+        type=str,
+        choices=[cityscapes_name, kitti_name],
+        help="Define the validation dataset name.",
+    )
+
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
+
+    # Detect training dataset name
+    if args.dataset_name_train is None:
+        if kitti_name in args.filenames_file.lower():
+            args.dataset_name_train = kitti_name
+        elif cityscapes_name in args.filenames_file.lower():
+            args.dataset_name_train = cityscapes_name
+        else:
+            raise Exception(
+                f"Usage:\n{parser.format_help()}"
+                f"Could not detect dataset-name-train from "
+                f"filenames file name and argument --dataset-name-train was not "
+                f"explicitly set. "
+            )
+    # Detect validation dataset name
+    if args.dataset_name_val is None:
+        # Try to automatically detect the datasetname
+        if kitti_name in args.val_filenames_file.lower():
+            args.dataset_name_val = kitti_name
+        elif cityscapes_name in args.val_filenames_file.lower():
+            args.dataset_name_val = cityscapes_name
+        else:
+            raise Exception(
+                f"Usage:\n{parser.format_help()}"
+                f"Could not detect dataset-name-train from "
+                f"filenames file name and argument --dataset-name-train was not "
+                f"explicitly set. "
+            )
     return args

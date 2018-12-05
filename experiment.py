@@ -61,7 +61,7 @@ class Experiment:
         )
         logger.debug(f"Using optimizer: {self.optimizer}")
 
-        self.dataset_val = args.val_filenames_file.split("_")[0].split("/")[2]
+        self.dataset_val = args.dataset_name_val
 
         # the validation loader is a train loader but without data augmentation!
         self.val_n_img, self.val_loader = prepare_dataloader(
@@ -83,7 +83,7 @@ class Experiment:
         self.output_dir = args.output_dir
         self.input_height = args.input_height
         self.input_width = args.input_width
-        self.dataset_train = args.filenames_file.split("_")[0].split("/")[2]
+        self.dataset_train = args.dataset_name_train
 
         self.n_img, self.loader = prepare_dataloader(
             root_dir=args.data_dir,
