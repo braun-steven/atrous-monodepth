@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 
@@ -6,6 +7,8 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from .transforms import image_transforms, crop_cityscapes
 
+
+logger = logging.getLogger(__name__)
 
 class ImageLoader(Dataset):
     """ DataSet that reads a single Kitti sequence.
