@@ -34,7 +34,7 @@ then
 fi
 
 # Server idx
-declare -a arr=("06" "07" "08" "09" "10" "20")
+declare -a arr=("01" "03" "04" "05" "06" "07" "08" "09" "10" "20")
 
 # First argument is your username
 BOLD="\e[1m"
