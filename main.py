@@ -5,7 +5,7 @@ import logging
 from args import parse_args
 from experiment import Experiment, setup_logging
 from utils import notify_mail
-
+import traceback
 
 def main():
     args = parse_args()
@@ -36,19 +36,23 @@ def main():
             )
     except Exception as e:
         # Log error message
-        logging.warning(str(e))
+        tbstr = ''.join(traceback.extract_tb(e.__traceback__).format())
+        errormsg = f"Traceback:\n{tbstr}\nError: {e}"
+        logging.error(errormsg)
+
 
         # Notify exception
         if args.notify:
             subject = f"[MONOLAB {args.tag}] Training Error!"
             message = (
                 f"The experiment in {base_dir} has failed. An error occurred "
-                f"during training:\n\n{str(e)}"
+                f"during training:\n\n{errormsg}"
             )
             notify_mail(
                 address=args.notify, subject=subject, message=message, filename=log_file
             )
 
+        raise e
 
 def generate_run_base_dir(model_name: str, tag: str, output_dir: str) -> str:
     """
