@@ -44,6 +44,31 @@ class DummyModel(nn.Module):
         return disp1, disp2, disp3, disp4
 
 
+class DummyModel2(nn.Module):
+    def __init__(self, n_in_layers):
+        super(DummyModel2, self).__init__()
+
+        self.conv1 = nn.Conv2d(
+            in_channels=n_in_layers, out_channels=2**13, kernel_size=3, padding=1
+        )
+        self.elu = nn.ELU()
+        self.disp = get_disp(10)
+
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_uniform_(m.weight)
+
+    def forward(self, input):
+        x = self.conv1(input)
+        x = self.elu(x)
+        disp = self.disp(x)
+
+        result = disp,
+        print(f"Result: {result[0].shape}")
+        return result
+
+
 class get_disp(nn.Module):
     def __init__(self, num_in_layers):
         super(get_disp, self).__init__()

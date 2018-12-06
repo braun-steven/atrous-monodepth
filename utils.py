@@ -10,8 +10,7 @@ from monolab.networks.resnet_reference import Resnet50_md
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
 from monolab.networks.deeplab.deeplab_udisp import DeepLab as DeepLabUpDisp
-from monolab.networks.dummy_model import DummyModel
-
+from monolab.networks.dummy_model import DummyModel, DummyModel2
 
 import os
 import logging
@@ -79,6 +78,8 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     elif model == "dummy_model":
         out_model = DummyModel(n_in_layers=n_input_channels)
+    elif model == "dummy_model2":
+        out_model = DummyModel2(n_in_layers=n_input_channels)
     # elif and so on and so on
     else:
         raise NotImplementedError(f"Unknown model type: {model}")
