@@ -166,13 +166,18 @@ class TestRunner:
 
         logging.info("Finished Testing")
 
-    def evaluate(self):
+    def evaluate(self, postprocessing):
         """ Evaluates the model given either ground truth data or velodyne reprojected data
 
         Returns:
             None
 
         """
+
+        if postprocessing:
+            disparities = self.disparities_pp
+        else:
+            disparities = self.disparities
 
         # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if self.args.eval == "kitti-gt":
@@ -181,7 +186,7 @@ class TestRunner:
                     "For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'"
                 )
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-                predicted_disps=self.disparities,
+                predicted_disps=disparities,
                 gt_path=self.args.data_dir,
                 min_depth=0,
                 max_depth=80,
@@ -190,7 +195,7 @@ class TestRunner:
         # Evaluates on the 697 Eigen Test Files
         elif self.args.eval == "eigen":
             abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-                predicted_disps=self.disparities,
+                predicted_disps=disparities,
                 test_file_path=self.args.filenames_file,
                 gt_path=self.args.data_dir,
                 min_depth=0,
@@ -201,13 +206,15 @@ class TestRunner:
                 "{} is not a valid evaluation procedure.".format(self.args.eval)
             )
 
+
         logging.info(
-            "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
-                "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
+            "{},{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
+                "pp,abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
             )
         )
         logging.info(
-            "{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
+            "{},{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
+                postprocessing,
                 abs_rel.mean(),
                 sq_rel.mean(),
                 rms.mean(),
@@ -268,4 +275,5 @@ if __name__ == "__main__":
     model.test()
 
     if args.eval:
-        model.evaluate()
+        model.evaluate(postprocessing=False)
+        model.evaluate(postprocessing=True)
