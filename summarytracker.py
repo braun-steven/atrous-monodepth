@@ -83,6 +83,9 @@ class SummaryTracker:
         # Original validation image index set
         self._orig_image_dict = set()
 
+        # Save arguments with which the current experiment has been started
+        self._save_args()
+
     def _create_dirs(self):
         """Create necessary directories"""
         for d in [
@@ -293,8 +296,6 @@ class SummaryTracker:
         - Scalar values as JSON
         - Plots
         """
-        # Save arguments with which the current experiment has been started
-        self._save_args()
 
         # Save all scalars to a json for future processing
         self._summary_writer.export_scalars_to_json(

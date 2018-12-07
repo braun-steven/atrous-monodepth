@@ -326,12 +326,13 @@ class Experiment:
         Args:
             epoch (int): Current epoch
         """
-        n_val_images = 10
+        gen_count = 0
+        n_gen_images = 25
 
         with torch.no_grad():
             for (i, data) in enumerate(self.val_loader):
-                # Stop after n_val_images
-                if i >= n_val_images:
+                # Stop after n_gen_images
+                if gen_count >= n_gen_images:
                     break
 
                 # Get the inputs
@@ -339,14 +340,20 @@ class Experiment:
                 left = data["left_image"]
                 # Do a forward pass
                 disps = self.model(left)
-                disp = disps[0][:, 0, :, :].unsqueeze(1)  # Get left disparity
-                disp_i = disp[0].squeeze().cpu().numpy()  # Use first left disparity
-                self.summary.add_disparity_map(
-                    epoch=epoch,
-                    disp=torch.Tensor(disp_i),
-                    idx=i,
-                    input_img=left[0],  # Use first image in batch
-                )
+
+                while gen_count < n_gen_images and gen_count < self.args.batch_size:
+                    batch_idx = gen_count % self.args.batch_size
+                    largest_disp_map = disps[0]
+                    image_in_batch = largest_disp_map[batch_idx]
+                    left_disp = image_in_batch[0]
+                    d = left_disp.cpu().numpy()
+                    self.summary.add_disparity_map(
+                        epoch=epoch,
+                        disp=torch.Tensor(d),
+                        idx=gen_count,
+                        input_img=left[batch_idx],
+                    )
+                    gen_count += 1
 
     def save(self, path: str) -> None:
         """ Save a .pth state dict from self.model
