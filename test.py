@@ -209,7 +209,7 @@ class TestRunner:
 
         logging.info(
             "{},{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
-                "pp,abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
+                "pp", "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
             )
         )
         logging.info(
