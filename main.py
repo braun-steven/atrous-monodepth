@@ -6,6 +6,7 @@ from args import parse_args
 from experiment import Experiment, setup_logging
 from utils import notify_mail
 import traceback
+from eval.eval_utils import results_to_csv_str
 
 def main():
     args = parse_args()
@@ -22,6 +23,7 @@ def main():
         # Run experiment
         experiment = Experiment(args, base_dir=base_dir)
         experiment.train()
+        experiment.test()
 
         # Notify the user via e-mail and send the log file
         if args.notify is not None:
@@ -29,6 +31,8 @@ def main():
             message = (
                 f"The experiment in {base_dir} has finished training and "
                 f"took {experiment.time_str}. Best loss: {experiment.best_val_loss}"
+                f"Test results: \n"
+                f"{results_to_csv_str(experiment.test_result, experiment.test_result_pp)}"
             )
 
             notify_mail(

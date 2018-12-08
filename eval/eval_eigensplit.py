@@ -5,7 +5,7 @@ from collections import Counter
 from scipy.interpolate import LinearNDInterpolator
 
 
-from eval.eval_utils import compute_errors
+from eval.eval_utils import compute_errors, Result
 
 
 class EvaluateEigen:
@@ -45,9 +45,7 @@ class EvaluateEigen:
         self.crop = crop
         self.gt_depths = []
 
-        test_files = self.__read_text_lines(
-            self.test_file_path
-        )
+        test_files = self.__read_text_lines(self.test_file_path)
 
         self.gt_files, self.gt_calib, self.im_sizes, self.im_files, self.cams = self.__read_file_data(
             test_files, self.gt_path
@@ -60,10 +58,14 @@ class EvaluateEigen:
         for t_id in range(len(self.im_files)):
             camera_id = self.cams[t_id]  # 2 is left, 3 is right
             depth = self.__generate_depth_map(
-                self.gt_calib[t_id], self.gt_files[t_id], self.im_sizes[t_id], camera_id, False, True
+                self.gt_calib[t_id],
+                self.gt_files[t_id],
+                self.im_sizes[t_id],
+                camera_id,
+                False,
+                True,
             )
             self.gt_depths.append(depth.astype(np.float32))
-
 
     def evaluate(self):
         """ Evaluates the predicted depth data for the KITI dataset on 697 images of the Eigensplit, by using the Velodyne
@@ -71,13 +73,7 @@ class EvaluateEigen:
 
 
         Returns:
-            -abs_rel
-            -sq_rel
-            -rmse
-            -rmse_log
-            -a1
-            -a2
-            -a3
+            Evaluation result
         """
 
         pred_disparities = self.predicted_disps
@@ -129,7 +125,7 @@ class EvaluateEigen:
 
                 # crop used by Garg ECCV16
                 # if used on gt_size 370x1224 produces a crop of [-218, -3, 44, 1180]
-                if (self.crop == "garg"):
+                if self.crop == "garg":
                     crop = np.array(
                         [
                             0.40810811 * gt_height,
@@ -157,8 +153,15 @@ class EvaluateEigen:
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
                 i
             ] = compute_errors(gt_depth[mask], pred_depth[mask])
-
-        return abs_rel, sq_rel, rms, log_rms, a1, a2, a3
+        return Result(
+            abs_rel=abs_rel,
+            sq_rel=sq_rel,
+            rms=rms,
+            log_rms=log_rms,
+            a1=a1,
+            a2=a2,
+            a3=a3,
+        )
 
     def __read_file_data(self, files, data_root):
         """ Reads in the files for evaluation of ground truth data

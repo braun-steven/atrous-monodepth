@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 
-from eval.eval_utils import compute_errors
+from eval.eval_utils import compute_errors, Result
 
 
 class EvaluateKittiGT:
@@ -46,13 +46,7 @@ class EvaluateKittiGT:
             pred: numpy array (2D) of the predicted depth
 
         Returns:
-            -abs_rel
-            -sq_rel
-            -rmse
-            -rmse_log
-            -a1
-            -a2
-            -a3
+            Evaluation result
         """
 
         pred_disparities = self.predicted_disps
@@ -94,7 +88,15 @@ class EvaluateKittiGT:
                 i
             ] = compute_errors(gt_depth[mask], pred_depth[mask])
 
-        return abs_rel, sq_rel, rms, log_rms, a1, a2, a3
+        return Result(
+            abs_rel=abs_rel,
+            sq_rel=sq_rel,
+            rms=rms,
+            log_rms=log_rms,
+            a1=a1,
+            a2=a2,
+            a3=a3,
+        )
 
     def __load_gt_disp_kitti(self, path):
         """

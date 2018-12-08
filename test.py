@@ -1,15 +1,22 @@
 import argparse
 import logging
+from typing import Tuple
+
 import torch
 import os
 from os.path import dirname as path_up
 import matplotlib.pyplot as plt
 import numpy as np
 
+from eval.eval_utils import Result, results_to_csv_str
 from utils import get_model, to_device, setup_logging
 from monolab.data_loader import prepare_dataloader
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
+from torch import nn
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -17,10 +24,11 @@ def parse_args() -> argparse.Namespace:
         description="PyTorch Monolab Testing: Monodepth x " "DeepLabv3+"
     )
     parser.add_argument(
-        "--filenames-file",
+        "--test-filenames-file",
         help="File that contains a list of filenames for testing. \
                             Each line should contain left and right image paths \
                             separated by a space.",
+        metavar="FILE",
     )
     parser.add_argument(
         "--model",
@@ -37,10 +45,12 @@ def parse_args() -> argparse.Namespace:
         help="path to the dataset folder. \
                             The filenames given in filenames_file \
                             are relative to this path.",
+        metavar="DIR",
     )
     parser.add_argument(
         "--output-dir",
         help="Output directory for all results generated during an experiment run",
+        metavar="DIR",
     )
     parser.add_argument("--input-height", type=int, help="input height", default=256)
     parser.add_argument("--input-width", type=int, help="input width", default=512)
@@ -75,177 +85,119 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-class TestRunner:
-    def __init__(self, args):
-        self.args = args
+def run_test(model: nn.Module, device, result_dir, args):
+    """
+    Run the test procedure, that is: Generate disparity maps for all test files and
+    evaluate the model on the given groun-truth data.
+    Args:
+        model: Model to be tested
+        device: Execution device
+        result_dir: Result directory (for predictions)
+        args: Commandline arguments
+    """
+    output_dir = result_dir
 
-        # Set up model
-        self.device = args.device
-        self.model = get_model(args.model, n_input_channels=args.input_channels)
+    preds_dir = os.path.join(output_dir, "preds")
+    os.makedirs(preds_dir, exist_ok=True)
 
-        if args.use_multiple_gpu:
-            self.model = torch.nn.DataParallel(self.model)
+    # Load data
+    input_height = args.input_height
+    input_width = args.input_width
 
-        self.load(args.model_path)
-        self.model = self.model.to(self.device)
+    dataset = args.test_filenames_file.split("_")[0].split("/")[2]
 
-        args.augment_parameters = None
-        args.do_augmentation = False
+    n_img, loader = prepare_dataloader(
+        root_dir=args.data_dir,
+        filenames_file=args.test_filenames_file,
+        mode="test",
+        augment_parameters=None,
+        do_augmentation=False,
+        shuffle=False,
+        batch_size=1,
+        size=(args.input_height, args.input_width),
+        num_workers=args.num_workers,
+        dataset=dataset,
+    )
 
-        # setup output directory
-        if args.output_dir is not None:
-            self.output_dir = args.output_dir
-        else:
-            self.output_dir = os.path.join(path_up(path_up(args.model_path)), "test")
+    logging.info("Using a testing data set with {} images".format(n_img))
 
-        # Load data
-        self.input_height = args.input_height
-        self.input_width = args.input_width
+    if "cuda" in device:
+        torch.cuda.synchronize()
 
-        dataset = args.filenames_file.split("_")[0].split("/")[2]
-
-        self.n_img, self.loader = prepare_dataloader(
-            root_dir=args.data_dir,
-            filenames_file=args.filenames_file,
-            mode="test",
-            augment_parameters=None,
-            do_augmentation=False,
-            shuffle=False,
-            batch_size=1,
-            size=(args.input_height, args.input_width),
-            num_workers=args.num_workers,
-            dataset=dataset,
-        )
-
-        logging.info("Using a testing data set with {} images".format(self.n_img))
-
-        if "cuda" in self.device:
-            torch.cuda.synchronize()
-
-    def test(self):
-        """ Test the model.
-
-        Returns:
-            None
-        """
-
-        self.model.eval()
-        self.disparities = np.zeros(
-            (self.n_img, self.input_height, self.input_width), dtype=np.float32
-        )
-        self.disparities_pp = np.zeros(
-            (self.n_img, self.input_height, self.input_width), dtype=np.float32
-        )
-        with torch.no_grad():
-            for (i, data) in enumerate(self.loader):
-                # Get the inputs
-                data = to_device(data, self.device)
-                left = data.squeeze()
-                # Do a forward pass
-                disps = self.model(left)
-                disp = disps[0][:, 0, :, :].unsqueeze(1)
-                self.disparities[i] = disp[0].squeeze().cpu().numpy()
-                self.disparities_pp[i] = post_process_disparity(
-                    disps[0][:, 0, :, :].cpu().numpy()
-                )
-
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-        np.save(os.path.join(self.output_dir, "disparities.npy"), self.disparities)
-        np.save(
-            os.path.join(self.output_dir, "disparities_pp.npy"), self.disparities_pp
-        )
-
-        for i in range(self.disparities.shape[0]):
-            plt.imsave(
-                os.path.join(self.output_dir, "pred_" + str(i) + ".png"),
-                self.disparities[i],
-                cmap="plasma",
+    model.eval()
+    disparities = np.zeros((n_img, input_height, input_width), dtype=np.float32)
+    disparities_pp = np.zeros((n_img, input_height, input_width), dtype=np.float32)
+    with torch.no_grad():
+        for (i, data) in enumerate(loader):
+            # Get the inputs
+            data = to_device(data, device)
+            left = data.squeeze()
+            # Do a forward pass
+            disps = model(left)
+            disp = disps[0][:, 0, :, :].unsqueeze(1)
+            disparities[i] = disp[0].squeeze().cpu().numpy()
+            disparities_pp[i] = post_process_disparity(
+                disps[0][:, 0, :, :].cpu().numpy()
             )
 
-        logging.info("Finished Testing")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    def evaluate(self, postprocessing):
-        """ Evaluates the model given either ground truth data or velodyne reprojected data
+    np.save(os.path.join(output_dir, "disparities.npy"), disparities)
+    np.save(os.path.join(output_dir, "disparities_pp.npy"), disparities_pp)
 
-        Returns:
-            None
+    for i in range(disparities.shape[0]):
+        plt.imsave(
+            os.path.join(preds_dir, str(i).zfill(3) + ".png"),
+            disparities[i],
+            cmap="plasma",
+        )
 
-        """
+    logging.info("Finished Testing")
+    eval_result = _evaluate_scores(disparities, args)
+    eval_result_pp = _evaluate_scores(disparities_pp, args)
 
-        if postprocessing:
-            disparities = self.disparities_pp
-        else:
-            disparities = self.disparities
+    # Save scores
+    with open(os.path.join(output_dir, "scores.csv"), "w") as f:
+        f.write(results_to_csv_str(eval_result, eval_result_pp))
 
-        # Evaluates on the 200 Kitti Stereo 2015 Test Files
-        if self.args.eval == "kitti-gt":
-            if "kitti_stereo_2015_test_files" not in self.args.filenames_file:
-                raise ValueError(
-                    "For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'"
-                )
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-                predicted_disps=disparities,
-                gt_path=self.args.data_dir,
-                min_depth=0,
-                max_depth=80,
-            ).evaluate()
+    return eval_result, eval_result_pp
 
+def _evaluate_scores(disparities, args):
+    """ Evaluates the model given either ground truth data or velodyne reprojected data
+
+    Returns:
+        None
+
+    """
+
+    # Evaluates on the 200 Kitti Stereo 2015 Test Files
+    if args.eval == "kitti-gt":
+        if "kitti_stereo_2015_test_files" not in args.test_filenames_file:
+            raise ValueError(
+                "For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'"
+            )
+        result = EvaluateKittiGT(
+            predicted_disps=disparities,
+            gt_path=args.data_dir,
+            min_depth=0,
+            max_depth=80,
+        ).evaluate()
+
+    elif args.eval == "eigen":
         # Evaluates on the 697 Eigen Test Files
-        elif self.args.eval == "eigen":
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-                predicted_disps=disparities,
-                test_file_path=self.args.filenames_file,
-                gt_path=self.args.data_dir,
-                min_depth=0,
-                max_depth=80,
-            ).evaluate()
-        else:
-            logging.warning(
-                "{} is not a valid evaluation procedure.".format(self.args.eval)
-            )
+        result = EvaluateEigen(
+            predicted_disps=disparities,
+            test_file_path=args.test_filenames_file,
+            gt_path=args.data_dir,
+            min_depth=0,
+            max_depth=80,
+        ).evaluate()
+    else:
+        logger.error("{} is not a valid evaluation procedure.".format(args.eval))
+        raise Exception(f"Invalid evaluation procedure: {args.eval}")
 
-
-        logging.info(
-            "{},{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(
-                "pp", "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
-            )
-        )
-        logging.info(
-            "{},{:10.4f}, {:10.4f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}, {:10.3f}".format(
-                postprocessing,
-                abs_rel.mean(),
-                sq_rel.mean(),
-                rms.mean(),
-                log_rms.mean(),
-                a1.mean(),
-                a2.mean(),
-                a3.mean(),
-            )
-        )
-
-    def save(self, path: str) -> None:
-        """ Save a .pth state dict from self.model
-
-        Args:
-            path: path to .pth state dict file
-
-        Returns:
-            None
-        """
-        torch.save(self.model.state_dict(), path)
-
-    def load(self, path: str) -> None:
-        """ Load a .pth state dict into self.model
-
-        Args:
-            path: path to .pth state dict file
-
-        Returns:
-            None
-        """
-        self.model.load_state_dict(torch.load(path, map_location=self.device))
+    return result
 
 
 def post_process_disparity(disp: np.ndarray) -> np.ndarray:
@@ -271,9 +223,17 @@ if __name__ == "__main__":
     args = parse_args()
     setup_logging(level=args.log_level, filename=args.log_file)
 
-    model = TestRunner(args)
-    model.test()
+    model = get_model(args.model, n_input_channels=args.input_channels)
 
-    if args.eval:
-        model.evaluate(postprocessing=False)
-        model.evaluate(postprocessing=True)
+    if args.use_multiple_gpu:
+        model = torch.nn.DataParallel(model)
+
+    model.load_state_dict(torch.load(args.model_path, map_location=args.device))
+    model = model.to(args.device)
+
+    run_test(
+        model=model,
+        args=args,
+        device=args.device,
+        result_dir=os.path.join(args.output_dir, "test"),
+    )

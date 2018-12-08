@@ -1,4 +1,5 @@
 import argparse
+import os
 
 
 def parse_args() -> argparse.Namespace:
@@ -12,18 +13,21 @@ def parse_args() -> argparse.Namespace:
         help="path to the dataset folder. \
                         The filenames given in filenames_file \
                         are relative to this path.",
+        metavar="DIR",
     )
     parser.add_argument(
         "--filenames-file",
         help="File that contains a list of filenames for training. \
                         Each line should contain left and right image paths \
                         separated by a space.",
+        metavar="FILE",
     )
     parser.add_argument(
         "--val-filenames-file",
         help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
                             separated by a space.",
+        metavar="FILE",
     )
     parser.add_argument(
         "--model",
@@ -36,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--checkpoint",
         help="Checkpoint of previously trained model to start from (used for pretraining on a different dataset)",
+        metavar="FILE",
     )
     parser.add_argument(
         "--imagenet-pretrained",
@@ -46,6 +51,7 @@ def parse_args() -> argparse.Namespace:
         "--output-dir",
         default="/visinf/projects_students/monolab/results/",
         help="Output directory for all results generated during an experiment run",
+        metavar="DIR",
     )
     parser.add_argument("--input-height", type=int, help="input height", default=256)
     parser.add_argument("--input-width", type=int, help="input width", default=512)
@@ -151,6 +157,21 @@ def parse_args() -> argparse.Namespace:
         type=str,
         choices=[cityscapes_name, kitti_name],
         help="Define the validation dataset name.",
+    )
+
+    parser.add_argument(
+        "--eval",
+        default="none",
+        type=str,
+        help="Either evaluate on eigensplit or on kitti gt",
+        choices=["kitti-gt", "eigen", "none"],
+    )
+    parser.add_argument(
+        "--test-filenames-file",
+        help="File that contains a list of filenames for testing. \
+                            Each line should contain left and right image paths \
+                            separated by a space.",
+        metavar="FILE",
     )
 
     parser.add_argument("--log-file", default="monolab.log", help="Log file")

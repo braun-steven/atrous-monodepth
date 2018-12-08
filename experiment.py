@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import time
 from argparse import Namespace
@@ -7,6 +9,7 @@ import torch
 from summarytracker import SummaryTracker
 from monolab.data_loader import prepare_dataloader
 from monolab.loss import MonodepthLoss
+from test import run_test
 from utils import get_model, setup_logging, notify_mail, to_device, time_delta_now
 import logging
 
@@ -32,6 +35,7 @@ class Experiment:
             torch.cuda.manual_seed_all(args.seed)
 
         self.args = args
+        self.base_dir = base_dir
 
         self.loss_names = dict(
             full="monodepth-loss",
@@ -379,6 +383,15 @@ class Experiment:
             None
         """
         self.model.load_state_dict(torch.load(path, map_location=self.device))
+
+    def test(self):
+        # Run test
+        self.test_result, self.test_result_pp = run_test(
+            model=self.model,
+            args=self.args,
+            device=self.device,
+            result_dir=os.path.join(self.base_dir, "test"),
+        )
 
 
 def adjust_learning_rate(
