@@ -322,7 +322,7 @@ class Experiment:
 
         # Store best validation loss
         self.best_val_loss = best_val_loss
-        self.time_str = time_delta_now(train_start_time)
+        self.training_time = time_delta_now(train_start_time)
 
     def gen_val_disp_maps(self, epoch: int):
         """

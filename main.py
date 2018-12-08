@@ -8,6 +8,8 @@ from utils import notify_mail
 import traceback
 from eval.eval_utils import results_to_csv_str
 
+logger = logging.getLogger(__name__)
+
 def main():
     args = parse_args()
 
@@ -25,14 +27,23 @@ def main():
         experiment.train()
         experiment.test()
 
+        test_res_str = results_to_csv_str(experiment.test_result,
+                                     experiment.test_result_pp)
+
+        logger.info("Test results: ")
+        logger.info(test_res_str)
+
+        logger.info("Training took ", experiment.training_time)
+
+
         # Notify the user via e-mail and send the log file
         if args.notify is not None:
             subject = f"[MONOLAB {args.tag}] Training Finished!"
             message = (
                 f"The experiment in {base_dir} has finished training and "
-                f"took {experiment.time_str}. Best loss: {experiment.best_val_loss}"
+                f"took {experiment.training_time}. Best loss: {experiment.best_val_loss}"
                 f"Test results: \n"
-                f"{results_to_csv_str(experiment.test_result, experiment.test_result_pp)}"
+                f"{ test_res_str }"
             )
 
             notify_mail(
@@ -42,7 +53,7 @@ def main():
         # Log error message
         tbstr = ''.join(traceback.extract_tb(e.__traceback__).format())
         errormsg = f"Traceback:\n{tbstr}\nError: {e}"
-        logging.error(errormsg)
+        logger.error(errormsg)
 
 
         # Notify exception
