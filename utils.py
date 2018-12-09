@@ -159,6 +159,13 @@ def time_delta_now(ts: float) -> str:
         ts (float): Timestamp
 
     Returns:
-        Human readable timestring (%H:%M:%S)
+        Human readable timestring
     """
-    return datetime.utcfromtimestamp(time.time() - ts).strftime("%H:%M:%S")
+    a = ts
+    b = time.time()  # current epoch time
+    c = b - a  # seconds
+    days = round(c // 86400)
+    hours = round(c // 3600 % 24)
+    minutes = round(c // 60 % 60)
+    seconds = round(c % 60)
+    return f"{days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
