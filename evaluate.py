@@ -9,7 +9,6 @@ def parse_args() -> argparse.Namespace:
         description="PyTorch Monolab Evaluating: Monodepth x " "DeepLabv3+"
     )
 
-
     parser.add_argument(
         "--disp-file",
         help="File that contains the model output disparities as .npy file",
@@ -24,9 +23,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--crop",
-        help="Crop that is applied to the images either",
-        type=str
+        "--crop", help="Crop that is applied to the images either", type=str
     )
 
     parser.add_argument(
@@ -48,22 +45,21 @@ def parse_args() -> argparse.Namespace:
         "--min-depth",
         default=0,
         type=int,
-        help="the minimum depth that is used for evaluation"
+        help="the minimum depth that is used for evaluation",
     )
-
 
     parser.add_argument(
         "--max-depth",
         default=80,
         type=int,
-        help="the maximum depth that is used for evaluation"
+        help="the maximum depth that is used for evaluation",
     )
 
     args = parser.parse_args()
     return args
 
 
-class Evaluator():
+class Evaluator:
     def __init__(self, args):
         self.args = args
 
@@ -73,31 +69,44 @@ class Evaluator():
         # Evaluates on the 200 Kitti Stereo 2015 Test Files
         if args.eval == "kitti-gt":
             if "kitti_stereo_2015_test_files" not in self.args.filenames_file:
-                raise ValueError("For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'")
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateKittiGT(
-                predicted_disps=disparities,
-                gt_path=self.args.data_dir,
-                min_depth=self.args.min_depth,
-                max_depth=self.args.max_depth,
-            ).evaluate()
+                raise ValueError(
+                    "For KITTI GT evaluation, the test set should be 'kitti_stereo_2015_test_files.txt'"
+                )
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = (
+                EvaluateKittiGT(
+                    predicted_disps=disparities,
+                    gt_path=self.args.data_dir,
+                    min_depth=self.args.min_depth,
+                    max_depth=self.args.max_depth,
+                )
+                .evaluate()
+                .values()
+            )
 
         # Evaluates on the 697 Eigen Test Files
         elif args.eval == "eigen":
             if "kitti_eigen_test_files.txt" not in self.args.filenames_file:
-                raise ValueError("For Eigen split evaluation, the test set should be 'kitti_eigen_test_files.txt'")
-            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = EvaluateEigen(
-                predicted_disps=disparities,
-                test_file_path=self.args.filenames_file,
-                gt_path=self.args.data_dir,
-                min_depth=self.args.min_depth,
-                max_depth=self.args.max_depth,
-                crop = self.args.crop
-            ).evaluate()
+                raise ValueError(
+                    "For Eigen split evaluation, the test set should be 'kitti_eigen_test_files.txt'"
+                )
+            abs_rel, sq_rel, rms, log_rms, a1, a2, a3 = (
+                EvaluateEigen(
+                    predicted_disps=disparities,
+                    test_file_path=self.args.filenames_file,
+                    gt_path=self.args.data_dir,
+                    min_depth=self.args.min_depth,
+                    max_depth=self.args.max_depth,
+                    crop=self.args.crop,
+                )
+                .evaluate()
+                .values()
+            )
         else:
-            raise ValueError("{} is not a valid evaluation procedure.".format(args.eval))
+            raise ValueError(
+                "{} is not a valid evaluation procedure.".format(args.eval)
+            )
 
-
-        #TODO maybe do this with logging?
+        # TODO maybe do this with logging?
 
         print(
             "{:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}".format(

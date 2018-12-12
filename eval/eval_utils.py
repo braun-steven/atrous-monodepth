@@ -112,3 +112,19 @@ class Result:
             self.a2.mean(),
             self.a3.mean(),
         )
+
+    def values(self):
+        """ results as a list
+
+        Returns: a list containing abs_rel, sq_rel, rms, log_rms, a1, a2, a3
+
+        """
+        return [
+            self.abs_rel,
+            self.sq_rel,
+            self.rms,
+            self.log_rms,
+            self.a1,
+            self.a2,
+            self.a3,
+        ]
