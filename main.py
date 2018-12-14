@@ -10,6 +10,7 @@ from eval.eval_utils import results_to_csv_str
 
 logger = logging.getLogger(__name__)
 
+
 def main():
     args = parse_args()
 
@@ -27,14 +28,14 @@ def main():
         experiment.train()
         experiment.test()
 
-        test_res_str = results_to_csv_str(experiment.test_result,
-                                     experiment.test_result_pp)
+        test_res_str = results_to_csv_str(
+            experiment.test_result, experiment.test_result_pp
+        )
 
         logger.info("Test results: ")
         logger.info(test_res_str)
 
-        logger.info("Training took ", experiment.training_time)
-
+        logger.info("Training took {}".format(experiment.training_time))
 
         # Notify the user via e-mail and send the log file
         if args.notify is not None:
@@ -51,10 +52,9 @@ def main():
             )
     except Exception as e:
         # Log error message
-        tbstr = ''.join(traceback.extract_tb(e.__traceback__).format())
+        tbstr = "".join(traceback.extract_tb(e.__traceback__).format())
         errormsg = f"Traceback:\n{tbstr}\nError: {e}"
         logger.error(errormsg)
-
 
         # Notify exception
         if args.notify:
@@ -68,6 +68,7 @@ def main():
             )
 
         raise e
+
 
 def generate_run_base_dir(model_name: str, tag: str, output_dir: str) -> str:
     """
