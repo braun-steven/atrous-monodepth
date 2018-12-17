@@ -89,6 +89,7 @@ def parse_args() -> argparse.Namespace:
         help="lowest and highest values for gamma,\
                         brightness and color respectively",
     )
+    parser.add_argument("--batchnorm", default=True, help="Use nn.BatchNorm2d")
     parser.add_argument(
         "--input-channels",
         default=3,

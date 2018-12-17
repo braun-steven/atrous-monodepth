@@ -19,6 +19,7 @@ class DeepLab(nn.Module):
         output_stride=16,
         freeze_bn=False,
         pretrained=False,
+        BatchNorm=nn.BatchNorm2d,
     ):
         super(DeepLab, self).__init__()
 
@@ -30,6 +31,7 @@ class DeepLab(nn.Module):
                 output_stride=output_stride,
                 num_in_layers=num_in_layers,
                 pretrained=pretrained,
+                BatchNorm=BatchNorm,
             )
         elif backbone == "xception":
             self.backbone = Xception(
@@ -41,7 +43,7 @@ class DeepLab(nn.Module):
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
         # ASPP module
-        self.aspp = ASPP(backbone, output_stride, BatchNorm=nn.BatchNorm2d)
+        self.aspp = ASPP(backbone, output_stride, BatchNorm=BatchNorm)
 
         # Decoder module
         if backbone == "resnet":

@@ -158,11 +158,12 @@ class ResNet(nn.Module):
             dilation: Atrous rate
         :return: Sequential model
         """
+
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(
-                    self.inplanes,
+                    planes * block.expansion,
                     planes * block.expansion,
                     kernel_size=1,
                     stride=stride,
@@ -172,12 +173,42 @@ class ResNet(nn.Module):
             )
 
         layers = []
+
+        layers.append(
+            block(
+                inplanes=self.inplanes,
+                planes=planes,
+                downsample=nn.Conv2d(
+                    self.inplanes,
+                    block.expansion * planes,
+                    kernel_size=1,
+                    stride=1,
+                    bias=False,
+                ),
+                BatchNorm=BatchNorm,
+            )
+        )
+
+        self.inplanes = planes * block.expansion
+        for i in range(1, num_blocks - 1):
+            layers.append(
+                block(
+                    inplanes=self.inplanes,
+                    planes=planes,
+                    downsample=nn.Conv2d(
+                        self.inplanes,
+                        block.expansion * planes,
+                        kernel_size=1,
+                        stride=1,
+                        bias=False,
+                    ),
+                    BatchNorm=BatchNorm,
+                )
+            )
+
         layers.append(
             block(self.inplanes, planes, stride, dilation, downsample, BatchNorm)
         )
-        self.inplanes = planes * block.expansion
-        for i in range(1, num_blocks):
-            layers.append(block(self.inplanes, planes, BatchNorm=BatchNorm))
 
         return nn.Sequential(*layers)
 
@@ -224,7 +255,9 @@ MODEL_URLS = {
 }
 
 
-def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
+def ResNet101(
+    output_stride: int, num_in_layers=3, pretrained=False, BatchNorm=nn.BatchNorm2d
+) -> ResNet:
     """Constructs a ResNet-101 model.
     Args:
         output_stride (int): input_size / output_size
@@ -232,14 +265,20 @@ def ResNet101(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 23, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
+        [3, 4, 23, 3],
+        output_stride,
+        num_in_layers=num_in_layers,
+        block=Bottleneck,
+        BatchNorm=BatchNorm,
     )
     if pretrained:
         model.load_pretrained_model(MODEL_URLS["resnet101"])
     return model
 
 
-def ResNet50(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
+def ResNet50(
+    output_stride: int, num_in_layers=3, pretrained=False, BatchNorm=nn.BatchNorm2d
+) -> ResNet:
     """Constructs a ResNet-50 model.
     Args:
         output_stride (int): input_size / output_size
@@ -247,14 +286,20 @@ def ResNet50(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [3, 4, 6, 3], output_stride, num_in_layers=num_in_layers, block=Bottleneck
+        [3, 4, 6, 3],
+        output_stride,
+        num_in_layers=num_in_layers,
+        block=Bottleneck,
+        BatchNorm=BatchNorm,
     )
     if pretrained:
         model.load_pretrained_model(MODEL_URLS["resnet50"])
     return model
 
 
-def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
+def ResNet18(
+    output_stride: int, num_in_layers=3, pretrained=False, BatchNorm=nn.BatchNorm2d
+) -> ResNet:
     """Constructs a ResNet-18 model.
     Args:
         output_stride (int): input_size / output_size
@@ -262,7 +307,11 @@ def ResNet18(output_stride: int, num_in_layers=3, pretrained=False) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(
-        [2, 2, 2, 2], output_stride, num_in_layers=num_in_layers, block=Bottleneck
+        [2, 2, 2, 2],
+        output_stride,
+        num_in_layers=num_in_layers,
+        block=Bottleneck,
+        BatchNorm=BatchNorm,
     )
     if pretrained:
         model.load_pretrained_model(MODEL_URLS["resnet18"])
@@ -275,14 +324,17 @@ if __name__ == "__main__":
     in_size = 512
     x = torch.rand(1, 3, in_size, in_size)
 
-    for out_stride in [16, 32, 64]:
+    for out_stride in [64]:
         net = ResNet(block=Bottleneck, layers=[3, 4, 6, 3], output_stride=out_stride)
 
         y = net.forward(x)
 
         print("Output stride: {}".format(out_stride))
+        print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+
         for i, yi in enumerate(y):
-            print("Skip{}".format(i))
-            print("Stride = {}".format(in_size / yi.size()[3]))
-            print("Dimension = {}".format(yi.size()[1]))
+            # print("Skip{}".format(i))
+            # print("Stride = {}".format(in_size / yi.size()[3]))
+            # print("Dimension = {}".format(yi.size()[1]))
+            pass
         print("\n")

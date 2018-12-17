@@ -47,7 +47,9 @@ def to_device(
         raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
 
 
-def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Module:
+def get_model(
+    model: str, n_input_channels=3, pretrained=False, batchnorm=True
+) -> torch.nn.Module:
     """
     Get model via name
     Args:
@@ -56,9 +58,17 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
     Returns:
         Instantiated model
     """
+    if batchnorm:
+        BatchNorm = torch.nn.BatchNorm2d
+    else:
+        BatchNorm = lambda x: x
     if model == "deeplab":
         out_model = DeepLab(
-            num_in_layers=3, output_stride=16, backbone="resnet", pretrained=pretrained
+            num_in_layers=3,
+            output_stride=16,
+            backbone="resnet",
+            pretrained=pretrained,
+            BatchNorm=BatchNorm,
         )
     elif model == "deeplab_udisp":
         out_model = DeepLabUpDisp(
@@ -66,11 +76,11 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         )
     elif model == "resnet50_md":
         out_model = MonoDepthResNet50(
-            num_in_layers=n_input_channels, pretrained=pretrained
+            num_in_layers=n_input_channels, pretrained=pretrained, BatchNorm=BatchNorm
         )
     elif model == "resnet18_md":
         out_model = MonoDepthResNet18(
-            num_in_layers=n_input_channels, pretrained=pretrained
+            num_in_layers=n_input_channels, pretrained=pretrained, BatchNorm=BatchNorm
         )
     elif model == "resnet50_ref":
         out_model = Resnet50_md(num_in_layers=n_input_channels)

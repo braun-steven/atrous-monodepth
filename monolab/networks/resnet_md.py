@@ -6,11 +6,14 @@ from monolab.networks.decoder import MonoDepthDecoder
 
 
 class MonoDepthResNet50(nn.Module):
-    def __init__(self, num_in_layers=3, pretrained=False):
+    def __init__(self, num_in_layers=3, pretrained=False, BatchNorm=nn.BatchNorm2d):
         super(MonoDepthResNet50, self).__init__()
 
         self.encoder = ResNet50(
-            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
+            num_in_layers=num_in_layers,
+            output_stride=64,
+            pretrained=pretrained,
+            BatchNorm=BatchNorm,
         )
 
         self.decoder = MonoDepthDecoder()
@@ -24,11 +27,14 @@ class MonoDepthResNet50(nn.Module):
 
 
 class MonoDepthResNet18(nn.Module):
-    def __init__(self, num_in_layers=3, pretrained=False):
+    def __init__(self, num_in_layers=3, pretrained=False, BatchNorm=nn.BatchNorm2d):
         super(MonoDepthResNet18, self).__init__()
 
         self.encoder = ResNet18(
-            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
+            num_in_layers=num_in_layers,
+            output_stride=64,
+            pretrained=pretrained,
+            BatchNorm=BatchNorm,
         )
 
         self.decoder = MonoDepthDecoder()
@@ -49,7 +55,4 @@ if __name__ == "__main__":
 
     d1, d2, d3, d4 = net.forward(x)
 
-    print(d1.size())
-    print(d2.size())
-    print(d3.size())
-    print(d4.size())
+    print(sum(p.numel() for p in net.parameters() if p.requires_grad))

@@ -100,6 +100,9 @@ class resconv_basic(nn.Module):
 
 
 def resblock(num_in_layers, num_out_layers, num_blocks, stride):
+    print("Resblock")
+    print(num_in_layers)
+    print(num_out_layers)
     layers = []
     layers.append(resconv(num_in_layers, num_out_layers, stride))
     for i in range(1, num_blocks - 1):
