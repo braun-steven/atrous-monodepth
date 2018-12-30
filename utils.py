@@ -72,6 +72,8 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         out_model = MonoDepthResNet18(
             num_in_layers=n_input_channels, pretrained=pretrained
         )
+    elif model == "resnet18_ref":
+        out_model = Resnet18_md(num_in_layers=n_input_channels)
     elif model == "resnet50_ref":
         out_model = Resnet50_md(num_in_layers=n_input_channels)
     elif model == "vgg_md":
