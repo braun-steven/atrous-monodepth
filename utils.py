@@ -6,7 +6,7 @@ import collections
 import torch
 
 from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
-from monolab.networks.resnet_reference import Resnet50_md
+from monolab.networks.resnet_reference import Resnet50_md, Resnet18_md
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
 from monolab.networks.deeplab.deeplab_udisp import DeepLab as DeepLabUpDisp
