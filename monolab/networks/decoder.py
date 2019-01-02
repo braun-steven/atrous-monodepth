@@ -31,7 +31,7 @@ class UpConv(nn.Module):
 
     def forward(self, x):
         x = nn.functional.interpolate(
-            x, scale_factor=self.scale, mode="bilinear", align_corners=True
+            x, scale_factor=self.scale, mode="nearest", align_corners=True
         )
         return self.conv1(x)
 
@@ -90,7 +90,7 @@ class MonoDepthDecoder(nn.Module):
         iconv4 = self.iconv4(concat4)
         self.disp4 = self.disp4_layer(iconv4)
         self.udisp4 = nn.functional.interpolate(
-            self.disp4, scale_factor=2, mode="bilinear", align_corners=True
+            self.disp4, scale_factor=2, mode="nearest", align_corners=True
         )
 
         upconv3 = self.upconv3(iconv4)
@@ -98,7 +98,7 @@ class MonoDepthDecoder(nn.Module):
         iconv3 = self.iconv3(concat3)
         self.disp3 = self.disp3_layer(iconv3)
         self.udisp3 = nn.functional.interpolate(
-            self.disp3, scale_factor=2, mode="bilinear", align_corners=True
+            self.disp3, scale_factor=2, mode="nearest", align_corners=True
         )
 
         upconv2 = self.upconv2(iconv3)
@@ -106,7 +106,7 @@ class MonoDepthDecoder(nn.Module):
         iconv2 = self.iconv2(concat2)
         self.disp2 = self.disp2_layer(iconv2)
         self.udisp2 = nn.functional.interpolate(
-            self.disp2, scale_factor=2, mode="bilinear", align_corners=True
+            self.disp2, scale_factor=2, mode="nearest", align_corners=True
         )
 
         upconv1 = self.upconv1(iconv2)
