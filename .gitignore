@@ -283,3 +283,6 @@ TSWLatexianTemp*
 
 # Ignore virtualenv
 env
+
+# Ignore ctags
+tags
