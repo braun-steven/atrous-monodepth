@@ -33,7 +33,7 @@ class MonodepthLoss(nn.modules.Module):
             nw = w // ratio
             scaled_imgs.append(
                 nn.functional.interpolate(
-                    img, size=[nh, nw], mode="bilinear", align_corners=True
+                    img, size=[nh, nw], mode="area", align_corners=None
                 )
             )
         return scaled_imgs
