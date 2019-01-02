@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class MonodepthLoss(nn.modules.Module):
-    def __init__(self, device, SSIM_w=0.85, disp_gradient_w=1.0, lr_w=1.0):
+    def __init__(self, device, SSIM_w=0.85, disp_gradient_w=0.1, lr_w=1.0):
         super(MonodepthLoss, self).__init__()
         self.device = device
         self.SSIM_w = SSIM_w
@@ -48,7 +48,6 @@ class MonodepthLoss(nn.modules.Module):
             the image gradient (same shape as input)
         """
         # Pad input to keep output size consistent
-        img = F.pad(img, (0, 1, 0, 0), mode="replicate")
         gx = img[:, :, :, :-1] - img[:, :, :, 1:]  # NCHW
         return gx
 
@@ -62,7 +61,6 @@ class MonodepthLoss(nn.modules.Module):
             the image gradient (same shape as input)
         """
         # Pad input to keep output size consistent
-        img = F.pad(img, (0, 0, 0, 1), mode="replicate")
         gy = img[:, :, :-1, :] - img[:, :, 1:, :]  # NCHW
         return gy
 
@@ -184,10 +182,8 @@ class MonodepthLoss(nn.modules.Module):
         smoothness_x = [disp_gradients_x[i] * weights_x[i] for i in range(self.n)]
         smoothness_y = [disp_gradients_y[i] * weights_y[i] for i in range(self.n)]
 
-        return [
-            torch.abs(smoothness_x[i]) + torch.abs(smoothness_y[i])
-            for i in range(self.n)
-        ]
+        return smoothness_x + smoothness_y
+
 
     def forward(self, input, target):
         """ Compute the loss, given disparity maps at 4 scales and left and right input images

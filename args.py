@@ -123,7 +123,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--weight-disp-gradient",
-        default=1.0,
+        default=0.1,
         type=float,
         help="Distparity gradient weight in Monodepth Loss",
     )
