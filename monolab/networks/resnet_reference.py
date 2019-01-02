@@ -466,3 +466,7 @@ class ResnetModel(nn.Module):
 if __name__ == "__main__":
     model = Resnet50_md(3)
     print(sum(p.numel() for p in model.parameters() if p.requires_grad))
+
+    img = np.random.randn(1, 3, 256, 512)
+    img = torch.Tensor(img)
+    model.forward(img)
