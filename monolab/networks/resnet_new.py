@@ -6,7 +6,14 @@ import numpy as np
 
 
 class maxpool(nn.Module):
+    """ Max pooling layer with padding (dependent on kernel size) and stride 2
+    """
+
     def __init__(self, kernel_size):
+        """
+        Args:
+            kernel_size: kernel size (determines padding)
+        """
         super(maxpool, self).__init__()
         p = int(np.floor(kernel_size - 1) / 2)
         self.maxpool = nn.MaxPool2d(kernel_size, stride=2, padding=(p, p))
@@ -16,7 +23,14 @@ class maxpool(nn.Module):
 
 
 class upsample_nn(nn.Module):
+    """ Upsampling layer, nearest neighbor
+    """
+
     def __init__(self, scale):
+        """
+        Args:
+            scale: upsampling factor
+        """
         super(upsample_nn, self).__init__()
         self.scale = scale
 
@@ -25,7 +39,15 @@ class upsample_nn(nn.Module):
 
 
 class get_disp(nn.Module):
+    """ Convolution followed by a sigmoid layer, multiplied with 0.3.
+        Has two output channels (left and right disparity map)
+    """
+
     def __init__(self, num_in_layers):
+        """
+        Args:
+            num_in_layers: number of input channels
+        """
         super(get_disp, self).__init__()
         super(get_disp, self).__init__()
         self.conv1 = nn.Conv2d(num_in_layers, 2, kernel_size=3, stride=1)
@@ -39,11 +61,25 @@ class get_disp(nn.Module):
 
 
 class conv(nn.Module):
-    def __init__(self, n_in, n_out, k, s):
+    """ Convolutional layer with padding
+    """
+
+    def __init__(self, n_in, n_out, kernel_size, stride):
+        """
+        Args:
+            n_in: number of input channels
+            n_out: number of output channels
+            kernel_size: kernel size
+            stride: stride of the convolution
+        """
         super(conv, self).__init__()
-        self.p = np.floor((k - 1) / 2).astype(np.int32)
+        self.p = np.floor((kernel_size - 1) / 2).astype(np.int32)
         self.conv = nn.Conv2d(
-            n_in, n_out, kernel_size=k, stride=s, padding=(self.p, self.p)
+            n_in,
+            n_out,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=(self.p, self.p),
         )
 
     def forward(self, x):
@@ -52,10 +88,20 @@ class conv(nn.Module):
 
 
 class upconv(nn.Module):
+    """ Upsampling and convolution
+    """
+
     def __init__(self, n_in, n_out, kernel_size, scale):
+        """
+        Args:
+            n_in: number of input channels
+            n_out: number of output_channels
+            kernel_size: kernel size
+            scale: scale of the upsampling
+        """
         super(upconv, self).__init__()
         self.upsample = upsample_nn(scale)
-        self.conv = conv(n_in, n_out, kernel_size, 1)
+        self.conv = conv(n_in=n_in, n_out=n_out, kernel_size=kernel_size, stride=1)
 
     def forward(self, x):
         x = self.upsample(x)
@@ -64,13 +110,24 @@ class upconv(nn.Module):
 
 
 class resconv(nn.Module):
+    """ A resnet building block, consisting of 3 convolutional layers
+    """
+
     def __init__(self, n_in, num_layers, stride):
+        """
+        Args:
+            n_in: number of input channels
+            num_layers: number of intermediate channels, output has 4 * num_layers
+            stride: stride of the second conv layer
+        """
         super(resconv, self).__init__()
         self.num_layers = num_layers
         self.stride = stride
 
-        self.conv1 = conv(n_in, num_layers, 1, 1)
-        self.conv2 = conv(num_layers, num_layers, 3, stride)
+        self.conv1 = conv(n_in=n_in, n_out=num_layers, kernel_size=1, stride=1)
+        self.conv2 = conv(
+            n_in=num_layers, n_out=num_layers, kernel_size=3, stride=stride
+        )
         self.conv3 = nn.Conv2d(num_layers, 4 * num_layers, kernel_size=1, stride=1)
 
         self.shortcut_conv = nn.Conv2d(
@@ -94,57 +151,64 @@ class resconv(nn.Module):
 
 
 class resblock(nn.Module):
-    def __init__(self, n_in, num_layers, num_blocks):
+    """ A Resnet block, that consists of num_blocks resconv building blocks.
+    """
+
+    def __init__(self, n_in, num_layers, num_blocks, stride=2):
+        """
+        Args:
+            n_in: number of input channels
+            num_layers: number of intermediate channels (for resconv units), output is 4 * num_layers
+            num_blocks: number of resconv units
+            stride: stride of the final resconv unit (all others are 1)
+        """
         super(resblock, self).__init__()
         layers = []
 
-        layers.append(resconv(n_in, num_layers, 1))
+        layers.append(resconv(n_in=n_in, num_layers=num_layers, stride=1))
 
         for i in range(1, num_blocks - 1):
-            layers.append(resconv(4 * num_layers, num_layers, 1))
+            layers.append(resconv(n_in=4 * num_layers, num_layers=num_layers, stride=1))
 
-        layers.append(resconv(4 * num_layers, num_layers, 2))
+        layers.append(
+            resconv(n_in=4 * num_layers, num_layers=num_layers, stride=stride)
+        )
         self.block = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.block(x)
 
 
-class Resnet50(nn.Module):
-    def __init__(self, num_in_layers):
-        super(Resnet50, self).__init__()
+class Resnet(nn.Module):
+    """ Resnet implementation with the quirk's of Godard et al. (2017), https://github.com/mrharicot/monodepth
+        We made the resnet size variable by letting the user give a list of numbers of blocks for the three resblocks
+    """
+
+    def __init__(self, num_in_layers, blocks):
+        """
+        Args:
+            num_in_layers: number of input channels (3 for rgb)
+            blocks: list of length 4, contains the numbers of blocks -> [3, 4, 6, 3] for Resnet50
+        """
+        super(Resnet, self).__init__()
+
         # encoder
-        self.conv1 = conv(num_in_layers, 64, 7, 2)  # H/2 - 64D
-        self.pool1 = maxpool(3)  # H/4 - 64D
-        self.conv2 = resblock(64, 64, 3)  # H/8 - 256D
-        self.conv3 = resblock(256, 128, 4)  # H/16 -  512D
-        self.conv4 = resblock(512, 256, 6)  # H/32 - 1024D
-        self.conv5 = resblock(1024, 512, 3)  # H/64 - 2048D
-
-        # decoder
-        self.upconv6 = upconv(2048, 512, 3, 2)  # H/32
-        self.iconv6 = conv(512 + 1024, 512, 3, 1)  # upconv6 + conv4
-
-        self.upconv5 = upconv(512, 256, 3, 2)  # H/16
-        self.iconv5 = conv(256 + 512, 256, 3, 1)  # upconv5 + conv3
-
-        self.upconv4 = upconv(256, 128, 3, 2)  # H/8
-        self.iconv4 = conv(256 + 128, 128, 3, 1)  # upconv4 + conv2
-        self.disp4 = get_disp(128)
-
-        self.upconv3 = upconv(128, 64, 3, 2)  # H/4
-        self.iconv3 = conv(64 + 64 + 2, 64, 3, 1)  # upconv3 + pool1 + disp4
-        self.disp3 = get_disp(64)
-
-        self.upconv2 = upconv(64, 32, 3, 2)  # H/2
-        self.iconv2 = conv(32 + 64 + 2, 32, 3, 1)  # upconv2 + conv1 + disp3
-        self.disp2 = get_disp(32)
-
-        self.upconv1 = upconv(32, 16, 3, 2)  # H
-        self.iconv1 = conv(16 + 2, 16, 3, 1)  # upconv1 + disp2
-        self.disp1 = get_disp(16)
-
-        self.upsample_nn = upsample_nn(scale=2)
+        self.conv1 = conv(
+            n_in=num_in_layers, n_out=64, kernel_size=7, stride=2
+        )  # H/2 - 64D
+        self.pool1 = maxpool(kernel_size=3)  # H/4 - 64D
+        self.conv2 = resblock(
+            n_in=64, num_layers=64, num_blocks=blocks[0]
+        )  # H/8 - 256D
+        self.conv3 = resblock(
+            n_in=256, num_layers=128, num_blocks=blocks[1]
+        )  # H/16 -  512D
+        self.conv4 = resblock(
+            n_in=512, num_layers=256, num_blocks=blocks[2]
+        )  # H/32 - 1024D
+        self.conv5 = resblock(
+            n_in=1024, num_layers=512, num_blocks=blocks[3]
+        )  # H/64 - 2048D
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -159,46 +223,19 @@ class Resnet50(nn.Module):
         x4 = self.conv4(x3)
         x5 = self.conv5(x4)
 
-        # skips
-        skip1 = x1
-        skip2 = x_pool1
-        skip3 = x2
-        skip4 = x3
-        skip5 = x4
+        return x1, x_pool1, x2, x3, x4, x5
 
-        # decoder
-        upconv6 = self.upconv6(x5)
-        concat6 = torch.cat([upconv6, skip5], 1)
-        iconv6 = self.iconv6(concat6)
 
-        upconv5 = self.upconv5(iconv6)
-        concat5 = torch.cat([upconv5, skip4], 1)
-        iconv5 = self.iconv5(concat5)
+def Resnet50(num_in_layers):
+    return Resnet(num_in_layers=num_in_layers, blocks=[3, 4, 6, 3])
 
-        upconv4 = self.upconv4(iconv5)
-        concat4 = torch.cat([upconv4, skip3], 1)
-        iconv4 = self.iconv4(concat4)
-        disp4 = self.disp4(iconv4)
-        udisp4 = self.upsample_nn(disp4)
 
-        upconv3 = self.upconv3(iconv4)
-        concat3 = torch.cat([upconv3, skip2, udisp4], 1)
-        iconv3 = self.iconv3(concat3)
-        disp3 = self.disp3(iconv3)
-        udisp3 = self.upsample_nn(disp3)
+def Resnet18(num_in_layers):
+    return Resnet(num_in_layers=num_in_layers, blocks=[2, 2, 2, 2])
 
-        upconv2 = self.upconv2(iconv3)
-        concat2 = torch.cat([upconv2, skip1, udisp3], 1)
-        iconv2 = self.iconv2(concat2)
-        disp2 = self.disp2(iconv2)
-        udisp2 = self.upsample_nn(disp2)
 
-        upconv1 = self.upconv1(iconv2)
-        concat1 = torch.cat([upconv1, udisp2], 1)
-        iconv1 = self.iconv1(concat1)
-        disp1 = self.disp1(iconv1)
-
-        return [disp1, disp2, disp3, disp4]
+def Resnet101(num_in_layers):
+    return Resnet(num_in_layers=num_in_layers, blocks=[3, 4, 23, 3])
 
 
 if __name__ == "__main__":

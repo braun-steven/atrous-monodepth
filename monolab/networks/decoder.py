@@ -1,74 +1,55 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 
-from monolab.networks.utils import DisparityOut
+from monolab.networks.resnet_new import upconv, conv, get_disp, upsample_nn
 
 
-class Conv(nn.Module):
-    def __init__(self, num_in_layers, num_out_layers, kernel_size, stride):
-        super(Conv, self).__init__()
-        self.kernel_size = kernel_size
-        self.conv_base = nn.Conv2d(
-            num_in_layers, num_out_layers, kernel_size=kernel_size, stride=stride
-        )
-        self.normalize = nn.BatchNorm2d(num_out_layers)
-
-    def forward(self, x):
-        p = int(np.floor((self.kernel_size - 1) / 2))
-        p2d = (p, p, p, p)
-        x = self.conv_base(F.pad(x, p2d))
-        x = self.normalize(x)
-        return F.elu(x, inplace=True)
-
-
-class UpConv(nn.Module):
-    def __init__(self, num_in_layers, num_out_layers, kernel_size, scale):
-        super(UpConv, self).__init__()
-        self.scale = scale
-        self.conv1 = Conv(num_in_layers, num_out_layers, kernel_size, 1)
-
-    def forward(self, x):
-        x = nn.functional.interpolate(
-            x, scale_factor=self.scale, mode="bilinear", align_corners=True
-        )
-        return self.conv1(x)
-
-
-class MonoDepthDecoder(nn.Module):
+class MonodepthDecoder(nn.Module):
     def __init__(self):
-        super(MonoDepthDecoder, self).__init__()
+        super(MonodepthDecoder, self).__init__()
 
         # decoder
-        self.upconv6 = UpConv(2048, 512, 3, 2)
-        self.iconv6 = Conv(1024 + 512, 512, 3, 1)
+        self.upconv6 = upconv(n_in=2048, n_out=512, kernel_size=3, scale=2)  # H/32
+        self.iconv6 = conv(
+            n_in=512 + 1024, n_out=512, kernel_size=3, stride=1
+        )  # upconv6 + conv4
 
-        self.upconv5 = UpConv(512, 256, 3, 2)
-        self.iconv5 = Conv(512 + 256, 256, 3, 1)
+        self.upconv5 = upconv(n_in=512, n_out=256, kernel_size=3, scale=2)  # H/16
+        self.iconv5 = conv(
+            n_in=256 + 512, n_out=256, kernel_size=3, stride=1
+        )  # upconv5 + conv3
 
-        self.upconv4 = UpConv(256, 128, 3, 2)
-        self.iconv4 = Conv(256 + 128, 128, 3, 1)
-        self.disp4_layer = DisparityOut(128)
+        self.upconv4 = upconv(n_in=256, n_out=128, kernel_size=3, scale=2)  # H/8
+        self.iconv4 = conv(
+            n_in=256 + 128, n_out=128, kernel_size=3, stride=1
+        )  # upconv4 + conv2
+        self.disp4 = get_disp(128)
 
-        self.upconv3 = UpConv(128, 64, 3, 2)
-        self.iconv3 = Conv(64 + 64 + 2, 64, 3, 1)
-        self.disp3_layer = DisparityOut(64)
+        self.upconv3 = upconv(n_in=128, n_out=64, kernel_size=3, scale=2)  # H/4
+        self.iconv3 = conv(
+            n_in=64 + 64 + 2, n_out=64, kernel_size=3, stride=1
+        )  # upconv3 + pool1 + disp4
+        self.disp3 = get_disp(64)
 
-        self.upconv2 = UpConv(64, 32, 3, 2)
-        self.iconv2 = Conv(32 + 64 + 2, 32, 3, 1)
-        self.disp2_layer = DisparityOut(32)
+        self.upconv2 = upconv(n_in=64, n_out=32, kernel_size=3, scale=2)  # H/2
+        self.iconv2 = conv(
+            n_in=32 + 64 + 2, n_out=32, kernel_size=3, stride=1
+        )  # upconv2 + conv1 + disp3
+        self.disp2 = get_disp(32)
 
-        self.upconv1 = UpConv(32, 16, 3, 2)
-        self.iconv1 = Conv(16 + 2, 16, 3, 1)
-        self.disp1_layer = DisparityOut(16)
+        self.upconv1 = upconv(n_in=32, n_out=16, kernel_size=3, scale=2)  # H
+        self.iconv1 = conv(
+            n_in=16 + 2, n_out=16, kernel_size=3, stride=1
+        )  # upconv1 + disp2
+        self.disp1 = get_disp(16)
+
+        self.upsample_nn = upsample_nn(scale=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x1, x_pool1, x2, x3, x4, x_enc):
-
         # skips
         skip1 = x1
         skip2 = x_pool1
@@ -78,39 +59,34 @@ class MonoDepthDecoder(nn.Module):
 
         # decoder
         upconv6 = self.upconv6(x_enc)
-        concat6 = torch.cat((upconv6, skip5), 1)
+        concat6 = torch.cat([upconv6, skip5], 1)
         iconv6 = self.iconv6(concat6)
 
         upconv5 = self.upconv5(iconv6)
-        concat5 = torch.cat((upconv5, skip4), 1)
+        concat5 = torch.cat([upconv5, skip4], 1)
         iconv5 = self.iconv5(concat5)
 
         upconv4 = self.upconv4(iconv5)
-        concat4 = torch.cat((upconv4, skip3), 1)
+        concat4 = torch.cat([upconv4, skip3], 1)
         iconv4 = self.iconv4(concat4)
-        self.disp4 = self.disp4_layer(iconv4)
-        self.udisp4 = nn.functional.interpolate(
-            self.disp4, scale_factor=2, mode="bilinear", align_corners=True
-        )
+        disp4 = self.disp4(iconv4)
+        udisp4 = self.upsample_nn(disp4)
 
         upconv3 = self.upconv3(iconv4)
-        concat3 = torch.cat((upconv3, skip2, self.udisp4), 1)
+        concat3 = torch.cat([upconv3, skip2, udisp4], 1)
         iconv3 = self.iconv3(concat3)
-        self.disp3 = self.disp3_layer(iconv3)
-        self.udisp3 = nn.functional.interpolate(
-            self.disp3, scale_factor=2, mode="bilinear", align_corners=True
-        )
+        disp3 = self.disp3(iconv3)
+        udisp3 = self.upsample_nn(disp3)
 
         upconv2 = self.upconv2(iconv3)
-        concat2 = torch.cat((upconv2, skip1, self.udisp3), 1)
+        concat2 = torch.cat([upconv2, skip1, udisp3], 1)
         iconv2 = self.iconv2(concat2)
-        self.disp2 = self.disp2_layer(iconv2)
-        self.udisp2 = nn.functional.interpolate(
-            self.disp2, scale_factor=2, mode="bilinear", align_corners=True
-        )
+        disp2 = self.disp2(iconv2)
+        udisp2 = self.upsample_nn(disp2)
 
         upconv1 = self.upconv1(iconv2)
-        concat1 = torch.cat((upconv1, self.udisp2), 1)
+        concat1 = torch.cat([upconv1, udisp2], 1)
         iconv1 = self.iconv1(concat1)
-        self.disp1 = self.disp1_layer(iconv1)
-        return self.disp1, self.disp2, self.disp3, self.disp4
+        disp1 = self.disp1(iconv1)
+
+        return [disp1, disp2, disp3, disp4]

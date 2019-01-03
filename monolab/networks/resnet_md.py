@@ -1,51 +1,49 @@
 import torch
 import torch.nn as nn
 
-from monolab.networks.backbones.resnet import ResNet50, ResNet18
-from monolab.networks.decoder import MonoDepthDecoder
+from monolab.networks.resnet_new import Resnet50, Resnet18
+from monolab.networks.decoder import MonodepthDecoder
 
 
-class MonoDepthResNet50(nn.Module):
-    def __init__(self, num_in_layers=3, pretrained=False):
-        super(MonoDepthResNet50, self).__init__()
+class MonodepthResnet50(nn.Module):
+    def __init__(self, num_in_layers):
+        super(MonodepthResnet50, self).__init__()
 
-        self.encoder = ResNet50(
-            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
-        )
+        self.encoder = Resnet50(num_in_layers=num_in_layers)
 
-        self.decoder = MonoDepthDecoder()
+        self.decoder = MonodepthDecoder()
 
     def forward(self, x):
-        x1, x_pool1, x2, x3, x4, x_enc = self.encoder(x)
+        x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
 
-        disp1, disp2, disp3, disp4 = self.decoder(x1, x_pool1, x2, x3, x4, x_enc)
+        disp1, disp2, disp3, disp4 = self.decoder(x1, x_pool1, x2, x3, x4, x5)
 
-        return disp1, disp2, disp3, disp4
+        return [disp1, disp2, disp3, disp4]
 
 
-class MonoDepthResNet18(nn.Module):
-    def __init__(self, num_in_layers=3, pretrained=False):
-        super(MonoDepthResNet18, self).__init__()
+class MonodepthResnet18(nn.Module):
+    def __init__(self, num_in_layers):
+        super(MonodepthResnet18, self).__init__()
 
-        self.encoder = ResNet18(
-            num_in_layers=num_in_layers, output_stride=64, pretrained=pretrained
-        )
+        self.encoder = Resnet18(num_in_layers=num_in_layers)
 
-        self.decoder = MonoDepthDecoder()
+        self.decoder = MonodepthDecoder()
 
     def forward(self, x):
-        x1, x_pool1, x2, x3, x4, x_enc = self.encoder(x)
+        x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
 
-        disp1, disp2, disp3, disp4 = self.decoder(x1, x_pool1, x2, x3, x4, x_enc)
+        disp1, disp2, disp3, disp4 = self.decoder(x1, x_pool1, x2, x3, x4, x5)
 
-        return disp1, disp2, disp3, disp4
+        return [disp1, disp2, disp3, disp4]
 
 
 if __name__ == "__main__":
 
     x = torch.rand(1, 3, 256, 512)
 
-    net = MonoDepthResNet50(num_in_layers=3, pretrained=True)
+    net = MonodepthResnet50(num_in_layers=3)
+
+    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     d1, d2, d3, d4 = net.forward(x)
 

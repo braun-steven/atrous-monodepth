@@ -5,8 +5,7 @@ from typing import Union, List, Dict
 import collections
 import torch
 
-from monolab.networks.resnet_md import MonoDepthResNet50, MonoDepthResNet18
-from monolab.networks.resnet_new import Resnet50 as Resnet50_Godard
+from monolab.networks.resnet_md import MonodepthResnet50, MonodepthResnet18
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
 from monolab.networks.dummy_model import DummyModel, DummyModel2
@@ -60,15 +59,9 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
             num_in_layers=3, output_stride=16, backbone="resnet", pretrained=pretrained
         )
     elif model == "resnet50_md":
-        out_model = MonoDepthResNet50(
-            num_in_layers=n_input_channels, pretrained=pretrained
-        )
+        out_model = MonodepthResnet50(num_in_layers=n_input_channels)
     elif model == "resnet18_md":
-        out_model = MonoDepthResNet18(
-            num_in_layers=n_input_channels, pretrained=pretrained
-        )
-    elif model == "resnet50_godard":
-        out_model = Resnet50_Godard(num_in_layers=3)
+        out_model = MonodepthResnet18(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     elif model == "dummy_model":
