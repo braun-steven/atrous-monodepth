@@ -3,22 +3,14 @@ import torch.nn as nn
 from torch import Tensor
 from typing import List, Tuple
 
-from monolab.networks.backbones.resnet import ResNet50, Bottleneck
-from monolab.networks.backbones.xception import Xception
+from monolab.networks.resnet import Resnet50, get_disp
 from monolab.networks.deeplab.deeplab_decoder import Decoder
 from monolab.networks.deeplab.aspp import ASPP
-
-from monolab.networks.utils import DisparityOut
 
 
 class DeepLab(nn.Module):
     def __init__(
-        self,
-        num_in_layers=3,
-        backbone="resnet",
-        output_stride=16,
-        freeze_bn=False,
-        pretrained=False,
+        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False
     ):
         super(DeepLab, self).__init__()
 
@@ -26,16 +18,8 @@ class DeepLab(nn.Module):
 
         # Define backbone DCNN in encoder
         if backbone == "resnet":
-            self.backbone = ResNet50(
-                output_stride=output_stride,
-                num_in_layers=num_in_layers,
-                pretrained=pretrained,
-            )
-        elif backbone == "xception":
-            self.backbone = Xception(
-                inplanes=num_in_layers,
-                output_stride=output_stride,
-                pretrained=pretrained,
+            self.backbone = Resnet50(
+                output_stride=output_stride, num_in_layers=num_in_layers
             )
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
@@ -58,10 +42,10 @@ class DeepLab(nn.Module):
             num_outplanes_list=num_channels_out_list,
         )
 
-        self.disp1 = DisparityOut(num_channels_out_list[0])
-        self.disp2 = DisparityOut(num_channels_out_list[1])
-        self.disp3 = DisparityOut(num_channels_out_list[2])
-        self.disp4 = DisparityOut(num_channels_out_list[3])
+        self.disp1 = get_disp(num_channels_out_list[0])
+        self.disp2 = get_disp(num_channels_out_list[1])
+        self.disp3 = get_disp(num_channels_out_list[2])
+        self.disp4 = get_disp(num_channels_out_list[3])
 
         if freeze_bn:
             self.freeze_bn()
@@ -102,7 +86,7 @@ if __name__ == "__main__":
     x = torch.rand(1, 3, 256, 512)
 
     net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
-    print(net)
+    # print(net)
 
     net.eval()
 

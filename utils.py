@@ -55,9 +55,7 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         Instantiated model
     """
     if model == "deeplab":
-        out_model = DeepLab(
-            num_in_layers=3, output_stride=16, backbone="resnet", pretrained=pretrained
-        )
+        out_model = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(num_in_layers=n_input_channels)
     elif model == "resnet18_md":

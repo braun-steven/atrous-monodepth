@@ -64,22 +64,26 @@ class conv(nn.Module):
     """ Convolutional layer with padding
     """
 
-    def __init__(self, n_in, n_out, kernel_size, stride):
+    def __init__(self, n_in, n_out, kernel_size, stride, dilation=1):
         """
         Args:
             n_in: number of input channels
             n_out: number of output channels
             kernel_size: kernel size
             stride: stride of the convolution
+            dilation: dilation (atrous rate) of the convolution
         """
         super(conv, self).__init__()
         self.p = np.floor((kernel_size - 1) / 2).astype(np.int32)
+        if dilation != 1:
+            self.p = dilation
         self.conv = nn.Conv2d(
             n_in,
             n_out,
             kernel_size=kernel_size,
             stride=stride,
             padding=(self.p, self.p),
+            dilation=dilation,
         )
 
     def forward(self, x):
@@ -113,12 +117,13 @@ class resconv(nn.Module):
     """ A resnet building block, consisting of 3 convolutional layers
     """
 
-    def __init__(self, n_in, num_layers, stride):
+    def __init__(self, n_in, num_layers, stride, dilation=1):
         """
         Args:
             n_in: number of input channels
             num_layers: number of intermediate channels, output has 4 * num_layers
             stride: stride of the second conv layer
+            dilation: dilation (atrous rate) of the second conv layer
         """
         super(resconv, self).__init__()
         self.num_layers = num_layers
@@ -126,7 +131,11 @@ class resconv(nn.Module):
 
         self.conv1 = conv(n_in=n_in, n_out=num_layers, kernel_size=1, stride=1)
         self.conv2 = conv(
-            n_in=num_layers, n_out=num_layers, kernel_size=3, stride=stride
+            n_in=num_layers,
+            n_out=num_layers,
+            kernel_size=3,
+            stride=stride,
+            dilation=dilation,
         )
         self.conv3 = nn.Conv2d(num_layers, 4 * num_layers, kernel_size=1, stride=1)
 
@@ -135,7 +144,7 @@ class resconv(nn.Module):
         )
 
     def forward(self, x):
-        do_proj = x.shape[3] != self.num_layers or self.stride == 2
+        do_proj = x.shape[1] != 4 * self.num_layers or self.stride == 2
         shortcut = []
 
         conv1 = self.conv1(x)
@@ -154,13 +163,14 @@ class resblock(nn.Module):
     """ A Resnet block, that consists of num_blocks resconv building blocks.
     """
 
-    def __init__(self, n_in, num_layers, num_blocks, stride=2):
+    def __init__(self, n_in, num_layers, num_blocks, stride=2, dilation=1):
         """
         Args:
             n_in: number of input channels
             num_layers: number of intermediate channels (for resconv units), output is 4 * num_layers
             num_blocks: number of resconv units
             stride: stride of the final resconv unit (all others are 1)
+            dilation: dilation (atrous rate) of the final resconv unit (all others are 1 by default)
         """
         super(resblock, self).__init__()
         layers = []
@@ -171,7 +181,12 @@ class resblock(nn.Module):
             layers.append(resconv(n_in=4 * num_layers, num_layers=num_layers, stride=1))
 
         layers.append(
-            resconv(n_in=4 * num_layers, num_layers=num_layers, stride=stride)
+            resconv(
+                n_in=4 * num_layers,
+                num_layers=num_layers,
+                stride=stride,
+                dilation=dilation,
+            )
         )
         self.block = nn.Sequential(*layers)
 
@@ -184,7 +199,7 @@ class Resnet(nn.Module):
         We made the resnet size variable by letting the user give a list of numbers of blocks for the three resblocks
     """
 
-    def __init__(self, num_in_layers, blocks):
+    def __init__(self, num_in_layers, blocks, output_stride=64):
         """
         Args:
             num_in_layers: number of input channels (3 for rgb)
@@ -192,22 +207,54 @@ class Resnet(nn.Module):
         """
         super(Resnet, self).__init__()
 
+        if output_stride == 64:
+            strides = [2, 2, 2, 2]
+            dilations = [1, 1, 1, 1]
+        elif output_stride == 32:
+            strides = [1, 2, 2, 2]
+            dilations = [1, 1, 1, 1]
+        # output_stride = 16 is the standard for deeplabv3+
+        elif output_stride == 16:
+            strides = [1, 2, 2, 1]
+            dilations = [1, 1, 1, 2]
+        elif output_stride == 8:
+            strides = [1, 2, 1, 1]
+            dilations = [1, 1, 2, 4]
+        else:
+            raise ValueError("Please specify a valid output stride")
+
         # encoder
         self.conv1 = conv(
             n_in=num_in_layers, n_out=64, kernel_size=7, stride=2
         )  # H/2 - 64D
         self.pool1 = maxpool(kernel_size=3)  # H/4 - 64D
         self.conv2 = resblock(
-            n_in=64, num_layers=64, num_blocks=blocks[0]
+            n_in=64,
+            num_layers=64,
+            num_blocks=blocks[0],
+            stride=strides[0],
+            dilation=dilations[0],
         )  # H/8 - 256D
         self.conv3 = resblock(
-            n_in=256, num_layers=128, num_blocks=blocks[1]
+            n_in=256,
+            num_layers=128,
+            num_blocks=blocks[1],
+            stride=strides[1],
+            dilation=dilations[1],
         )  # H/16 -  512D
         self.conv4 = resblock(
-            n_in=512, num_layers=256, num_blocks=blocks[2]
+            n_in=512,
+            num_layers=256,
+            num_blocks=blocks[2],
+            stride=strides[2],
+            dilation=dilations[2],
         )  # H/32 - 1024D
         self.conv5 = resblock(
-            n_in=1024, num_layers=512, num_blocks=blocks[3]
+            n_in=1024,
+            num_layers=512,
+            num_blocks=blocks[3],
+            stride=strides[3],
+            dilation=dilations[3],
         )  # H/64 - 2048D
 
         for m in self.modules():
@@ -226,16 +273,22 @@ class Resnet(nn.Module):
         return x1, x_pool1, x2, x3, x4, x5
 
 
-def Resnet50(num_in_layers):
-    return Resnet(num_in_layers=num_in_layers, blocks=[3, 4, 6, 3])
+def Resnet50(num_in_layers, output_stride=64):
+    return Resnet(
+        num_in_layers=num_in_layers, blocks=[3, 4, 6, 3], output_stride=output_stride
+    )
 
 
-def Resnet18(num_in_layers):
-    return Resnet(num_in_layers=num_in_layers, blocks=[2, 2, 2, 2])
+def Resnet18(num_in_layers, output_stride=64):
+    return Resnet(
+        num_in_layers=num_in_layers, blocks=[2, 2, 2, 2], output_stride=output_stride
+    )
 
 
-def Resnet101(num_in_layers):
-    return Resnet(num_in_layers=num_in_layers, blocks=[3, 4, 23, 3])
+def Resnet101(num_in_layers, output_stride=64):
+    return Resnet(
+        num_in_layers=num_in_layers, blocks=[3, 4, 23, 3], output_stride=output_stride
+    )
 
 
 if __name__ == "__main__":
@@ -243,7 +296,7 @@ if __name__ == "__main__":
     img = np.random.randn(1, 3, 256, 512)
     img = torch.Tensor(img)
 
-    model = Resnet50(3)
+    model = Resnet50(3, output_stride=16)
 
     print(sum(p.numel() for p in model.parameters() if p.requires_grad))
 

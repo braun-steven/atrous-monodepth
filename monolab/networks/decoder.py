@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from monolab.networks.resnet_new import upconv, conv, get_disp, upsample_nn
+from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class MonodepthDecoder(nn.Module):
