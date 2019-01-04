@@ -1,4 +1,6 @@
 import logging
+from typing import List
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -7,9 +9,23 @@ logger = logging.getLogger(__name__)
 
 
 class ASPPModule(nn.Module):
+    """
+    A single ASPP Module consisting of Conv2d > BN > ReLU
+    """
+
     def __init__(
         self, inplanes, planes, kernel_size, padding, dilation, BatchNorm=nn.BatchNorm2d
     ):
+        """
+        Construct an ASPP Module.
+        Args:
+            inplanes: Number of inplanes
+            planes: Number of outplanes
+            kernel_size: Convolution kernel size
+            padding: Convolution padding
+            dilation: Convultion dilation
+            BatchNorm: Batchnorm function
+        """
         super(ASPPModule, self).__init__()
         self.atrous_conv = nn.Conv2d(
             inplanes,
@@ -42,12 +58,18 @@ class ASPPModule(nn.Module):
 
 
 class ASPP(nn.Module):
-    """ ASPP contains 4 ASPPModules and a global average pooling module
+    """
+    ASPP contains a variable number of ASPPModules and a global average pooling module
     """
 
-    def __init__(
-        self, backbone, dilations, BatchNorm=nn.BatchNorm2d
-    ):
+    def __init__(self, backbone: str, dilations: List[int], BatchNorm=nn.BatchNorm2d):
+        """
+        Construct the ASPP global module that contains several ASPP submodules
+        Args:
+            backbone (str): Backbone name
+            dilations: List of dilations (atrous rates)
+            BatchNorm: Batchnorm function
+        """
         super(ASPP, self).__init__()
         if backbone == "drn":
             inplanes = 512
@@ -55,7 +77,6 @@ class ASPP(nn.Module):
             inplanes = 320
         else:
             inplanes = 2048
-
 
         # Create variable length module list of parallel ASPP modules with different dilations
         self.aspp_modules = nn.ModuleList()
@@ -80,6 +101,7 @@ class ASPP(nn.Module):
                 )
             )
 
+        # Global average pooling layer
         self.global_avg_pool = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(inplanes, 256, 1, stride=1, bias=False),
