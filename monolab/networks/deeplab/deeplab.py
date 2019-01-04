@@ -30,8 +30,7 @@ class DeepLab(nn.Module):
         # Decoder module
         if backbone == "resnet":
             # Output channel sizes of x4 x3 x2 x1 of resnet
-            num_aspp_modules = len(aspp_dilations) + 1
-            x_low_inplanes_list = [256 * (num_aspp_modules), 128 * 4, 64 * 4, 64]
+            x_low_inplanes_list = [256 * 4, 128 * 4, 64 * 4, 64]
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
@@ -86,7 +85,7 @@ class DeepLab(nn.Module):
 if __name__ == "__main__":
     x = torch.rand(1, 3, 256, 512)
 
-    net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
+    net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=[1, 2, 4, 8, 12, 18, 32])
     print(net)
 
 
