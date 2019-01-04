@@ -45,7 +45,9 @@ class ASPP(nn.Module):
     """ ASPP contains 4 ASPPModules and a global average pooling module
     """
 
-    def __init__(self, backbone, output_stride, BatchNorm=nn.BatchNorm2d):
+    def __init__(
+        self, backbone, dilations, BatchNorm=nn.BatchNorm2d
+    ):
         super(ASPP, self).__init__()
         if backbone == "drn":
             inplanes = 512
@@ -53,40 +55,30 @@ class ASPP(nn.Module):
             inplanes = 320
         else:
             inplanes = 2048
-        if output_stride == 16:
-            dilations = [1, 6, 12, 18]
-        elif output_stride == 8:
-            dilations = [1, 12, 24, 36]
-        else:
-            raise NotImplementedError
 
-        self.aspp1 = ASPPModule(
-            inplanes, 256, 1, padding=0, dilation=dilations[0], BatchNorm=BatchNorm
+
+        # Create variable length module list of parallel ASPP modules with different dilations
+        self.aspp_modules = nn.ModuleList()
+
+        # First ASPP module with 1x1 conv
+        self.aspp_modules.append(
+            ASPPModule(
+                inplanes, 256, 1, padding=0, dilation=dilations[0], BatchNorm=BatchNorm
+            )
         )
-        self.aspp2 = ASPPModule(
-            inplanes,
-            256,
-            3,
-            padding=dilations[1],
-            dilation=dilations[1],
-            BatchNorm=BatchNorm,
-        )
-        self.aspp3 = ASPPModule(
-            inplanes,
-            256,
-            3,
-            padding=dilations[2],
-            dilation=dilations[2],
-            BatchNorm=BatchNorm,
-        )
-        self.aspp4 = ASPPModule(
-            inplanes,
-            256,
-            3,
-            padding=dilations[3],
-            dilation=dilations[3],
-            BatchNorm=BatchNorm,
-        )
+
+        # Following ASPP modules with 3x3 conv
+        for dil in dilations[1:]:
+            self.aspp_modules.append(
+                ASPPModule(
+                    inplanes=inplanes,
+                    planes=256,
+                    kernel_size=3,
+                    padding=dil,
+                    dilation=dil,
+                    BatchNorm=BatchNorm,
+                )
+            )
 
         self.global_avg_pool = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
@@ -94,19 +86,25 @@ class ASPP(nn.Module):
             BatchNorm(256),
             nn.ReLU(),
         )
-        self.conv1 = nn.Conv2d(1280, 256, 1, bias=False)
+        num_aspp_modules = len(dilations) + 1
+        self.conv1 = nn.Conv2d(256 * num_aspp_modules, 256, 1, bias=False)
         self.bn1 = BatchNorm(256)
         self.relu = nn.ReLU()
         self._init_weight()
 
     def forward(self, x):
-        x1 = self.aspp1(x)
-        x2 = self.aspp2(x)
-        x3 = self.aspp3(x)
-        x4 = self.aspp4(x)
-        x5 = self.global_avg_pool(x)
-        x5 = F.interpolate(x5, size=x4.size()[2:], mode="bilinear", align_corners=True)
-        x = torch.cat((x1, x2, x3, x4, x5), dim=1)
+        # Collect results from ASPP modules
+        aspp_results = [l(x) for l in self.aspp_modules]
+
+        x_gl_avg_pool = self.global_avg_pool(x)
+        x_gl_avg_pool = F.interpolate(
+            x_gl_avg_pool,
+            size=aspp_results[-1].size()[2:],
+            mode="bilinear",
+            align_corners=True,
+        )
+        x = aspp_results + [x_gl_avg_pool]
+        x = torch.cat(x, dim=1)
 
         x = self.conv1(x)
         x = self.bn1(x)

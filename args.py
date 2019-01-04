@@ -81,6 +81,13 @@ def parse_args() -> argparse.Namespace:
         help="Cuda device ids. E.g. [0,1,2]. Use -1 for all GPUs available and -2 for cpu only.",
     )
     parser.add_argument(
+        "--atrous-rates",
+        nargs="+",
+        type=int,
+        default=[1, 6, 12, 18],
+        help="Atrous rates for the ASPP Module.",
+    )
+    parser.add_argument(
         "--do-augmentation", default=True, help="do augmentation of images or not"
     )
     parser.add_argument(

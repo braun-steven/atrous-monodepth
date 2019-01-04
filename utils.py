@@ -45,7 +45,7 @@ def to_device(
         raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
 
 
-def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Module:
+def get_model(model: str, args, n_input_channels=3, pretrained=False) -> torch.nn.Module:
     """
     Get model via name
     Args:
@@ -55,18 +55,13 @@ def get_model(model: str, n_input_channels=3, pretrained=False) -> torch.nn.Modu
         Instantiated model
     """
     if model == "deeplab":
-        out_model = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
+        out_model = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=args.atrous_rates)
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(num_in_layers=n_input_channels)
     elif model == "resnet18_md":
         out_model = MonodepthResnet18(num_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
-    elif model == "dummy_model":
-        out_model = DummyModel(n_in_layers=n_input_channels)
-    elif model == "dummy_model2":
-        out_model = DummyModel2(n_in_layers=n_input_channels)
-    # elif and so on and so on
     else:
         raise NotImplementedError(f"Unknown model type: {model}")
     return out_model

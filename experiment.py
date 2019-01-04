@@ -130,6 +130,7 @@ class Experiment:
             model=args.model,
             n_input_channels=args.input_channels,
             pretrained=args.imagenet_pretrained,
+            args=self.args
         )
         logger.info(
             "Training a {} model with {} parameters".format(

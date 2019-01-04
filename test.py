@@ -223,7 +223,7 @@ if __name__ == "__main__":
     args = parse_args()
     setup_logging(level=args.log_level, filename=args.log_file)
 
-    model = get_model(args.model, n_input_channels=args.input_channels)
+    model = get_model(args.model, n_input_channels=args.input_channels,args=args)
 
     if args.use_multiple_gpu:
         model = torch.nn.DataParallel(model)

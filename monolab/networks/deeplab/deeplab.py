@@ -10,7 +10,7 @@ from monolab.networks.deeplab.aspp import ASPP
 
 class DeepLab(nn.Module):
     def __init__(
-        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False
+        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False, aspp_dilations=None,
     ):
         super(DeepLab, self).__init__()
 
@@ -25,12 +25,13 @@ class DeepLab(nn.Module):
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
         # ASPP module
-        self.aspp = ASPP(backbone, output_stride, BatchNorm=nn.BatchNorm2d)
+        self.aspp = ASPP(backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d)
 
         # Decoder module
         if backbone == "resnet":
             # Output channel sizes of x4 x3 x2 x1 of resnet
-            x_low_inplanes_list = [256 * 4, 128 * 4, 64 * 4, 64]
+            num_aspp_modules = len(aspp_dilations) + 1
+            x_low_inplanes_list = [256 * (num_aspp_modules), 128 * 4, 64 * 4, 64]
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
@@ -86,7 +87,8 @@ if __name__ == "__main__":
     x = torch.rand(1, 3, 256, 512)
 
     net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet")
-    # print(net)
+    print(net)
+
 
     net.eval()
 
