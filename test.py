@@ -163,6 +163,7 @@ def run_test(model: nn.Module, device, result_dir, args):
 
     return eval_result, eval_result_pp
 
+
 def _evaluate_scores(disparities, args):
     """ Evaluates the model given either ground truth data or velodyne reprojected data
 
@@ -193,6 +194,8 @@ def _evaluate_scores(disparities, args):
             min_depth=0,
             max_depth=80,
         ).evaluate()
+    elif args.eval == "none":
+        pass
     else:
         logger.error("{} is not a valid evaluation procedure.".format(args.eval))
         raise Exception(f"Invalid evaluation procedure: {args.eval}")
