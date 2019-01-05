@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from typing import List, Tuple
 
-from monolab.networks.resnet import Resnet50, get_disp
+from monolab.networks.resnet import Resnet50
 from monolab.networks.deeplab.deeplab_decoder import Decoder
 from monolab.networks.deeplab.aspp import ASPP
 
@@ -42,10 +42,6 @@ class DeepLab(nn.Module):
             num_outplanes_list=num_channels_out_list,
         )
 
-        self.disp1 = get_disp(num_channels_out_list[0])
-        self.disp2 = get_disp(num_channels_out_list[1])
-        self.disp3 = get_disp(num_channels_out_list[2])
-        self.disp4 = get_disp(num_channels_out_list[3])
 
         if freeze_bn:
             self.freeze_bn()
@@ -67,14 +63,9 @@ class DeepLab(nn.Module):
         x = self.aspp(x_dcnn_out)
 
         # List of decoder results of size num_disparity_maps
-        x_skip1, x_skip2, x_skip3, x_skip4 = self.decoder(x, x1, x2, x3, x4)
+        disp1, disp2, disp3, disp4 = self.decoder(x, x1, x2, x3, x4)
 
-        # Compute disparity maps
-        disp1 = self.disp1(x_skip1)
-        disp2 = self.disp2(x_skip2)
-        disp3 = self.disp3(x_skip3)
-        disp4 = self.disp4(x_skip4)
-        return [disp4, disp3, disp2, disp1]
+        return [disp1, disp2, disp3, disp4]
 
     def freeze_bn(self):
         for m in self.modules():

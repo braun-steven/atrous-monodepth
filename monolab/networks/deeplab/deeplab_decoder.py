@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import Tensor
 from typing import List, Tuple
+
+from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class Decoder(nn.Module):
@@ -16,6 +17,7 @@ class Decoder(nn.Module):
         (decout <-- ski <-- ski <-- ski <-- ski <-- decoder)
 
     """
+
     def __init__(
         self,
         x_low_inplanes_list: List[int],
@@ -24,14 +26,14 @@ class Decoder(nn.Module):
         BatchNorm=nn.BatchNorm2d,
     ):
         """
-        Decoder module that gets the encoder output and some skip connections.
-        Args:
-            x_low_inplanes_list: List of low level feature channels from the encoder
-            x_prev_inplanes_list: List of number of channels for each skip connection input
-            num_outplanes_list: List of number of out_channels for each skip connection
-            backbone: Backbone implementation
-            BatchNorm: Batchnorm implementation
-            num_skip_connections:
+               Decoder module that gets the encoder output and some skip connections.
+               Args:
+                   x_low_inplanes_list: List of low level feature channels from the encoder
+                   x_prev_inplanes_list: List of number of channels for each skip connection input
+                   num_outplanes_list: List of number of out_channels for each skip connection
+                   backbone: Backbone implementation
+                   BatchNorm: Batchnorm implementation
+                   num_skip_connections:
         """
         super(Decoder, self).__init__()
 
@@ -42,37 +44,76 @@ class Decoder(nn.Module):
         else:
             raise NotImplementedError
 
-        # Reduce input channels by a factor of 1/2 at each skip connection
-        x_prev_inplanes_list = [encoder_out_planes] + [
-            encoder_out_planes // 2 ** i for i in range(1, 4)
-        ]
+        upsampling_scales = [1, 2, 2, 1]
 
-        # Create skip connections
-        self.skip4 = SkipConnection(
-            x_low_inplanes=x_low_inplanes_list[0],
-            x_prev_inplanes=x_prev_inplanes_list[0],
-            num_out_planes=num_outplanes_list[0],
-            BatchNorm=BatchNorm,
+        self.upconv5 = upconv(
+            n_in=encoder_out_planes,
+            n_out=256,
+            kernel_size=3,
+            scale=upsampling_scales[0],
         )
-        self.skip3 = SkipConnection(
-            x_low_inplanes=x_low_inplanes_list[1],
-            x_prev_inplanes=x_prev_inplanes_list[1],
-            num_out_planes=num_outplanes_list[1],
-            BatchNorm=BatchNorm,
+        self.iconv5 = conv(
+            n_in=x_low_inplanes_list[0] + 256,
+            n_out=256,
+            kernel_size=3,
+            stride=1,
         )
-        self.skip2 = SkipConnection(
-            x_low_inplanes=x_low_inplanes_list[2],
-            x_prev_inplanes=x_prev_inplanes_list[2],
-            num_out_planes=num_outplanes_list[2],
-            BatchNorm=BatchNorm,
+
+        self.upconv4 = upconv(
+            n_in=256,
+            n_out=128,
+            kernel_size=3,
+            scale=upsampling_scales[1],
         )
-        self.skip1 = SkipConnection(
-            x_low_inplanes=x_low_inplanes_list[3],
-            x_prev_inplanes=x_prev_inplanes_list[3],
-            num_out_planes=num_outplanes_list[3],
-            BatchNorm=BatchNorm,
+        self.iconv4 = conv(
+            n_in=x_low_inplanes_list[1] + 128,
+            n_out=128,
+            kernel_size=3,
+            stride=1,
         )
-        self._init_weight()
+        self.disp4_layer = get_disp(128)
+
+        self.upconv3 = upconv(
+            n_in=128,
+            n_out=64,
+            kernel_size=3,
+            scale=upsampling_scales[2],
+        )
+        self.iconv3 = conv(
+            n_in=x_low_inplanes_list[2] + 64 + 2,
+            n_out=64,
+            kernel_size=3,
+            stride=1,
+        )
+        self.disp3_layer = get_disp(64)
+
+        self.upconv2 = upconv(
+            n_in=64,
+            n_out=32,
+            kernel_size=3,
+            scale=upsampling_scales[2],
+        )
+        self.iconv2 = conv(
+            n_in=x_low_inplanes_list[3] + 32 + 2,
+            n_out=32,
+            kernel_size=3,
+            stride=1,
+        )
+        self.disp2_layer = get_disp(32)
+
+        self.upconv1 = upconv(
+            n_in=32, n_out=16, kernel_size=3, scale=2
+        )
+        self.iconv1 = conv(
+            n_in=16 + 2, n_out=16, kernel_size=3, stride=1
+        )
+        self.disp1_layer = get_disp(16)
+
+        self.upsample_nn = upsample_nn(scale=2)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_uniform_(m.weight)
 
     def forward(
         self, x_aspp_out: Tensor, x_low1, x_low2, x_low3, x_low4
@@ -89,115 +130,39 @@ class Decoder(nn.Module):
             Tuple of all four skip connection outputs
         """
 
-        x_skip1 = self.skip4(x_aspp_out, x_low4)
-        x_skip2 = self.skip3(x_skip1, x_low3)
-        x_skip3 = self.skip2(x_skip2, x_low2)
-        x_skip4 = self.skip1(x_skip3, x_low1)
+        # skips
+        skip1 = x_low1
+        skip2 = x_low2
+        skip3 = x_low3
+        skip4 = x_low4
 
-        return x_skip1, x_skip2, x_skip3, x_skip4
+        # decoder
+        upconv5 = self.upconv5(x_aspp_out)
+        concat5 = torch.cat((upconv5, skip4), 1)
+        iconv5 = self.iconv5(concat5)
 
-    def _init_weight(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+        upconv4 = self.upconv4(iconv5)
+        concat4 = torch.cat((upconv4, skip3), 1)
+        iconv4 = self.iconv4(concat4)
+        self.disp4 = self.disp4_layer(iconv4)
+        self.udisp4 = self.upsample_nn(self.disp4)
+
+        upconv3 = self.upconv3(iconv4)
+        concat3 = torch.cat((upconv3, skip2, self.udisp4), 1)
+        iconv3 = self.iconv3(concat3)
+        self.disp3 = self.disp3_layer(iconv3)
+        self.udisp3 = self.upsample_nn(self.disp3)
+
+        upconv2 = self.upconv2(iconv3)
+        concat2 = torch.cat((upconv2, skip1, self.udisp3), 1)
+        iconv2 = self.iconv2(concat2)
+        self.disp2 = self.disp2_layer(iconv2)
+        self.udisp2 = self.upsample_nn(self.disp2)
+
+        upconv1 = self.upconv1(iconv2)
+        concat1 = torch.cat((upconv1, self.udisp2), 1)
+        iconv1 = self.iconv1(concat1)
+        self.disp1 = self.disp1_layer(iconv1)
 
 
-class SkipConnection(nn.Module):
-    """
-    Skip connection module that takes one input from the encoder and one input from
-    the decoder pipeline and generates the next tensor in the decoder.
-    """
-    def __init__(
-        self,
-        x_prev_inplanes: int,
-        x_low_inplanes: int,
-        BatchNorm: nn.BatchNorm2d,
-        num_out_planes: int,
-    ):
-        super(SkipConnection, self).__init__()
-
-        # 1x1 conv2d block to reduce channel size
-        # TODO: Is this necessary?
-        num_out_conv2 = int(x_low_inplanes / 2)
-        self.conv1 = nn.Conv2d(
-            in_channels=x_low_inplanes,
-            out_channels=num_out_conv2,
-            kernel_size=1,
-            bias=False,
-        )
-        self.bn1 = BatchNorm(num_out_conv2)
-        self.relu = nn.ELU()
-
-        # Conv2d block as of deeplabv3+
-        self.last_conv = nn.Sequential(
-            nn.Conv2d(
-                in_channels=x_prev_inplanes + num_out_conv2,
-                out_channels=x_prev_inplanes,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            BatchNorm(x_prev_inplanes),
-            nn.ELU(),
-            nn.Conv2d(
-                in_channels=x_prev_inplanes,
-                out_channels=x_prev_inplanes,
-                kernel_size=3,
-                stride=1,
-                padding=1,
-                bias=False,
-            ),
-            BatchNorm(x_prev_inplanes),
-            nn.ELU(),
-            nn.Conv2d(
-                in_channels=x_prev_inplanes,
-                out_channels=num_out_planes,
-                kernel_size=1,
-                stride=1,
-            ),
-        )
-
-        self._init_weight()
-
-    def forward(self, x_prev, x_low) -> Tensor:
-        """
-        Forward pass on skip connection.
-        Args:
-            x_prev: Previous output in decoder
-            x_low: Low level features from encoder (dcnn)
-
-        Returns:
-            Skip connection output
-        """
-        # Apply 1x1 conv to x_low
-        x_low = self.conv1(x_low)
-        x_low = self.bn1(x_low)
-        x_low = self.relu(x_low)
-
-        x_prev = F.interpolate(
-            x_prev, size=x_low.size()[2:], mode="bilinear", align_corners=True
-        )
-
-        # Concat
-        x = torch.cat((x_prev, x_low), dim=1)
-        # Reduce
-        x = self.last_conv(x)
-
-        # Interpolate
-        x = nn.functional.interpolate(
-            x, scale_factor=2, mode="bilinear", align_corners=True
-        )
-
-        return x
-
-    def _init_weight(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+        return self.disp1, self.disp2, self.disp3, self.disp4
