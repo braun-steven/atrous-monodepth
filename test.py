@@ -48,6 +48,13 @@ def parse_args() -> argparse.Namespace:
         metavar="DIR",
     )
     parser.add_argument(
+        "--atrous-rates",
+        nargs="+",
+        type=int,
+        default=[1, 6, 12, 18],
+        help="Atrous rates for the ASPP Module.",
+    )
+    parser.add_argument(
         "--output-dir",
         help="Output directory for all results generated during an experiment run",
         metavar="DIR",
