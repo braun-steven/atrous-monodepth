@@ -43,20 +43,23 @@ class get_disp(nn.Module):
         Has two output channels (left and right disparity map)
     """
 
-    def __init__(self, num_in_layers):
+    def __init__(self, num_in_layers, padding=nn.ZeroPad2d):
         """
         Args:
             num_in_layers: number of input channels
+            padding: torch.nn padding layer (default nn.ZeroPad2d)
         """
         super(get_disp, self).__init__()
         super(get_disp, self).__init__()
+        p = 1
+        p2d = (p, p, p, p)
+        self.pad = padding(p2d)
         self.conv1 = nn.Conv2d(num_in_layers, 2, kernel_size=3, stride=1)
         self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, x):
-        p = 1
-        p2d = (p, p, p, p)
-        x = self.conv1(F.pad(x, p2d))
+        x = self.pad(x)
+        x = self.conv1(x)
         return 0.3 * self.sigmoid(x)
 
 
@@ -64,7 +67,9 @@ class conv(nn.Module):
     """ Convolutional layer with padding
     """
 
-    def __init__(self, n_in, n_out, kernel_size, stride, dilation=1):
+    def __init__(
+        self, n_in, n_out, kernel_size, stride, dilation=1, padding=nn.ZeroPad2d
+    ):
         """
         Args:
             n_in: number of input channels
@@ -72,21 +77,20 @@ class conv(nn.Module):
             kernel_size: kernel size
             stride: stride of the convolution
             dilation: dilation (atrous rate) of the convolution
+            padding: torch.nn padding layer (default nn.ZeroPad2d)
         """
         super(conv, self).__init__()
-        self.p = np.floor((kernel_size - 1) / 2).astype(np.int32)
+        # compute padding and create padding layer
+        self.p = int(np.floor((kernel_size - 1) / 2))
         if dilation != 1:
             self.p = dilation
+        self.pad = padding((self.p, self.p, self.p, self.p))
         self.conv = nn.Conv2d(
-            n_in,
-            n_out,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=(self.p, self.p),
-            dilation=dilation,
+            n_in, n_out, kernel_size=kernel_size, stride=stride, dilation=dilation
         )
 
     def forward(self, x):
+        x = self.pad(x)
         x = self.conv(x)
         return F.elu(x)
 
@@ -95,17 +99,20 @@ class upconv(nn.Module):
     """ Upsampling and convolution
     """
 
-    def __init__(self, n_in, n_out, kernel_size, scale):
+    def __init__(self, n_in, n_out, kernel_size, scale, padding=nn.ZeroPad2d):
         """
         Args:
             n_in: number of input channels
             n_out: number of output_channels
             kernel_size: kernel size
             scale: scale of the upsampling
+            padding: torch.nn padding layer (default nn.ZeroPad2d)
         """
         super(upconv, self).__init__()
         self.upsample = upsample_nn(scale)
-        self.conv = conv(n_in=n_in, n_out=n_out, kernel_size=kernel_size, stride=1)
+        self.conv = conv(
+            n_in=n_in, n_out=n_out, kernel_size=kernel_size, stride=1, padding=padding
+        )
 
     def forward(self, x):
         x = self.upsample(x)
