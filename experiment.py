@@ -130,7 +130,7 @@ class Experiment:
             model=args.model,
             n_input_channels=args.input_channels,
             pretrained=args.imagenet_pretrained,
-            args=self.args
+            args=self.args,
         )
         logger.info(
             "Training a {} model with {} parameters".format(
@@ -271,19 +271,19 @@ class Experiment:
             #################
             # Track results #
             #################
-            running_val_loss /= self.val_n_img
-            running_val_image_loss /= self.val_n_img
-            running_val_disp_gradient_loss /= self.val_n_img
-            running_val_lr_loss /= self.val_n_img
+            running_val_loss /= len(self.val_loader)
+            running_val_image_loss /= len(self.val_loader)
+            running_val_disp_gradient_loss /= len(self.val_loader)
+            running_val_lr_loss /= len(self.val_loader)
 
             # Generate 10 random disparity map predictions
             self.gen_val_disp_maps(epoch)
 
             # Estimate loss per image
-            running_loss /= self.n_img
-            running_image_loss /= self.n_img
-            running_disp_gradient_loss /= self.n_img
-            running_lr_loss /= self.n_img
+            running_loss /= len(self.loader)
+            running_image_loss /= len(self.loader)
+            running_disp_gradient_loss /= len(self.loader)
+            running_lr_loss /= len(self.loader)
 
             # Update best loss
             if running_val_loss < best_val_loss:
