@@ -1,28 +1,28 @@
 from monolab.networks.resnet import Resnet50
 import numpy as np
 import torch
+import time
 
 
 def test(output_stride):
-    img = np.random.randn(1, 3, 32, 64)
+    img = np.random.randn(1, 3, 256, 512)
     img = torch.Tensor(img)
 
     model = Resnet50(3, output_stride=output_stride)
 
-    model.forward(img)
+    for i in range(10):
+        model.forward(img)
+
+
+def time_test(output_stride):
+    start_time = time.time()
+    test(output_stride=output_stride)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == "__main__":
-    import timeit
+    print("Output stride 64")
+    time_test(64)
 
-    print("Output stride = 64")
-    print(
-        timeit.timeit(stmt="test(output_stride=64)", setup="from __main__ import test"),
-        number=10,
-    )
-
-    print("Output stride = 16")
-    print(
-        timeit.timeit(stmt="test(output_stride=16)", setup="from __main__ import test"),
-        number=10,
-    )
+    print("Output stride 16")
+    time_test(16)

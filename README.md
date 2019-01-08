@@ -1,5 +1,5 @@
 # Monocular Depth Estimation with Atrous Convolutions
-This repo contains code for the Deep Learning in Computer Vision practical course at TU Darmstadt.
+This repo contains code for the Deep Learning in Computer Vision practical course at TU Darmstadt. The project's goal is to test whether atrous convolutions (convolutions with dilated kernels) can improve monocular depth estimation. We base our implementation upon [Unsupervised single image depth prediction with CNNs](https://github.com/mrharicot/monodepth) and improve the ResNet backbone using ideas from the semantic segmentation network [DeepLab v3+](https://github.com/tensorflow/models/tree/master/research/deeplab). Atrous convolutions might help in using information at different spatial scales without introducing lots of new parameters.
 
 ## Useful Links
 ### Original implementations
@@ -28,5 +28,7 @@ You can train a model by running `main.py`, which is parametrized with the follo
 - `--cuda-device-ids`: GPUs on which to train, -1 for cpu only
 
 ### Testing
+Testing on a dataset of choice is automatically performed after training (if the argument `--test-filenames-file` is set). If you want to manually test a given model, running `test.py` and providing a `--checkpoint` will also work.
 
 ### Evaluation
+Evaluation is implemented on the KITTI Stereo 2015 dataset or the Eigen split of the KITTI dataset. It is automatically evoked after training if `--eval` is set to `kitti-gt` or `eigen`. If you want to manually run evaluation on a given `.npy` file containing the output disparities on the respective dataset, you can do so by running `eval.py`.
