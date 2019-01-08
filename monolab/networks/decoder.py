@@ -5,55 +5,55 @@ from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class MonodepthDecoder(nn.Module):
-    def __init__(self):
+    def __init__(self, padding="constant"):
         super(MonodepthDecoder, self).__init__()
 
         # decoder
         self.upconv6 = upconv(
-            n_in=2048, n_out=512, kernel_size=3, scale=2, padding="reflect"
+            n_in=2048, n_out=512, kernel_size=3, scale=2, padding=padding
         )  # H/32
         self.iconv6 = conv(
-            n_in=512 + 1024, n_out=512, kernel_size=3, stride=1, padding="reflect"
+            n_in=512 + 1024, n_out=512, kernel_size=3, stride=1, padding=padding
         )  # upconv6 + conv4
 
         self.upconv5 = upconv(
-            n_in=512, n_out=256, kernel_size=3, scale=2, padding="reflect"
+            n_in=512, n_out=256, kernel_size=3, scale=2, padding=padding
         )  # H/16
         self.iconv5 = conv(
-            n_in=256 + 512, n_out=256, kernel_size=3, stride=1, padding="reflect"
+            n_in=256 + 512, n_out=256, kernel_size=3, stride=1, padding=padding
         )  # upconv5 + conv3
 
         self.upconv4 = upconv(
-            n_in=256, n_out=128, kernel_size=3, scale=2, padding="reflect"
+            n_in=256, n_out=128, kernel_size=3, scale=2, padding=padding
         )  # H/8
         self.iconv4 = conv(
-            n_in=256 + 128, n_out=128, kernel_size=3, stride=1, padding="reflect"
+            n_in=256 + 128, n_out=128, kernel_size=3, stride=1, padding=padding
         )  # upconv4 + conv2
-        self.disp4 = get_disp(128, "reflect")
+        self.disp4 = get_disp(128, padding)
 
         self.upconv3 = upconv(
-            n_in=128, n_out=64, kernel_size=3, scale=2, padding="reflect"
+            n_in=128, n_out=64, kernel_size=3, scale=2, padding=padding
         )  # H/4
         self.iconv3 = conv(
-            n_in=64 + 64 + 2, n_out=64, kernel_size=3, stride=1, padding="reflect"
+            n_in=64 + 64 + 2, n_out=64, kernel_size=3, stride=1, padding=padding
         )  # upconv3 + pool1 + disp4
-        self.disp3 = get_disp(64, padding="reflect")
+        self.disp3 = get_disp(64, padding=padding)
 
         self.upconv2 = upconv(
-            n_in=64, n_out=32, kernel_size=3, scale=2, padding="reflect"
+            n_in=64, n_out=32, kernel_size=3, scale=2, padding=padding
         )  # H/2
         self.iconv2 = conv(
-            n_in=32 + 64 + 2, n_out=32, kernel_size=3, stride=1, padding="reflect"
+            n_in=32 + 64 + 2, n_out=32, kernel_size=3, stride=1, padding=padding
         )  # upconv2 + conv1 + disp3
-        self.disp2 = get_disp(32, padding="reflect")
+        self.disp2 = get_disp(32, padding=padding)
 
         self.upconv1 = upconv(
-            n_in=32, n_out=16, kernel_size=3, scale=2, padding="reflect"
+            n_in=32, n_out=16, kernel_size=3, scale=2, padding=padding
         )  # H
         self.iconv1 = conv(
-            n_in=16 + 2, n_out=16, kernel_size=3, stride=1, padding="reflect"
+            n_in=16 + 2, n_out=16, kernel_size=3, stride=1, padding=padding
         )  # upconv1 + disp2
-        self.disp1 = get_disp(16, "reflect")
+        self.disp1 = get_disp(16, padding)
 
         self.upsample_nn = upsample_nn(scale=2)
 
