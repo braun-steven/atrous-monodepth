@@ -10,7 +10,12 @@ from monolab.networks.deeplab.aspp import ASPP
 
 class DeepLab(nn.Module):
     def __init__(
-        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False, aspp_dilations=None,
+        self,
+        num_in_layers=3,
+        backbone="resnet",
+        output_stride=16,
+        freeze_bn=False,
+        aspp_dilations=None,
     ):
         super(DeepLab, self).__init__()
 
@@ -25,7 +30,9 @@ class DeepLab(nn.Module):
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
         # ASPP module
-        self.aspp = ASPP(backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d)
+        self.aspp = ASPP(
+            backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d
+        )
 
         # Decoder module
         if backbone == "resnet":
@@ -38,10 +45,9 @@ class DeepLab(nn.Module):
         self.decoder = Decoder(
             backbone=backbone,
             BatchNorm=nn.BatchNorm2d,
-            x_low_inplanes_list=x_low_inplanes_list,
+            x_low_inplanes_list=[],
             num_outplanes_list=num_channels_out_list,
         )
-
 
         if freeze_bn:
             self.freeze_bn()
@@ -63,7 +69,7 @@ class DeepLab(nn.Module):
         x = self.aspp(x_dcnn_out)
 
         # List of decoder results of size num_disparity_maps
-        disp1, disp2, disp3, disp4 = self.decoder(x, x1, x2, x3, x4)
+        disp1, disp2, disp3, disp4 = self.decoder(x)
 
         return [disp1, disp2, disp3, disp4]
 
@@ -76,9 +82,13 @@ class DeepLab(nn.Module):
 if __name__ == "__main__":
     x = torch.rand(1, 3, 256, 512)
 
-    net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=[1, 2, 4, 8, 12, 18, 32])
+    net = DeepLab(
+        num_in_layers=3,
+        output_stride=16,
+        backbone="resnet",
+        aspp_dilations=[1, 2, 4, 8, 12, 18, 32],
+    )
     print(net)
-
 
     net.eval()
 
