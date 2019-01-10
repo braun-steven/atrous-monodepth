@@ -5,7 +5,7 @@ from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class MonodepthDecoder(nn.Module):
-    def __init__(self, padding="constant"):
+    def __init__(self, padding="reflect"):
         super(MonodepthDecoder, self).__init__()
 
         # decoder
