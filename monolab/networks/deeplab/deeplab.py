@@ -42,22 +42,12 @@ class DeepLab(nn.Module):
             num_outplanes_list=num_channels_out_list,
         )
 
-        self.disp1 = get_disp(num_channels_out_list[0])
-        self.disp2 = get_disp(num_channels_out_list[1])
-        self.disp3 = get_disp(num_channels_out_list[2])
-        self.disp4 = get_disp(num_channels_out_list[3])
-
         if freeze_bn:
             self.freeze_bn()
 
     def forward(self, x) -> List[Tensor]:
         if self.dcnn_type == "resnet":
             x1, x1_pool, x2, x3, x4, x_dcnn_out = self.backbone(x)
-        elif self.dcnn_type == "xception":
-            x_dcnn_out, x2 = self.backbone(input)
-            raise NotImplementedError(
-                "Multiple disparities for xception backend not " "yet implemented"
-            )
         else:
             raise NotImplementedError(
                 "Unknown DCNN backend type for the Deeplab backbone."
@@ -67,14 +57,9 @@ class DeepLab(nn.Module):
         x = self.aspp(x_dcnn_out)
 
         # List of decoder results of size num_disparity_maps
-        x_skip1, x_skip2, x_skip3, x_skip4 = self.decoder(x, x1, x2, x3, x4)
+        disp1, disp2, disp3, disp4 = self.decoder(x, x1, x2, x3, x4)
 
-        # Compute disparity maps
-        disp1 = self.disp1(x_skip1)
-        disp2 = self.disp2(x_skip2)
-        disp3 = self.disp3(x_skip3)
-        disp4 = self.disp4(x_skip4)
-        return [disp4, disp3, disp2, disp1]
+        return [disp1, disp2, disp3, disp4]
 
     def freeze_bn(self):
         for m in self.modules():
@@ -87,7 +72,6 @@ if __name__ == "__main__":
 
     net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=[1, 2, 4, 8, 12, 18, 32])
     print(net)
-
 
     net.eval()
 
