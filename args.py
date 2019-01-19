@@ -180,6 +180,12 @@ def parse_args() -> argparse.Namespace:
                             separated by a space.",
         metavar="FILE",
     )
+    parser.add_argument(
+        "--decoder-type",
+        default="deeplab",
+        help="Decoder architecture, one of [godard, deeplab]",
+        choices=["godard", "deeplab"]
+    )
 
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()

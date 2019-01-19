@@ -3,14 +3,20 @@ import torch.nn as nn
 from torch import Tensor
 from typing import List, Tuple
 
-from monolab.networks.resnet import Resnet50, get_disp
 from monolab.networks.deeplab.deeplab_decoder import Decoder
 from monolab.networks.deeplab.aspp import ASPP
+from monolab.networks.resnet import Resnet50
 
 
 class DeepLab(nn.Module):
     def __init__(
-        self, num_in_layers=3, backbone="resnet", output_stride=16, freeze_bn=False, aspp_dilations=None,
+        self,
+        num_in_layers=3,
+        backbone="resnet",
+        output_stride=16,
+        freeze_bn=False,
+        aspp_dilations=None,
+        decoder_type="deeplab",
     ):
         super(DeepLab, self).__init__()
 
@@ -25,7 +31,9 @@ class DeepLab(nn.Module):
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
         # ASPP module
-        self.aspp = ASPP(backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d)
+        self.aspp = ASPP(
+            backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d
+        )
 
         # Decoder module
         if backbone == "resnet":
@@ -40,6 +48,7 @@ class DeepLab(nn.Module):
             BatchNorm=nn.BatchNorm2d,
             x_low_inplanes_list=x_low_inplanes_list,
             num_outplanes_list=num_channels_out_list,
+            decoder_type=decoder_type,
         )
 
         if freeze_bn:
@@ -70,7 +79,13 @@ class DeepLab(nn.Module):
 if __name__ == "__main__":
     x = torch.rand(1, 3, 256, 512)
 
-    net = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=[1, 2, 4, 8, 12, 18, 32])
+    net = DeepLab(
+        num_in_layers=3,
+        output_stride=16,
+        backbone="resnet",
+        aspp_dilations=[1, 2, 4, 8, 12, 18, 32],
+        decoder_type="godard"
+    )
     print(net)
 
     net.eval()

@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from typing import List, Tuple
+
 from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
@@ -41,8 +42,6 @@ class Decoder(nn.Module):
 
         if backbone == "resnet":
             encoder_out_planes = 256
-        elif backbone == "xception":
-            encoder_out_planes = 128
         else:
             raise NotImplementedError
 
@@ -77,6 +76,12 @@ class Decoder(nn.Module):
                 num_out_planes=num_outplanes_list[3],
                 BatchNorm=BatchNorm,
             )
+
+            self.disp4 = get_disp(num_outplanes_list[0])
+            self.disp3 = get_disp(num_outplanes_list[1])
+            self.disp2 = get_disp(num_outplanes_list[2])
+            self.disp1 = get_disp(num_outplanes_list[3])
+
         elif decoder_type == "godard":
             upsampling_scales = [1, 2, 2, 1]
             self.upconv5 = upconv(
@@ -136,12 +141,18 @@ class Decoder(nn.Module):
             Tuple of all four skip connection outputs
         """
         if self.decoder_type == "deeplab":
-            x_skip1 = self.skip4(x_aspp_out, x_low4)
-            x_skip2 = self.skip3(x_skip1, x_low3)
-            x_skip3 = self.skip2(x_skip2, x_low2)
-            x_skip4 = self.skip1(x_skip3, x_low1)
+            x_skip4 = self.skip4(x_aspp_out, x_low4)
+            x_skip3 = self.skip3(x_skip4, x_low3)
+            x_skip2 = self.skip2(x_skip3, x_low2)
+            x_skip1 = self.skip1(x_skip2, x_low1)
 
-            return x_skip1, x_skip2, x_skip3, x_skip4
+            # Compute disparity maps
+            disp4 = self.disp4(x_skip4)
+            disp3 = self.disp3(x_skip3)
+            disp2 = self.disp2(x_skip2)
+            disp1 = self.disp1(x_skip1)
+
+            return [disp1, disp2, disp3, disp4]
 
         elif self.decoder_type == "godard":
             # skips
@@ -158,27 +169,27 @@ class Decoder(nn.Module):
             upconv4 = self.upconv4(iconv5)
             concat4 = torch.cat((upconv4, skip3), 1)
             iconv4 = self.iconv4(concat4)
-            self.disp4 = self.disp4_layer(iconv4)
-            self.udisp4 = self.upsample_nn(self.disp4)
+            disp4 = self.disp4_layer(iconv4)
+            udisp4 = self.upsample_nn(disp4)
 
             upconv3 = self.upconv3(iconv4)
-            concat3 = torch.cat((upconv3, skip2, self.udisp4), 1)
+            concat3 = torch.cat((upconv3, skip2, udisp4), 1)
             iconv3 = self.iconv3(concat3)
-            self.disp3 = self.disp3_layer(iconv3)
-            self.udisp3 = self.upsample_nn(self.disp3)
+            disp3 = self.disp3_layer(iconv3)
+            udisp3 = self.upsample_nn(disp3)
 
             upconv2 = self.upconv2(iconv3)
-            concat2 = torch.cat((upconv2, skip1, self.udisp3), 1)
+            concat2 = torch.cat((upconv2, skip1, udisp3), 1)
             iconv2 = self.iconv2(concat2)
-            self.disp2 = self.disp2_layer(iconv2)
-            self.udisp2 = self.upsample_nn(self.disp2)
+            disp2 = self.disp2_layer(iconv2)
+            udisp2 = self.upsample_nn(disp2)
 
             upconv1 = self.upconv1(iconv2)
-            concat1 = torch.cat((upconv1, self.udisp2), 1)
+            concat1 = torch.cat((upconv1, udisp2), 1)
             iconv1 = self.iconv1(concat1)
-            self.disp1 = self.disp1_layer(iconv1)
+            disp1 = self.disp1_layer(iconv1)
 
-            return self.disp1, self.disp2, self.disp3, self.disp4
+            return disp1, disp2, disp3, disp4
 
     def _init_weight(self):
         for m in self.modules():

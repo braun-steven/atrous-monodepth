@@ -45,7 +45,9 @@ def to_device(
         raise TypeError("Input must contain tensor, dict or list, found %s" % type(x))
 
 
-def get_model(model: str, args, n_input_channels=3, pretrained=False) -> torch.nn.Module:
+def get_model(
+    model: str, args, n_input_channels=3, pretrained=False
+) -> torch.nn.Module:
     """
     Get model via name
     Args:
@@ -55,7 +57,13 @@ def get_model(model: str, args, n_input_channels=3, pretrained=False) -> torch.n
         Instantiated model
     """
     if model == "deeplab":
-        out_model = DeepLab(num_in_layers=3, output_stride=16, backbone="resnet", aspp_dilations=args.atrous_rates)
+        out_model = DeepLab(
+            num_in_layers=3,
+            output_stride=16,
+            backbone="resnet",
+            aspp_dilations=args.atrous_rates,
+            decoder_type=args.decoder,
+        )
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(num_in_layers=n_input_channels)
     elif model == "resnet18_md":

@@ -286,3 +286,9 @@ env
 
 # Ignore ctags
 tags
+
+# ignore pyc files
+*.pyc
+
+# ignore backup files
+*.orig
