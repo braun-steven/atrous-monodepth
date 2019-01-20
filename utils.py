@@ -62,7 +62,7 @@ def get_model(
             output_stride=16,
             backbone="resnet",
             aspp_dilations=args.atrous_rates,
-            decoder_type=args.decoder,
+            decoder_type=args.decoder_type,
             skip_connections=args.add_skip_connections,
         )
     elif model == "resnet50_md":
