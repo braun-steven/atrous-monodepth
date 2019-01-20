@@ -69,7 +69,7 @@ class DeepLab(nn.Module):
         self.decoder = decoder_module(
             backbone=backbone,
             BatchNorm=nn.BatchNorm2d,
-            x_low_inplanes_list=[],
+            x_low_inplanes_list=x_low_inplanes_list,
             num_outplanes_list=num_channels_out_list,
             decoder_type=decoder_type,
         )
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         backbone="resnet",
         aspp_dilations=[1, 2, 4, 8, 12, 18, 32],
         decoder_type="deeplab",
-        skip_connections=False,
+        skip_connections=True,
     )
     print(net)
 
