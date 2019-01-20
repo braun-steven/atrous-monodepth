@@ -2,13 +2,14 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import Tensor
 import logging
 
 from monolab.networks.resnet import conv, get_disp, upconv, upsample_nn
 
 logger = logging.getLogger(__name__)
+
+from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class Decoder(nn.Module):

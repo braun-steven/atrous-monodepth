@@ -63,11 +63,12 @@ def get_model(
             backbone="resnet",
             aspp_dilations=args.atrous_rates,
             decoder_type=args.decoder,
+            skip_connections=args.add_skip_connections,
         )
     elif model == "resnet50_md":
-        out_model = MonodepthResnet50(num_in_layers=n_input_channels)
+        out_model = MonodepthResnet50(num_in_layers=n_input_channels, skip_connections=args.add_skip_connections)
     elif model == "resnet18_md":
-        out_model = MonodepthResnet18(num_in_layers=n_input_channels)
+        out_model = MonodepthResnet18(num_in_layers=n_input_channels, skip_connections=args.add_skip_connections)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     else:

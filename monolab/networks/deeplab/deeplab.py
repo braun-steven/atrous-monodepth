@@ -69,7 +69,7 @@ class DeepLab(nn.Module):
         self.decoder = decoder_module(
             backbone=backbone,
             BatchNorm=nn.BatchNorm2d,
-            x_low_inplanes_list=x_low_inplanes_list,
+            x_low_inplanes_list=[],
             num_outplanes_list=num_channels_out_list,
             decoder_type=decoder_type,
         )
