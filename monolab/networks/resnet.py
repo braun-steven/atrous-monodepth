@@ -49,7 +49,6 @@ class get_disp(nn.Module):
             num_in_layers: number of input channels
         """
         super(get_disp, self).__init__()
-        super(get_disp, self).__init__()
         self.conv1 = nn.Conv2d(num_in_layers, 2, kernel_size=3, stride=1)
         self.sigmoid = torch.nn.Sigmoid()
 

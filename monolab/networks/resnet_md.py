@@ -2,16 +2,19 @@ import torch
 import torch.nn as nn
 
 from monolab.networks.resnet import Resnet50, Resnet18
-from monolab.networks.decoder import MonodepthDecoder
+from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 
 
 class MonodepthResnet50(nn.Module):
-    def __init__(self, num_in_layers):
+    def __init__(self, num_in_layers, skip_connections):
         super(MonodepthResnet50, self).__init__()
 
         self.encoder = Resnet50(num_in_layers=num_in_layers)
 
-        self.decoder = MonodepthDecoder()
+        if skip_connections:
+            self.decoder = MonodepthDecoder()
+        else:
+            self.decoder = MonodepthDecoderSkipless()
 
     def forward(self, x):
         x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
@@ -22,12 +25,15 @@ class MonodepthResnet50(nn.Module):
 
 
 class MonodepthResnet18(nn.Module):
-    def __init__(self, num_in_layers):
+    def __init__(self, num_in_layers, skip_connections):
         super(MonodepthResnet18, self).__init__()
 
         self.encoder = Resnet18(num_in_layers=num_in_layers)
 
-        self.decoder = MonodepthDecoder()
+        if skip_connections:
+            self.decoder = MonodepthDecoder()
+        else:
+            self.decoder = MonodepthDecoderSkipless()
 
     def forward(self, x):
         x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
@@ -41,7 +47,7 @@ if __name__ == "__main__":
 
     x = torch.rand(1, 3, 256, 512)
 
-    net = MonodepthResnet50(num_in_layers=3)
+    net = MonodepthResnet50(num_in_layers=3, skip_connections=False)
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 

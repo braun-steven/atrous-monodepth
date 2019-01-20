@@ -2,10 +2,13 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 from typing import List, Tuple
+import logging
 
-from monolab.networks.deeplab.deeplab_decoder import Decoder
+from monolab.networks.deeplab.deeplab_decoder import Decoder, DecoderSkipless
 from monolab.networks.deeplab.aspp import ASPP
 from monolab.networks.resnet import Resnet50
+
+logger = logging.getLogger(__name__)
 
 
 class DeepLab(nn.Module):
@@ -17,7 +20,20 @@ class DeepLab(nn.Module):
         freeze_bn=False,
         aspp_dilations=None,
         decoder_type="deeplab",
+        skip_connections=True,
     ):
+        """
+        DeepLab Module.
+
+        Args:
+            num_in_layers: Number of input layers.
+            backbone: backbone type.
+            output_stride: Factor by which the input image gets reduced in the encoder.
+            freeze_bn: Flag to freeze batchnorm layer.
+            aspp_dilations: List of aspp rates. Each rate will setup its own aspp layer with the given rate as dilation.
+            decoder_type: Type of the decoder, can be one of ["godard", "deeplab"].
+            skip_connections: Flag to use skip connections from the encoder to the decoder or not.
+        """
         super(DeepLab, self).__init__()
 
         self.dcnn_type = backbone
@@ -43,7 +59,14 @@ class DeepLab(nn.Module):
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
         num_channels_out_list = [128, 64, 32, 16]
-        self.decoder = Decoder(
+
+        # Use Decoder if skip connections are enabled, else use Skipless Decoder
+        if skip_connections:
+            decoder_module = Decoder
+        else:
+            decoder_module = DecoderSkipless
+
+        self.decoder = decoder_module(
             backbone=backbone,
             BatchNorm=nn.BatchNorm2d,
             x_low_inplanes_list=x_low_inplanes_list,
@@ -84,7 +107,8 @@ if __name__ == "__main__":
         output_stride=16,
         backbone="resnet",
         aspp_dilations=[1, 2, 4, 8, 12, 18, 32],
-        decoder_type="godard"
+        decoder_type="deeplab",
+        skip_connections=False,
     )
     print(net)
 
