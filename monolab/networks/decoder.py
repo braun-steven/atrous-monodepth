@@ -5,27 +5,48 @@ from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class MonodepthDecoder(nn.Module):
-    def __init__(self):
+    def __init__(self, output_stride=64):
         super(MonodepthDecoder, self).__init__()
 
+        if output_stride == 64:
+            strides = [2, 2, 2, 2]
+        elif output_stride == 32:
+            strides = [1, 2, 2, 2]
+        # output_stride = 16 is the standard for deeplabv3+
+        elif output_stride == 16:
+            strides = [1, 2, 2, 1]
+        elif output_stride == 8:
+            strides = [1, 2, 1, 1]
+        else:
+            raise ValueError("Please specify a valid output stride")
+
         # decoder
-        self.upconv6 = upconv(n_in=2048, n_out=512, kernel_size=3, scale=2)  # H/32
+        self.upconv6 = upconv(
+            n_in=2048, n_out=512, kernel_size=3, scale=strides[3]
+        )  # H/32
         self.iconv6 = conv(
             n_in=512 + 1024, n_out=512, kernel_size=3, stride=1
         )  # upconv6 + conv4
 
-        self.upconv5 = upconv(n_in=512, n_out=256, kernel_size=3, scale=2)  # H/16
+        self.upconv5 = upconv(
+            n_in=512, n_out=256, kernel_size=3, scale=strides[2]
+        )  # H/16
         self.iconv5 = conv(
             n_in=256 + 512, n_out=256, kernel_size=3, stride=1
         )  # upconv5 + conv3
 
-        self.upconv4 = upconv(n_in=256, n_out=128, kernel_size=3, scale=2)  # H/8
+        self.upconv4 = upconv(
+            n_in=256, n_out=128, kernel_size=3, scale=strides[1]
+        )  # H/8
         self.iconv4 = conv(
             n_in=256 + 128, n_out=128, kernel_size=3, stride=1
         )  # upconv4 + conv2
         self.disp4 = get_disp(128)
+        self.udisp4 = upsample_nn(scale=strides[0])
 
-        self.upconv3 = upconv(n_in=128, n_out=64, kernel_size=3, scale=2)  # H/4
+        self.upconv3 = upconv(
+            n_in=128, n_out=64, kernel_size=3, scale=strides[0]
+        )  # H/4
         self.iconv3 = conv(
             n_in=64 + 64 + 2, n_out=64, kernel_size=3, stride=1
         )  # upconv3 + pool1 + disp4
@@ -70,7 +91,7 @@ class MonodepthDecoder(nn.Module):
         concat4 = torch.cat([upconv4, skip3], 1)
         iconv4 = self.iconv4(concat4)
         disp4 = self.disp4(iconv4)
-        udisp4 = self.upsample_nn(disp4)
+        udisp4 = self.udisp4(disp4)
 
         upconv3 = self.upconv3(iconv4)
         concat3 = torch.cat([upconv3, skip2, udisp4], 1)
@@ -93,27 +114,48 @@ class MonodepthDecoder(nn.Module):
 
 
 class MonodepthDecoderSkipless(nn.Module):
-    def __init__(self):
+    def __init__(self, output_stride=64):
         super(MonodepthDecoderSkipless, self).__init__()
 
+        if output_stride == 64:
+            strides = [2, 2, 2, 2]
+        elif output_stride == 32:
+            strides = [1, 2, 2, 2]
+        # output_stride = 16 is the standard for deeplabv3+
+        elif output_stride == 16:
+            strides = [1, 2, 2, 1]
+        elif output_stride == 8:
+            strides = [1, 2, 1, 1]
+        else:
+            raise ValueError("Please specify a valid output stride")
+
         # decoder
-        self.upconv6 = upconv(n_in=2048, n_out=512, kernel_size=3, scale=2)  # H/32
+        self.upconv6 = upconv(
+            n_in=2048, n_out=512, kernel_size=3, scale=strides[3]
+        )  # H/32
         self.iconv6 = conv(
             n_in=512, n_out=512, kernel_size=3, stride=1
         )  # upconv6 + conv4
 
-        self.upconv5 = upconv(n_in=512, n_out=256, kernel_size=3, scale=2)  # H/16
+        self.upconv5 = upconv(
+            n_in=512, n_out=256, kernel_size=3, scale=strides[2]
+        )  # H/16
         self.iconv5 = conv(
             n_in=256, n_out=256, kernel_size=3, stride=1
         )  # upconv5 + conv3
 
-        self.upconv4 = upconv(n_in=256, n_out=128, kernel_size=3, scale=2)  # H/8
+        self.upconv4 = upconv(
+            n_in=256, n_out=128, kernel_size=3, scale=strides[1]
+        )  # H/8
         self.iconv4 = conv(
             n_in=128, n_out=128, kernel_size=3, stride=1
         )  # upconv4 + conv2
         self.disp4 = get_disp(128)
+        self.udisp4 = upsample_nn(scale=strides[0])
 
-        self.upconv3 = upconv(n_in=128, n_out=64, kernel_size=3, scale=2)  # H/4
+        self.upconv3 = upconv(
+            n_in=128, n_out=64, kernel_size=3, scale=strides[0]
+        )  # H/4
         self.iconv3 = conv(
             n_in=64 + 2, n_out=64, kernel_size=3, stride=1
         )  # upconv3 + pool1 + disp4
@@ -151,7 +193,7 @@ class MonodepthDecoderSkipless(nn.Module):
         concat4 = torch.cat([upconv4], 1)
         iconv4 = self.iconv4(concat4)
         disp4 = self.disp4(iconv4)
-        udisp4 = self.upsample_nn(disp4)
+        udisp4 = self.udisp4(disp4)
 
         upconv3 = self.upconv3(iconv4)
         concat3 = torch.cat([upconv3, udisp4], 1)

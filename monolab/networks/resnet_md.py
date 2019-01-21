@@ -6,15 +6,17 @@ from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 
 
 class MonodepthResnet50(nn.Module):
-    def __init__(self, num_in_layers, skip_connections):
+    def __init__(self, num_in_layers, skip_connections, output_stride=64):
         super(MonodepthResnet50, self).__init__()
 
-        self.encoder = Resnet50(num_in_layers=num_in_layers)
+        self.encoder = Resnet50(
+            num_in_layers=num_in_layers, output_stride=output_stride
+        )
 
         if skip_connections:
-            self.decoder = MonodepthDecoder()
+            self.decoder = MonodepthDecoder(output_stride=output_stride)
         else:
-            self.decoder = MonodepthDecoderSkipless()
+            self.decoder = MonodepthDecoderSkipless(output_stride=output_stride)
 
     def forward(self, x):
         x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
@@ -25,15 +27,17 @@ class MonodepthResnet50(nn.Module):
 
 
 class MonodepthResnet18(nn.Module):
-    def __init__(self, num_in_layers, skip_connections):
+    def __init__(self, num_in_layers, skip_connections, output_stride=64):
         super(MonodepthResnet18, self).__init__()
 
-        self.encoder = Resnet18(num_in_layers=num_in_layers)
+        self.encoder = Resnet18(
+            num_in_layers=num_in_layers, output_stride=output_stride
+        )
 
         if skip_connections:
-            self.decoder = MonodepthDecoder()
+            self.decoder = MonodepthDecoder(output_stride=output_stride)
         else:
-            self.decoder = MonodepthDecoderSkipless()
+            self.decoder = MonodepthDecoderSkipless(output_stride=output_stride)
 
     def forward(self, x):
         x1, x_pool1, x2, x3, x4, x5 = self.encoder(x)
@@ -47,7 +51,7 @@ if __name__ == "__main__":
 
     x = torch.rand(1, 3, 256, 512)
 
-    net = MonodepthResnet50(num_in_layers=3, skip_connections=True)
+    net = MonodepthResnet50(num_in_layers=3, skip_connections=False, output_stride=8)
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
