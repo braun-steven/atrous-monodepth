@@ -4,6 +4,21 @@ import torch.nn as nn
 from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
+def get_strides(output_stride):
+    if output_stride == 64:
+        strides = [2, 2, 2, 2]
+    elif output_stride == 32:
+        strides = [1, 2, 2, 2]
+    # output_stride = 16 is the standard for deeplabv3+
+    elif output_stride == 16:
+        strides = [1, 2, 2, 1]
+    elif output_stride == 8:
+        strides = [1, 2, 1, 1]
+    else:
+        raise ValueError("Please specify a valid output stride")
+    return strides
+
+
 class MonodepthDecoder(nn.Module):
     def __init__(
         self,
@@ -13,21 +28,15 @@ class MonodepthDecoder(nn.Module):
     ):
         super(MonodepthDecoder, self).__init__()
 
-        if output_stride == 64:
-            strides = [2, 2, 2, 2]
-        elif output_stride == 32:
-            strides = [1, 2, 2, 2]
-        # output_stride = 16 is the standard for deeplabv3+
-        elif output_stride == 16:
-            strides = [1, 2, 2, 1]
-        elif output_stride == 8:
-            strides = [1, 2, 1, 1]
-        else:
-            raise ValueError("Please specify a valid output stride")
+        self.output_stride = output_stride
+        self.strides = get_strides(output_stride)
 
         # decoder
         self.upconv6 = upconv(
-            n_in=num_in_planes, n_out=num_out_planes[0], kernel_size=3, scale=strides[3]
+            n_in=num_in_planes,
+            n_out=num_out_planes[0],
+            kernel_size=3,
+            scale=self.strides[3],
         )  # H/32
         self.iconv6 = conv(
             n_in=num_out_planes[0] + 1024,
@@ -40,7 +49,7 @@ class MonodepthDecoder(nn.Module):
             n_in=num_out_planes[0],
             n_out=num_out_planes[1],
             kernel_size=3,
-            scale=strides[2],
+            scale=self.strides[2],
         )  # H/16
         self.iconv5 = conv(
             n_in=num_out_planes[1] + 512,
@@ -53,7 +62,7 @@ class MonodepthDecoder(nn.Module):
             n_in=num_out_planes[1],
             n_out=num_out_planes[2],
             kernel_size=3,
-            scale=strides[1],
+            scale=self.strides[1],
         )  # H/8
         self.iconv4 = conv(
             n_in=num_out_planes[2] + 256,
@@ -62,13 +71,13 @@ class MonodepthDecoder(nn.Module):
             stride=1,
         )  # upconv4 + conv2
         self.disp4 = get_disp(num_out_planes[2])
-        self.udisp4 = upsample_nn(scale=strides[0])
+        self.udisp4 = upsample_nn(scale=self.strides[0])
 
         self.upconv3 = upconv(
             n_in=num_out_planes[2],
             n_out=num_out_planes[3],
             kernel_size=3,
-            scale=strides[0],
+            scale=self.strides[0],
         )  # H/4
         self.iconv3 = conv(
             n_in=num_out_planes[3] + 64 + 2,
@@ -126,6 +135,9 @@ class MonodepthDecoder(nn.Module):
         disp4 = self.disp4(iconv4)
         udisp4 = self.udisp4(disp4)
 
+        if self.output_stride != 64:
+            disp4 = nn.functional.interpolate(disp4, scale_factor=0.5, mode="nearest")
+
         upconv3 = self.upconv3(iconv4)
         concat3 = torch.cat([upconv3, skip2, udisp4], 1)
         iconv3 = self.iconv3(concat3)
@@ -155,21 +167,15 @@ class MonodepthDecoderSkipless(nn.Module):
     ):
         super(MonodepthDecoderSkipless, self).__init__()
 
-        if output_stride == 64:
-            strides = [2, 2, 2, 2]
-        elif output_stride == 32:
-            strides = [1, 2, 2, 2]
-        # output_stride = 16 is the standard for deeplabv3+
-        elif output_stride == 16:
-            strides = [1, 2, 2, 1]
-        elif output_stride == 8:
-            strides = [1, 2, 1, 1]
-        else:
-            raise ValueError("Please specify a valid output stride")
+        self.output_stride = output_stride
+        self.strides = get_strides(output_stride)
 
         # decoder
         self.upconv6 = upconv(
-            n_in=num_in_planes, n_out=num_out_planes[0], kernel_size=3, scale=strides[3]
+            n_in=num_in_planes,
+            n_out=num_out_planes[0],
+            kernel_size=3,
+            scale=self.strides[3],
         )  # H/32
         self.iconv6 = conv(
             n_in=num_out_planes[0], n_out=num_out_planes[0], kernel_size=3, stride=1
@@ -179,7 +185,7 @@ class MonodepthDecoderSkipless(nn.Module):
             n_in=num_out_planes[0],
             n_out=num_out_planes[1],
             kernel_size=3,
-            scale=strides[2],
+            scale=self.strides[2],
         )  # H/16
         self.iconv5 = conv(
             n_in=num_out_planes[1], n_out=num_out_planes[1], kernel_size=3, stride=1
@@ -189,19 +195,19 @@ class MonodepthDecoderSkipless(nn.Module):
             n_in=num_out_planes[1],
             n_out=num_out_planes[2],
             kernel_size=3,
-            scale=strides[1],
+            scale=self.strides[1],
         )  # H/8
         self.iconv4 = conv(
             n_in=num_out_planes[2], n_out=num_out_planes[2], kernel_size=3, stride=1
         )  # upconv4 + conv2
         self.disp4 = get_disp(num_out_planes[2])
-        self.udisp4 = upsample_nn(scale=strides[0])
+        self.udisp4 = upsample_nn(scale=self.strides[0])
 
         self.upconv3 = upconv(
             n_in=num_out_planes[2],
             n_out=num_out_planes[3],
             kernel_size=3,
-            scale=strides[0],
+            scale=self.strides[0],
         )  # H/4
         self.iconv3 = conv(
             n_in=num_out_planes[3] + 2, n_out=num_out_planes[3], kernel_size=3, stride=1
@@ -245,6 +251,9 @@ class MonodepthDecoderSkipless(nn.Module):
         iconv4 = self.iconv4(concat4)
         disp4 = self.disp4(iconv4)
         udisp4 = self.udisp4(disp4)
+
+        if self.output_stride != 64:
+            disp4 = nn.functional.interpolate(disp4, scale_factor=0.5, mode="nearest")
 
         upconv3 = self.upconv3(iconv4)
         concat3 = torch.cat([upconv3, udisp4], 1)
