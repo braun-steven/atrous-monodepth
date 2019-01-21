@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     x = torch.rand(1, 3, 256, 512)
 
-    net = MonodepthResnet50(num_in_layers=3, skip_connections=False, output_stride=8)
+    net = MonodepthResnet50(num_in_layers=3, skip_connections=True, output_stride=64)
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 

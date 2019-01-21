@@ -4,7 +4,8 @@ from torch import Tensor
 from typing import List, Tuple
 import logging
 
-from monolab.networks.deeplab.deeplab_decoder import Decoder, DecoderSkipless
+# from monolab.networks.deeplab.deeplab_decoder import Decoder, DecoderSkipless
+from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 from monolab.networks.deeplab.aspp import ASPP
 from monolab.networks.resnet import Resnet50
 
@@ -58,20 +59,18 @@ class DeepLab(nn.Module):
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
 
-        num_channels_out_list = [128, 64, 32, 16]
+        num_channels_out_list = [256, 128, 64, 32, 16, 8]
 
         # Use Decoder if skip connections are enabled, else use Skipless Decoder
         if skip_connections:
-            decoder_module = Decoder
+            decoder_module = MonodepthDecoder
         else:
-            decoder_module = DecoderSkipless
+            decoder_module = MonodepthDecoderSkipless
 
         self.decoder = decoder_module(
-            backbone=backbone,
-            BatchNorm=nn.BatchNorm2d,
-            x_low_inplanes_list=x_low_inplanes_list,
-            num_outplanes_list=num_channels_out_list,
-            decoder_type=decoder_type,
+            output_stride=output_stride,
+            num_in_planes=256,
+            num_out_planes=num_channels_out_list,
         )
 
         if freeze_bn:
@@ -89,7 +88,7 @@ class DeepLab(nn.Module):
         x = self.aspp(x_dcnn_out)
 
         # List of decoder results of size num_disparity_maps
-        disp1, disp2, disp3, disp4 = self.decoder(x, x1, x2, x3, x4)
+        disp1, disp2, disp3, disp4 = self.decoder(x1, x1_pool, x2, x3, x4, x)
 
         return [disp1, disp2, disp3, disp4]
 

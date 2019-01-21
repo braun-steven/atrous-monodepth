@@ -5,7 +5,12 @@ from monolab.networks.resnet import upconv, conv, get_disp, upsample_nn
 
 
 class MonodepthDecoder(nn.Module):
-    def __init__(self, output_stride=64):
+    def __init__(
+        self,
+        output_stride=64,
+        num_in_planes=2048,
+        num_out_planes=[512, 256, 128, 64, 32, 16],
+    ):
         super(MonodepthDecoder, self).__init__()
 
         if output_stride == 64:
@@ -22,47 +27,75 @@ class MonodepthDecoder(nn.Module):
 
         # decoder
         self.upconv6 = upconv(
-            n_in=2048, n_out=512, kernel_size=3, scale=strides[3]
+            n_in=num_in_planes, n_out=num_out_planes[0], kernel_size=3, scale=strides[3]
         )  # H/32
         self.iconv6 = conv(
-            n_in=512 + 1024, n_out=512, kernel_size=3, stride=1
+            n_in=num_out_planes[0] + 1024,
+            n_out=num_out_planes[0],
+            kernel_size=3,
+            stride=1,
         )  # upconv6 + conv4
 
         self.upconv5 = upconv(
-            n_in=512, n_out=256, kernel_size=3, scale=strides[2]
+            n_in=num_out_planes[0],
+            n_out=num_out_planes[1],
+            kernel_size=3,
+            scale=strides[2],
         )  # H/16
         self.iconv5 = conv(
-            n_in=256 + 512, n_out=256, kernel_size=3, stride=1
+            n_in=num_out_planes[1] + 512,
+            n_out=num_out_planes[1],
+            kernel_size=3,
+            stride=1,
         )  # upconv5 + conv3
 
         self.upconv4 = upconv(
-            n_in=256, n_out=128, kernel_size=3, scale=strides[1]
+            n_in=num_out_planes[1],
+            n_out=num_out_planes[2],
+            kernel_size=3,
+            scale=strides[1],
         )  # H/8
         self.iconv4 = conv(
-            n_in=256 + 128, n_out=128, kernel_size=3, stride=1
+            n_in=num_out_planes[2] + 256,
+            n_out=num_out_planes[2],
+            kernel_size=3,
+            stride=1,
         )  # upconv4 + conv2
-        self.disp4 = get_disp(128)
+        self.disp4 = get_disp(num_out_planes[2])
         self.udisp4 = upsample_nn(scale=strides[0])
 
         self.upconv3 = upconv(
-            n_in=128, n_out=64, kernel_size=3, scale=strides[0]
+            n_in=num_out_planes[2],
+            n_out=num_out_planes[3],
+            kernel_size=3,
+            scale=strides[0],
         )  # H/4
         self.iconv3 = conv(
-            n_in=64 + 64 + 2, n_out=64, kernel_size=3, stride=1
+            n_in=num_out_planes[3] + 64 + 2,
+            n_out=num_out_planes[3],
+            kernel_size=3,
+            stride=1,
         )  # upconv3 + pool1 + disp4
-        self.disp3 = get_disp(64)
+        self.disp3 = get_disp(num_out_planes[3])
 
-        self.upconv2 = upconv(n_in=64, n_out=32, kernel_size=3, scale=2)  # H/2
+        self.upconv2 = upconv(
+            n_in=num_out_planes[3], n_out=num_out_planes[4], kernel_size=3, scale=2
+        )  # H/2
         self.iconv2 = conv(
-            n_in=32 + 64 + 2, n_out=32, kernel_size=3, stride=1
+            n_in=num_out_planes[4] + 64 + 2,
+            n_out=num_out_planes[4],
+            kernel_size=3,
+            stride=1,
         )  # upconv2 + conv1 + disp3
-        self.disp2 = get_disp(32)
+        self.disp2 = get_disp(num_out_planes[4])
 
-        self.upconv1 = upconv(n_in=32, n_out=16, kernel_size=3, scale=2)  # H
+        self.upconv1 = upconv(
+            n_in=num_out_planes[4], n_out=num_out_planes[5], kernel_size=3, scale=2
+        )  # H
         self.iconv1 = conv(
-            n_in=16 + 2, n_out=16, kernel_size=3, stride=1
+            n_in=num_out_planes[5] + 2, n_out=num_out_planes[5], kernel_size=3, stride=1
         )  # upconv1 + disp2
-        self.disp1 = get_disp(16)
+        self.disp1 = get_disp(num_out_planes[5])
 
         self.upsample_nn = upsample_nn(scale=2)
 
@@ -114,7 +147,12 @@ class MonodepthDecoder(nn.Module):
 
 
 class MonodepthDecoderSkipless(nn.Module):
-    def __init__(self, output_stride=64):
+    def __init__(
+        self,
+        output_stride=64,
+        num_in_planes=2048,
+        num_out_planes=[512, 256, 128, 64, 32, 16],
+    ):
         super(MonodepthDecoderSkipless, self).__init__()
 
         if output_stride == 64:
@@ -131,47 +169,60 @@ class MonodepthDecoderSkipless(nn.Module):
 
         # decoder
         self.upconv6 = upconv(
-            n_in=2048, n_out=512, kernel_size=3, scale=strides[3]
+            n_in=num_in_planes, n_out=num_out_planes[0], kernel_size=3, scale=strides[3]
         )  # H/32
         self.iconv6 = conv(
-            n_in=512, n_out=512, kernel_size=3, stride=1
+            n_in=num_out_planes[0], n_out=num_out_planes[0], kernel_size=3, stride=1
         )  # upconv6 + conv4
 
         self.upconv5 = upconv(
-            n_in=512, n_out=256, kernel_size=3, scale=strides[2]
+            n_in=num_out_planes[0],
+            n_out=num_out_planes[1],
+            kernel_size=3,
+            scale=strides[2],
         )  # H/16
         self.iconv5 = conv(
-            n_in=256, n_out=256, kernel_size=3, stride=1
+            n_in=num_out_planes[1], n_out=num_out_planes[1], kernel_size=3, stride=1
         )  # upconv5 + conv3
 
         self.upconv4 = upconv(
-            n_in=256, n_out=128, kernel_size=3, scale=strides[1]
+            n_in=num_out_planes[1],
+            n_out=num_out_planes[2],
+            kernel_size=3,
+            scale=strides[1],
         )  # H/8
         self.iconv4 = conv(
-            n_in=128, n_out=128, kernel_size=3, stride=1
+            n_in=num_out_planes[2], n_out=num_in_planes[2], kernel_size=3, stride=1
         )  # upconv4 + conv2
-        self.disp4 = get_disp(128)
+        self.disp4 = get_disp(num_out_planes[2])
         self.udisp4 = upsample_nn(scale=strides[0])
 
         self.upconv3 = upconv(
-            n_in=128, n_out=64, kernel_size=3, scale=strides[0]
+            n_in=num_out_planes[2],
+            n_out=num_out_planes[3],
+            kernel_size=3,
+            scale=strides[0],
         )  # H/4
         self.iconv3 = conv(
-            n_in=64 + 2, n_out=64, kernel_size=3, stride=1
+            n_in=num_out_planes[3] + 2, n_out=num_out_planes[3], kernel_size=3, stride=1
         )  # upconv3 + pool1 + disp4
-        self.disp3 = get_disp(64)
+        self.disp3 = get_disp(num_out_planes[3])
 
-        self.upconv2 = upconv(n_in=64, n_out=32, kernel_size=3, scale=2)  # H/2
+        self.upconv2 = upconv(
+            n_in=num_out_planes[3], n_out=num_out_planes[4], kernel_size=3, scale=2
+        )  # H/2
         self.iconv2 = conv(
-            n_in=32 + 2, n_out=32, kernel_size=3, stride=1
+            n_in=num_out_planes[4] + 2, n_out=num_out_planes[4], kernel_size=3, stride=1
         )  # upconv2 + conv1 + disp3
-        self.disp2 = get_disp(32)
+        self.disp2 = get_disp(num_out_planes[4])
 
-        self.upconv1 = upconv(n_in=32, n_out=16, kernel_size=3, scale=2)  # H
+        self.upconv1 = upconv(
+            n_in=num_out_planes[4], n_out=num_out_planes[5], kernel_size=3, scale=2
+        )  # H
         self.iconv1 = conv(
-            n_in=16 + 2, n_out=16, kernel_size=3, stride=1
+            n_in=num_out_planes[5] + 2, n_out=num_out_planes[5], kernel_size=3, stride=1
         )  # upconv1 + disp2
-        self.disp1 = get_disp(16)
+        self.disp1 = get_disp(num_out_planes[5])
 
         self.upsample_nn = upsample_nn(scale=2)
 
