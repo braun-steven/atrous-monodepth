@@ -59,16 +59,24 @@ def get_model(
     if model == "deeplab":
         out_model = DeepLab(
             num_in_layers=3,
-            output_stride=16,
+            output_stride=args.output_stride,
             backbone="resnet",
             aspp_dilations=args.atrous_rates,
             decoder_type=args.decoder_type,
             skip_connections=args.add_skip_connections,
         )
     elif model == "resnet50_md":
-        out_model = MonodepthResnet50(num_in_layers=n_input_channels, skip_connections=args.add_skip_connections)
+        out_model = MonodepthResnet50(
+            num_in_layers=n_input_channels,
+            output_stride=args.output_stride,
+            skip_connections=args.add_skip_connections,
+        )
     elif model == "resnet18_md":
-        out_model = MonodepthResnet18(num_in_layers=n_input_channels, skip_connections=args.add_skip_connections)
+        out_model = MonodepthResnet18(
+            num_in_layers=n_input_channels,
+            output_stride=args.output_stride,
+            skip_connections=args.add_skip_connections,
+        )
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     else:

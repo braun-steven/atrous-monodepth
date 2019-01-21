@@ -81,6 +81,9 @@ def parse_args() -> argparse.Namespace:
         help="Cuda device ids. E.g. [0,1,2]. Use -1 for all GPUs available and -2 for cpu only.",
     )
     parser.add_argument(
+        "--output-stride", type=int, default=64, help="Output stride after the encoder"
+    )
+    parser.add_argument(
         "--atrous-rates",
         nargs="+",
         type=int,
@@ -184,7 +187,7 @@ def parse_args() -> argparse.Namespace:
         "--decoder-type",
         default="deeplab",
         help="Decoder architecture, one of [godard, deeplab]",
-        choices=["godard", "deeplab"]
+        choices=["godard", "deeplab"],
     )
 
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
@@ -192,7 +195,7 @@ def parse_args() -> argparse.Namespace:
         "--add-skip-connections",
         default=False,
         action="store_true",
-        help="Flag to add skip connections from the encoder to the decoder."
+        help="Flag to add skip connections from the encoder to the decoder.",
     )
     args = parser.parse_args()
 
