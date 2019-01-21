@@ -192,7 +192,7 @@ class MonodepthDecoderSkipless(nn.Module):
             scale=strides[1],
         )  # H/8
         self.iconv4 = conv(
-            n_in=num_out_planes[2], n_out=num_in_planes[2], kernel_size=3, stride=1
+            n_in=num_out_planes[2], n_out=num_out_planes[2], kernel_size=3, stride=1
         )  # upconv4 + conv2
         self.disp4 = get_disp(num_out_planes[2])
         self.udisp4 = upsample_nn(scale=strides[0])
