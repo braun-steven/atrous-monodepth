@@ -103,6 +103,8 @@ class ASPP(nn.Module):
                 )
             )
 
+        num_aspp_modules = len(dilations)
+
         # Global average pooling layer
         if self.use_global_average_pooling:
             self.global_avg_pool = nn.Sequential(
@@ -111,7 +113,8 @@ class ASPP(nn.Module):
                 BatchNorm(256),
                 nn.ReLU(),
             )
-        num_aspp_modules = len(dilations) + 1
+            num_aspp_modules += 1
+
         self.conv1 = nn.Conv2d(256 * num_aspp_modules, 256, 1, bias=False)
         self.bn1 = BatchNorm(256)
         self.relu = nn.ReLU()
