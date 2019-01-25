@@ -62,15 +62,17 @@ class ASPP(nn.Module):
     ASPP contains a variable number of ASPPModules and a global average pooling module
     """
 
-    def __init__(self, backbone: str, dilations: List[int], BatchNorm=nn.BatchNorm2d):
+    def __init__(self, backbone: str, dilations: List[int], BatchNorm=nn.BatchNorm2d, use_global_average_pooling=True):
         """
         Construct the ASPP global module that contains several ASPP submodules
         Args:
             backbone (str): Backbone name
             dilations: List of dilations (atrous rates)
             BatchNorm: Batchnorm function
+            use_global_average_pooling: Flag to enable global average pooling layer 
         """
         super(ASPP, self).__init__()
+        self.use_global_average_pooling = use_global_average_pooling
         if backbone == "drn":
             inplanes = 512
         elif backbone == "mobilenet":
@@ -102,12 +104,13 @@ class ASPP(nn.Module):
             )
 
         # Global average pooling layer
-        self.global_avg_pool = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Conv2d(inplanes, 256, 1, stride=1, bias=False),
-            BatchNorm(256),
-            nn.ReLU(),
-        )
+        if self.use_global_average_pooling:
+            self.global_avg_pool = nn.Sequential(
+                nn.AdaptiveAvgPool2d((1, 1)),
+                nn.Conv2d(inplanes, 256, 1, stride=1, bias=False),
+                BatchNorm(256),
+                nn.ReLU(),
+            )
         num_aspp_modules = len(dilations) + 1
         self.conv1 = nn.Conv2d(256 * num_aspp_modules, 256, 1, bias=False)
         self.bn1 = BatchNorm(256)
@@ -118,16 +121,21 @@ class ASPP(nn.Module):
         # Collect results from ASPP modules
         aspp_results = [l(x) for l in self.aspp_modules]
 
-        x_gl_avg_pool = self.global_avg_pool(x)
-        x_gl_avg_pool = F.interpolate(
-            x_gl_avg_pool,
-            size=aspp_results[-1].size()[2:],
-            mode="bilinear",
-            align_corners=True,
-        )
-        x = aspp_results + [x_gl_avg_pool]
-        x = torch.cat(x, dim=1)
 
+        # Apply global average pooling if enabled
+        if self.use_global_average_pooling:
+            x_gl_avg_pool = self.global_avg_pool(x)
+            x_gl_avg_pool = F.interpolate(
+                x_gl_avg_pool,
+                size=aspp_results[-1].size()[2:],
+                mode="bilinear",
+                align_corners=True,
+            )
+            x = aspp_results + [x_gl_avg_pool]
+        else:
+            x = aspp_results
+
+        x = torch.cat(x, dim=1)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
