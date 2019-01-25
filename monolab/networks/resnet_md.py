@@ -6,11 +6,19 @@ from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 
 
 class MonodepthResnet50(nn.Module):
-    def __init__(self, num_in_layers, skip_connections, output_stride=64):
+    def __init__(
+        self,
+        num_in_layers,
+        skip_connections,
+        output_stride=64,
+        resblock_dilations=[1, 1, 1, 1],
+    ):
         super(MonodepthResnet50, self).__init__()
 
         self.encoder = Resnet50(
-            num_in_layers=num_in_layers, output_stride=output_stride
+            num_in_layers=num_in_layers,
+            output_stride=output_stride,
+            dilations=resblock_dilations,
         )
 
         if skip_connections:
@@ -27,11 +35,19 @@ class MonodepthResnet50(nn.Module):
 
 
 class MonodepthResnet18(nn.Module):
-    def __init__(self, num_in_layers, skip_connections, output_stride=64):
+    def __init__(
+        self,
+        num_in_layers,
+        skip_connections,
+        output_stride=64,
+        resblock_dilations=[1, 1, 1, 1],
+    ):
         super(MonodepthResnet18, self).__init__()
 
         self.encoder = Resnet18(
-            num_in_layers=num_in_layers, output_stride=output_stride
+            num_in_layers=num_in_layers,
+            output_stride=output_stride,
+            dilations=resblock_dilations,
         )
 
         if skip_connections:

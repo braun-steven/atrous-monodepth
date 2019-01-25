@@ -19,6 +19,7 @@ class DeepLab(nn.Module):
         backbone="resnet",
         output_stride=16,
         freeze_bn=False,
+        encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=None,
         decoder_type="deeplab",
         skip_connections=True,
@@ -42,7 +43,9 @@ class DeepLab(nn.Module):
         # Define backbone DCNN in encoder
         if backbone == "resnet":
             self.backbone = Resnet50(
-                output_stride=output_stride, num_in_layers=num_in_layers
+                output_stride=output_stride,
+                num_in_layers=num_in_layers,
+                dilations=encoder_dilations,
             )
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
