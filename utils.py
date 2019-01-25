@@ -61,16 +61,18 @@ def get_model(
             num_in_layers=3,
             output_stride=args.output_stride,
             backbone="resnet",
+            encoder_dilations=args.encoder_dilations,
             aspp_dilations=args.atrous_rates,
             decoder_type=args.decoder_type,
             skip_connections=args.add_skip_connections,
-            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling
+            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling,
         )
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(
             num_in_layers=n_input_channels,
             output_stride=args.output_stride,
             skip_connections=args.add_skip_connections,
+            resblock_dilations=args.encoder_dilations,
         )
     elif model == "resnet18_md":
         out_model = MonodepthResnet18(

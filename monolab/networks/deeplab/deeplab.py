@@ -113,10 +113,11 @@ if __name__ == "__main__":
         num_in_layers=3,
         output_stride=16,
         backbone="resnet",
+        encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=[1, 2, 6, 12],
         decoder_type="deeplab",
         skip_connections=True,
-        use_global_average_pooling_aspp=False
+        use_global_average_pooling_aspp=False,
     )
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))
