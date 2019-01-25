@@ -84,6 +84,13 @@ def parse_args() -> argparse.Namespace:
         "--output-stride", type=int, default=64, help="Output stride after the encoder"
     )
     parser.add_argument(
+        "--encoder-dilations",
+        nargs="+",
+        type=int,
+        default=[1, 1, 1, 1],
+        help="Atrous rates used in the encoder's resblocks",
+    )
+    parser.add_argument(
         "--atrous-rates",
         nargs="+",
         type=int,

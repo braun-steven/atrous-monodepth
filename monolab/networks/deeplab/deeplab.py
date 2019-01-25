@@ -19,6 +19,7 @@ class DeepLab(nn.Module):
         backbone="resnet",
         output_stride=16,
         freeze_bn=False,
+        encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=None,
         decoder_type="deeplab",
         skip_connections=True,
@@ -44,7 +45,9 @@ class DeepLab(nn.Module):
         # Define backbone DCNN in encoder
         if backbone == "resnet":
             self.backbone = Resnet50(
-                output_stride=output_stride, num_in_layers=num_in_layers
+                output_stride=output_stride,
+                num_in_layers=num_in_layers,
+                dilations=encoder_dilations,
             )
         else:
             raise NotImplementedError(f"Backbone {backbone} not found.")
@@ -110,10 +113,11 @@ if __name__ == "__main__":
         num_in_layers=3,
         output_stride=16,
         backbone="resnet",
+        encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=[1, 2, 6, 12],
         decoder_type="deeplab",
         skip_connections=True,
-        use_global_average_pooling_aspp=False
+        use_global_average_pooling_aspp=False,
     )
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))

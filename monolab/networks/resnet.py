@@ -198,7 +198,7 @@ class Resnet(nn.Module):
         We made the resnet size variable by letting the user give a list of numbers of blocks for the three resblocks
     """
 
-    def __init__(self, num_in_layers, blocks, output_stride=64):
+    def __init__(self, num_in_layers, blocks, output_stride=64, dilations=[1, 1, 1, 1]):
         """
         Args:
             num_in_layers: number of input channels (3 for rgb)
@@ -208,17 +208,13 @@ class Resnet(nn.Module):
 
         if output_stride == 64:
             strides = [2, 2, 2, 2]
-            dilations = [1, 1, 1, 1]
         elif output_stride == 32:
             strides = [1, 2, 2, 2]
-            dilations = [1, 1, 1, 1]
         # output_stride = 16 is the standard for deeplabv3+
         elif output_stride == 16:
             strides = [1, 2, 2, 1]
-            dilations = [1, 1, 1, 2]
         elif output_stride == 8:
             strides = [1, 2, 1, 1]
-            dilations = [1, 1, 2, 4]
         else:
             raise ValueError("Please specify a valid output stride")
 
@@ -272,21 +268,30 @@ class Resnet(nn.Module):
         return x1, x_pool1, x2, x3, x4, x5
 
 
-def Resnet50(num_in_layers, output_stride=64):
+def Resnet50(num_in_layers, output_stride=64, dilations=[1, 1, 1, 1]):
     return Resnet(
-        num_in_layers=num_in_layers, blocks=[3, 4, 6, 3], output_stride=output_stride
+        num_in_layers=num_in_layers,
+        blocks=[3, 4, 6, 3],
+        output_stride=output_stride,
+        dilations=dilations,
     )
 
 
-def Resnet18(num_in_layers, output_stride=64):
+def Resnet18(num_in_layers, output_stride=64, dilations=[1, 1, 1, 1]):
     return Resnet(
-        num_in_layers=num_in_layers, blocks=[2, 2, 2, 2], output_stride=output_stride
+        num_in_layers=num_in_layers,
+        blocks=[2, 2, 2, 2],
+        output_stride=output_stride,
+        dilations=dilations,
     )
 
 
-def Resnet101(num_in_layers, output_stride=64):
+def Resnet101(num_in_layers, output_stride=64, dilations=[1, 1, 1, 1]):
     return Resnet(
-        num_in_layers=num_in_layers, blocks=[3, 4, 23, 3], output_stride=output_stride
+        num_in_layers=num_in_layers,
+        blocks=[3, 4, 23, 3],
+        output_stride=output_stride,
+        dilations=dilations,
     )
 
 

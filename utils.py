@@ -61,6 +61,7 @@ def get_model(
             num_in_layers=3,
             output_stride=args.output_stride,
             backbone="resnet",
+            encoder_dilations=args.encoder_dilations,
             aspp_dilations=args.atrous_rates,
             decoder_type=args.decoder_type,
             skip_connections=not args.disable_skip_connections,
@@ -71,6 +72,7 @@ def get_model(
             num_in_layers=n_input_channels,
             output_stride=args.output_stride,
             skip_connections=not args.disable_skip_connections,
+            resblock_dilations=args.encoder_dilations,
         )
     elif model == "resnet18_md":
         out_model = MonodepthResnet18(
