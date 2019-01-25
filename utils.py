@@ -64,6 +64,7 @@ def get_model(
             aspp_dilations=args.atrous_rates,
             decoder_type=args.decoder_type,
             skip_connections=args.add_skip_connections,
+            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling
         )
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(

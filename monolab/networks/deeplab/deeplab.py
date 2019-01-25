@@ -22,6 +22,7 @@ class DeepLab(nn.Module):
         aspp_dilations=None,
         decoder_type="deeplab",
         skip_connections=True,
+        use_global_average_pooling_aspp=True,
     ):
         """
         DeepLab Module.
@@ -34,6 +35,7 @@ class DeepLab(nn.Module):
             aspp_dilations: List of aspp rates. Each rate will setup its own aspp layer with the given rate as dilation.
             decoder_type: Type of the decoder, can be one of ["godard", "deeplab"].
             skip_connections: Flag to use skip connections from the encoder to the decoder or not.
+            use_global_average_pooling_aspp: Flag to enable global avg pooling in ASPP module
         """
         super(DeepLab, self).__init__()
 
@@ -49,7 +51,10 @@ class DeepLab(nn.Module):
 
         # ASPP module
         self.aspp = ASPP(
-            backbone=backbone, dilations=aspp_dilations, BatchNorm=nn.BatchNorm2d
+            backbone=backbone,
+            dilations=aspp_dilations,
+            BatchNorm=nn.BatchNorm2d,
+            use_global_average_pooling=use_global_average_pooling_aspp,
         )
 
         # Decoder module
@@ -108,11 +113,13 @@ if __name__ == "__main__":
         aspp_dilations=[1, 2, 6, 12],
         decoder_type="deeplab",
         skip_connections=True,
+        use_global_average_pooling_aspp=False
     )
 
     print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     net.eval()
+    print(net)
 
     y = net.forward(x)
 

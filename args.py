@@ -197,6 +197,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Flag to add skip connections from the encoder to the decoder.",
     )
+    parser.add_argument(
+        "--disable-aspp-global-avg-pooling",
+        default=False,
+        action="store_true",
+        help="Flag to disable global average pooling.",
+    )
     args = parser.parse_args()
 
     # Detect training dataset name
