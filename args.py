@@ -192,7 +192,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     parser.add_argument(
-        "--add-skip-connections",
+        "--disable-skip-connections",
         default=False,
         action="store_true",
         help="Flag to add skip connections from the encoder to the decoder.",
