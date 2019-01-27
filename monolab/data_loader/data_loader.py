@@ -10,6 +10,7 @@ from .transforms import image_transforms, crop_cityscapes
 
 logger = logging.getLogger(__name__)
 
+
 class ImageLoader(Dataset):
     """ DataSet that reads a single Kitti sequence.
         Can be accessed like a list.
@@ -17,7 +18,16 @@ class ImageLoader(Dataset):
         If mode='train', each element is a dict containing 'left_image' and 'right_image'
     """
 
-    def __init__(self, root_dir, filenames_file, mode, shuffle=False, seed=9001, transform=None, dataset='kitti'):
+    def __init__(
+        self,
+        root_dir,
+        filenames_file,
+        mode,
+        shuffle=False,
+        seed=9001,
+        transform=None,
+        dataset="kitti",
+    ):
         """ Setup a Kitti sequence dataset.
 
         Args:
@@ -54,7 +64,6 @@ class ImageLoader(Dataset):
         self.mode = mode
         self.dataset = dataset
 
-
     def __len__(self):
         return len(self.left_paths)
 
@@ -62,14 +71,14 @@ class ImageLoader(Dataset):
 
         left_image = Image.open(self.left_paths[idx])
 
-        if self.dataset == 'cityscapes':
+        if self.dataset == "cityscapes":
             left_image = crop_cityscapes(left_image)
 
         if self.mode == "train" or self.mode == "val":
 
             right_image = Image.open(self.right_paths[idx])
 
-            if self.dataset == 'cityscapes':
+            if self.dataset == "cityscapes":
                 right_image = crop_cityscapes(right_image)
 
             sample = {"left_image": left_image, "right_image": right_image}
@@ -96,7 +105,8 @@ def prepare_dataloader(
     batch_size=256,
     size=(256, 512),
     num_workers=1,
-    dataset = 'kitti'
+    dataset="kitti",
+    pin_memory=True,
 ):
     """ Prepares a DataLoader that loads Kitti images from file names and performs transforms
 
@@ -137,7 +147,7 @@ def prepare_dataloader(
         mode=mode,
         shuffle=shuffle_before,
         transform=data_transform,
-        dataset=dataset
+        dataset=dataset,
     )
 
     n_img = len(image_data_set)
@@ -147,6 +157,6 @@ def prepare_dataloader(
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=pin_memory,
     )
     return n_img, loader

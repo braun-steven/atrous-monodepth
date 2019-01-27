@@ -210,6 +210,9 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Flag to disable global average pooling.",
     )
+    parser.add_argument(
+        "--pin-memory", default=True, help="pin_memory argument to all dataloaders"
+    )
     args = parser.parse_args()
 
     # Detect training dataset name

@@ -124,6 +124,7 @@ def run_test(model: nn.Module, device, result_dir, args):
         size=(args.input_height, args.input_width),
         num_workers=args.num_workers,
         dataset=dataset,
+        pin_memory=args.pin_memory,
     )
 
     logging.info("Using a testing data set with {} images".format(n_img))
@@ -233,7 +234,7 @@ if __name__ == "__main__":
     args = parse_args()
     setup_logging(level=args.log_level, filename=args.log_file)
 
-    model = get_model(args.model, n_input_channels=args.input_channels,args=args)
+    model = get_model(args.model, n_input_channels=args.input_channels, args=args)
 
     if args.use_multiple_gpu:
         model = torch.nn.DataParallel(model)

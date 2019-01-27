@@ -80,6 +80,7 @@ class Experiment:
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
             dataset=self.dataset_val,
+            pin_memory=args.pin_memory,
         )
         logging.info(f"Using a validation set with {self.val_n_img} images")
 
@@ -101,6 +102,7 @@ class Experiment:
             size=(args.input_height, args.input_width),
             num_workers=args.num_workers,
             dataset=self.dataset_train,
+            pin_memory=args.pin_memory,
         )
         logging.info(
             f"Using a training data set from {self.dataset_train} with {self.n_img} images"
