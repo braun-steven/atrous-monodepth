@@ -63,9 +63,8 @@ def get_model(
             backbone="resnet",
             encoder_dilations=args.encoder_dilations,
             aspp_dilations=args.atrous_rates,
-            decoder_type=args.decoder_type,
             skip_connections=not args.disable_skip_connections,
-            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling
+            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling,
         )
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(
