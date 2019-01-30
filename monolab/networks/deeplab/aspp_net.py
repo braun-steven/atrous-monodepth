@@ -1,11 +1,11 @@
 from torch import nn
 
-from monolab.networks.resnet import conv, maxpool, resblock
+from monolab.networks.resnet import conv, maxpool, resblock, Resnet
 from monolab.networks.deeplab.aspp import ASPP
 from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 
 
-class ASPPNet(nn.Module):
+class ASPPNet(Resnet):
     """ Resnet implementation with the quirk's of Godard et al. (2017), https://github.com/mrharicot/monodepth
         We made the resnet size variable by letting the user give a list of numbers of blocks for the three resblocks
     """
@@ -23,54 +23,14 @@ class ASPPNet(nn.Module):
             num_in_layers: number of input channels (3 for rgb)
             blocks: list of length 4, contains the numbers of blocks -> [3, 4, 6, 3] for Resnet50
         """
-        super(ASPPNet, self).__init__()
+        super(ASPPNet, self).__init__(
+            num_in_layers=num_in_layers,
+            blocks=blocks,
+            output_stride=output_stride,
+            dilations=encoder_dilations,
+        )
 
-        if output_stride == 64:
-            strides = [2, 2, 2, 2]
-        elif output_stride == 32:
-            strides = [1, 2, 2, 2]
-        # output_stride = 16 is the standard for deeplabv3+
-        elif output_stride == 16:
-            strides = [1, 2, 2, 1]
-        elif output_stride == 8:
-            strides = [1, 2, 1, 1]
-        else:
-            raise ValueError("Please specify a valid output stride")
-
-        # encoder
-        self.conv1 = conv(
-            n_in=num_in_layers, n_out=64, kernel_size=7, stride=2
-        )  # H/2 - 64D
-        self.pool1 = maxpool(kernel_size=3)  # H/4 - 64D
-        self.conv2 = resblock(
-            n_in=64,
-            num_layers=64,
-            num_blocks=blocks[0],
-            stride=strides[0],
-            dilation=encoder_dilations[0],
-        )  # H/8 - 256D
         self.aspp = ASPP(inplanes=256, dilations=aspp_dilations)
-        self.conv3 = resblock(
-            n_in=256,
-            num_layers=128,
-            num_blocks=blocks[1],
-            stride=strides[1],
-            dilation=encoder_dilations[1],
-        )  # H/16 -  512D
-        self.conv4 = resblock(
-            n_in=512,
-            num_layers=256,
-            num_blocks=blocks[2],
-            stride=strides[2],
-            dilation=encoder_dilations[2],
-        )  # H/32 - 1024D
-        self.conv5 = resblock(
-            n_in=1024,
-            num_layers=512,
-            num_blocks=blocks[3],
-            stride=strides[3],
-            dilation=encoder_dilations[3],
-        )  # H/64 - 2048D
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
