@@ -52,7 +52,7 @@ class DeepLab(nn.Module):
 
         # ASPP module
         self.aspp = ASPP(
-            backbone=backbone,
+            inplanes=2048,
             dilations=aspp_dilations,
             BatchNorm=nn.BatchNorm2d,
             use_global_average_pooling=use_global_average_pooling_aspp,
@@ -113,7 +113,6 @@ if __name__ == "__main__":
         backbone="resnet",
         encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=[1, 2, 6, 12],
-        decoder_type="deeplab",
         skip_connections=True,
         use_global_average_pooling_aspp=False,
     )

@@ -8,6 +8,7 @@ import torch
 from monolab.networks.resnet_md import MonodepthResnet50, MonodepthResnet18
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
+from monolab.networks.deeplab.aspp_net import MonodepthASPPNet
 from monolab.networks.dummy_model import DummyModel, DummyModel2
 
 import os
@@ -81,6 +82,12 @@ def get_model(
         )
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
+    elif model == "aspp_net":
+        out_model = MonodepthASPPNet(
+            num_in_layers=3,
+            skip_connections=not args.disable_skip_connections,
+            output_stride=args.output_stride,
+        )
     else:
         raise NotImplementedError(f"Unknown model type: {model}")
     return out_model
