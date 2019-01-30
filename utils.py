@@ -87,6 +87,8 @@ def get_model(
             num_in_layers=3,
             skip_connections=not args.disable_skip_connections,
             output_stride=args.output_stride,
+            resblock_dilations=args.encoder_dilations,
+            aspp_dilations=args.atrous_rates,
         )
     else:
         raise NotImplementedError(f"Unknown model type: {model}")
