@@ -4,7 +4,6 @@ from torch import Tensor
 from typing import List, Tuple
 import logging
 
-# from monolab.networks.deeplab.deeplab_decoder import Decoder, DecoderSkipless
 from monolab.networks.decoder import MonodepthDecoder, MonodepthDecoderSkipless
 from monolab.networks.deeplab.aspp import ASPP
 from monolab.networks.resnet import Resnet50
@@ -21,7 +20,6 @@ class DeepLab(nn.Module):
         freeze_bn=False,
         encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=None,
-        decoder_type="deeplab",
         skip_connections=True,
         use_global_average_pooling_aspp=True,
     ):
@@ -54,7 +52,7 @@ class DeepLab(nn.Module):
 
         # ASPP module
         self.aspp = ASPP(
-            backbone=backbone,
+            inplanes=2048,
             dilations=aspp_dilations,
             BatchNorm=nn.BatchNorm2d,
             use_global_average_pooling=use_global_average_pooling_aspp,
@@ -115,7 +113,6 @@ if __name__ == "__main__":
         backbone="resnet",
         encoder_dilations=[1, 1, 1, 1],
         aspp_dilations=[1, 2, 6, 12],
-        decoder_type="deeplab",
         skip_connections=True,
         use_global_average_pooling_aspp=False,
     )

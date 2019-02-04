@@ -8,6 +8,7 @@ import torch
 from monolab.networks.resnet_md import MonodepthResnet50, MonodepthResnet18
 from monolab.networks.vgg_md import VGGMonodepth
 from monolab.networks.deeplab import DeepLab
+from monolab.networks.deeplab.aspp_net import MonodepthASPPNet
 from monolab.networks.dummy_model import DummyModel, DummyModel2
 
 import os
@@ -63,9 +64,8 @@ def get_model(
             backbone="resnet",
             encoder_dilations=args.encoder_dilations,
             aspp_dilations=args.atrous_rates,
-            decoder_type=args.decoder_type,
             skip_connections=not args.disable_skip_connections,
-            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling
+            use_global_average_pooling_aspp=not args.disable_aspp_global_avg_pooling,
         )
     elif model == "resnet50_md":
         out_model = MonodepthResnet50(
@@ -84,6 +84,14 @@ def get_model(
         out_model = DummyModel(n_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
+    elif model == "aspp_net":
+        out_model = MonodepthASPPNet(
+            num_in_layers=3,
+            skip_connections=not args.disable_skip_connections,
+            output_stride=args.output_stride,
+            resblock_dilations=args.encoder_dilations,
+            aspp_dilations=args.atrous_rates,
+        )
     else:
         raise NotImplementedError(f"Unknown model type: {model}")
     return out_model

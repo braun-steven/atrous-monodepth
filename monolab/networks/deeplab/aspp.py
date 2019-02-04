@@ -62,7 +62,13 @@ class ASPP(nn.Module):
     ASPP contains a variable number of ASPPModules and a global average pooling module
     """
 
-    def __init__(self, backbone: str, dilations: List[int], BatchNorm=nn.BatchNorm2d, use_global_average_pooling=True):
+    def __init__(
+        self,
+        inplanes: int,
+        dilations: List[int],
+        BatchNorm=nn.BatchNorm2d,
+        use_global_average_pooling=True,
+    ):
         """
         Construct the ASPP global module that contains several ASPP submodules
         Args:
@@ -73,12 +79,6 @@ class ASPP(nn.Module):
         """
         super(ASPP, self).__init__()
         self.use_global_average_pooling = use_global_average_pooling
-        if backbone == "drn":
-            inplanes = 512
-        elif backbone == "mobilenet":
-            inplanes = 320
-        else:
-            inplanes = 2048
 
         # Create variable length module list of parallel ASPP modules with different dilations
         self.aspp_modules = nn.ModuleList()
@@ -123,7 +123,6 @@ class ASPP(nn.Module):
     def forward(self, x):
         # Collect results from ASPP modules
         aspp_results = [l(x) for l in self.aspp_modules]
-
 
         # Apply global average pooling if enabled
         if self.use_global_average_pooling:
