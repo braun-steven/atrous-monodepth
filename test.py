@@ -165,9 +165,10 @@ def run_test(model: nn.Module, device, result_dir, args):
     eval_result = _evaluate_scores(disparities, args)
     eval_result_pp = _evaluate_scores(disparities_pp, args)
 
-    # Save scores
-    with open(os.path.join(output_dir, "scores.csv"), "w") as f:
-        f.write(results_to_csv_str(eval_result, eval_result_pp))
+    if eval_result is not None:
+        # Save scores
+        with open(os.path.join(output_dir, "scores.csv"), "w") as f:
+            f.write(results_to_csv_str(eval_result, eval_result_pp))
 
     return eval_result, eval_result_pp
 
@@ -203,7 +204,7 @@ def _evaluate_scores(disparities, args):
             max_depth=80,
         ).evaluate()
     elif args.eval == "none":
-        pass
+        return None
     else:
         logger.error("{} is not a valid evaluation procedure.".format(args.eval))
         raise Exception(f"Invalid evaluation procedure: {args.eval}")

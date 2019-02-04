@@ -54,6 +54,9 @@ def results_to_csv_str(res, res_pp):
     Returns:
         CSV table of results
     """
+    if res is None:
+        return ""
+
     s = "{:>5}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}, {:>10}\n".format(
         "pp", "abs_rel", "sq_rel", "rms", "log_rms", "a1", "a2", "a3"
     )
