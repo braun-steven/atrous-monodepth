@@ -80,6 +80,8 @@ def get_model(
             output_stride=args.output_stride,
             skip_connections=not args.disable_skip_connections,
         )
+    elif model == "dummy":
+        out_model = DummyModel(n_in_layers=n_input_channels)
     elif model == "vgg_md":
         out_model = VGGMonodepth(num_in_layers=n_input_channels)
     else:
