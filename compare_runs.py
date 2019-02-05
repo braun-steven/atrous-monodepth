@@ -45,7 +45,7 @@ total_height = 375 * num_images
 try:
     fnt = ImageFont.truetype("/Library/Fonts/Arial.ttf", 15)
 except OSError:
-    fnt = ImageFont.truetype("/usr/share/fonts/TTF/arial.ttf", 15)
+    fnt = ImageFont.truetype("/usr/share/fonts/TTF/Arial.ttf", 15)
 
 for i in range(200):
     img = Image.open(
