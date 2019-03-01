@@ -67,14 +67,14 @@ def main():
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         leftfiles = [
             os.path.join(seq, "RGB", "Stereo_Left", f)
-            for f in os.listdir(leftdir)
+            for f in sorted(os.listdir(leftdir))
             if os.path.isfile(os.path.join(leftdir, f))
         ]
 
         rightdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         rightfiles = [
             os.path.join(seq, "RGB", "Stereo_Right", f)
-            for f in os.listdir(rightdir)
+            for f in sorted(os.listdir(rightdir))
             if os.path.isfile(os.path.join(rightdir, f))
         ]
 
