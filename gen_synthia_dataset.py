@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
                             separated by a space.",
         default="val-filenames-synthia.txt",
     )
-    parser.parser.add_argument(
+    parser.add_argument(
         "--test-filenames-file-out",
         help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
