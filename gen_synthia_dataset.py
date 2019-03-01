@@ -66,14 +66,14 @@ def main():
     for seq in SYNTHIA_SEQS:
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         leftfiles = [
-            os.path.join(leftdir, f)
+            os.path.join(seq, "RGB", "Stereo_Left", f)
             for f in os.listdir(leftdir)
             if os.path.isfile(os.path.join(leftdir, f))
         ]
 
         rightdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         rightfiles = [
-            os.path.join(rightdir, f)
+            os.path.join(seq, "RGB", "Stereo_Right", f)
             for f in os.listdir(rightdir)
             if os.path.isfile(os.path.join(rightdir, f))
         ]
@@ -81,6 +81,8 @@ def main():
         leftright = [left + " " + right for left, right in zip(leftfiles, rightfiles)]
 
         filename_lines += leftright
+
+    print("Using a SYNTHIA subset with {} files".format(len(filename_lines)))
 
     with open(args.filenames_file_out, "w") as f:
         for item in filename_lines:
