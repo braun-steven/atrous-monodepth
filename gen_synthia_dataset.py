@@ -66,7 +66,9 @@ def main():
 
     for seq in SYNTHIA_SEQS:
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
-        files = [f for f in os.listdir(leftdir) if os.isfile(os.path.join(leftdir, f))]
+        files = [
+            f for f in os.listdir(leftdir) if os.path.isfile(os.path.join(leftdir, f))
+        ]
         filenames += files
 
     with open(args.filenames_file_out, "w") as f:
