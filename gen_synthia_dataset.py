@@ -1,5 +1,6 @@
 import argparse
 import os
+import random
 
 SYNTHIA_SEQS = [
     "SYNTHIA-SEQS-01-SPRING",
@@ -50,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--sizes",
         type=int,
-        nargs="+",
+        nargs=3,
         default=[80, 10, 10],
         help="Size of train and val set",
     )
@@ -62,8 +63,10 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
+    # generate all filenames (left and right pair, separated by space)
     filename_lines = []
     for seq in SYNTHIA_SEQS:
+        # Stereo_Left directory
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         leftfiles = [
             os.path.join(seq, "RGB", "Stereo_Left", f)
@@ -71,6 +74,7 @@ def main():
             if os.path.isfile(os.path.join(leftdir, f))
         ]
 
+        # Stereo_Right directory
         rightdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         rightfiles = [
             os.path.join(seq, "RGB", "Stereo_Right", f)
@@ -82,10 +86,26 @@ def main():
 
         filename_lines += leftright
 
-    print("Using a SYNTHIA subset with {} files".format(len(filename_lines)))
+    n_files = len(filename_lines)
+    print("Using a SYNTHIA subset with {} files".format(n_files))
+
+    randperm = list(range(n_files))
+    random.shuffle(randperm)
+    train_size, val_size, test_size = [int(size / 100 * n_files) for size in args.sizes]
+    train_idx = randperm[:train_size]
+    val_idx = randperm[train_size : (train_size + val_size)]
+    test_idx = randperm[(train_size + val_size) : -1]
 
     with open(args.filenames_file_out, "w") as f:
-        for item in filename_lines:
+        for item in [filename_lines[i] for i in train_idx]:
+            f.write("%s\n" % item)
+
+    with open(args.val_filenames_file_out, "w") as f:
+        for item in [filename_lines[i] for i in val_idx]:
+            f.write("%s\n" % item)
+
+    with open(args.test_filenames_file_out, "w") as f:
+        for item in [filename_lines[i] for i in test_idx]:
             f.write("%s\n" % item)
 
 
