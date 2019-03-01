@@ -32,21 +32,21 @@ def parse_args() -> argparse.Namespace:
         help="File that contains a list of filenames for training/testing. \
                         Each line should contain left and right image paths \
                         separated by a space.",
-        default="resources/filenames-synthia.txt",
+        default="resources/filenames/filenames-synthia.txt",
     )
     parser.add_argument(
         "--val-filenames-file-out",
         help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
                             separated by a space.",
-        default="val-filenames-synthia.txt",
+        default="resources/filenames/val-filenames-synthia.txt",
     )
     parser.add_argument(
         "--test-filenames-file-out",
         help="File that contains a list of filenames for validation. \
                             Each line should contain left and right image paths \
                             separated by a space.",
-        default="test-filenames-synthia.txt",
+        default="resources/filenames/test-filenames-synthia.txt",
     )
     parser.add_argument(
         "--sizes",
