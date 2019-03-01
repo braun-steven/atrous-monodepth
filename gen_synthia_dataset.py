@@ -62,17 +62,28 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
-    filenames = []
-
+    filename_lines = []
     for seq in SYNTHIA_SEQS:
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
-        files = [
-            f for f in os.listdir(leftdir) if os.path.isfile(os.path.join(leftdir, f))
+        leftfiles = [
+            os.path.join(leftdir, f)
+            for f in os.listdir(leftdir)
+            if os.path.isfile(os.path.join(leftdir, f))
         ]
-        filenames += files
+
+        rightdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
+        rightfiles = [
+            os.path.join(rightdir, f)
+            for f in os.listdir(rightdir)
+            if os.path.isfile(os.path.join(rightdir, f))
+        ]
+
+        leftright = [left + " " + right for left, right in zip(leftfiles, rightfiles)]
+
+        filename_lines += leftright
 
     with open(args.filenames_file_out, "w") as f:
-        for item in filenames:
+        for item in filename_lines:
             f.write("%s\n" % item)
 
 
