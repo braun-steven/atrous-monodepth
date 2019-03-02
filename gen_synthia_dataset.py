@@ -101,6 +101,10 @@ def main():
     val_idx = randperm[train_size : (train_size + val_size)]
     test_idx = randperm[(train_size + val_size) : -1]
 
+    print("Training set size: {}".format(len(train_idx)))
+    print("Validation set size: {}".format(len(val_idx)))
+    print("Test set size: {}".format(len(test_idx)))
+
     with open(args.filenames_file_out, "w") as f:
         for item in [filename_lines[i] for i in train_idx]:
             f.write("%s\n" % item)
