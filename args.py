@@ -163,10 +163,11 @@ def parse_args() -> argparse.Namespace:
 
     kitti_name = "kitti"
     cityscapes_name = "cityscapes"
+    synthia_name = "synthia"
     parser.add_argument(
         "--dataset-name-train",
         type=str,
-        choices=[cityscapes_name, kitti_name],
+        choices=[cityscapes_name, kitti_name, synthia_name],
         help="Define the train dataset name.",
     )
     parser.add_argument(
@@ -214,6 +215,8 @@ def parse_args() -> argparse.Namespace:
             args.dataset_name_train = kitti_name
         elif cityscapes_name in args.filenames_file.lower():
             args.dataset_name_train = cityscapes_name
+        elif synthia_name in args.filenames_file.lower():
+            args.dataset_name_train = synthia_name
         else:
             raise Exception(
                 f"Usage:\n{parser.format_help()}"
@@ -228,6 +231,8 @@ def parse_args() -> argparse.Namespace:
             args.dataset_name_val = kitti_name
         elif cityscapes_name in args.val_filenames_file.lower():
             args.dataset_name_val = cityscapes_name
+        elif synthia_name in args.val_filenames_file.lower():
+            args.dataset_name_val = synthia_name
         else:
             raise Exception(
                 f"Usage:\n{parser.format_help()}"
