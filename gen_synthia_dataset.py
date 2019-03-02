@@ -74,7 +74,7 @@ def main():
         # Stereo_Left directory
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         leftfiles = [
-            os.path.join(seq, "RGB", "Stereo_Left", f)
+            os.path.join(seq, "RGB", "Stereo_Left", "Omni_F", f)
             for f in sorted(os.listdir(leftdir))
             if os.path.isfile(os.path.join(leftdir, f))
         ]
@@ -82,7 +82,7 @@ def main():
         # Stereo_Right directory
         rightdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         rightfiles = [
-            os.path.join(seq, "RGB", "Stereo_Right", f)
+            os.path.join(seq, "RGB", "Stereo_Right", "Omni_F", f)
             for f in sorted(os.listdir(rightdir))
             if os.path.isfile(os.path.join(rightdir, f))
         ]

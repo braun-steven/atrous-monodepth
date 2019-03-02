@@ -173,7 +173,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dataset-name-val",
         type=str,
-        choices=[cityscapes_name, kitti_name],
+        choices=[cityscapes_name, kitti_name, synthia_name],
         help="Define the validation dataset name.",
     )
 
