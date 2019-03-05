@@ -212,7 +212,7 @@ def _evaluate_scores(disparities, args):
             root_dir=args.data_dir,
             min_depth=0,
             max_depth=80,
-        )
+        ).evaluate()
     elif args.eval == "none":
         return None
     else:
