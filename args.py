@@ -181,8 +181,8 @@ def parse_args() -> argparse.Namespace:
         "--eval",
         default="none",
         type=str,
-        help="Either evaluate on eigensplit or on kitti gt",
-        choices=["kitti-gt", "eigen", "none"],
+        help="Either evaluate on eigensplit or on kitti gt, or on synthia",
+        choices=["kitti-gt", "eigen", "synthia", "none"],
     )
     parser.add_argument(
         "--test-filenames-file",
