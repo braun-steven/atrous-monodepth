@@ -82,7 +82,7 @@ class EvaluateSynthia:
         gt_depth = []
         for i in range(self.num_images):
             depth = cv2.imread(left_depth_paths[i], cv2.IMREAD_UNCHANGED)
-            depth = depth.astype(np.float32)
+            depth = depth.astype(np.float32)[:, :, 0]
             gt_depth.append(depth)
         return gt_depth
 
