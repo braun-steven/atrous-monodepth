@@ -13,6 +13,7 @@ from utils import get_model, to_device, setup_logging
 from monolab.data_loader import prepare_dataloader
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
+from eval.eval_synthia import EvaluateSynthia
 from torch import nn
 import logging
 
@@ -203,6 +204,15 @@ def _evaluate_scores(disparities, args):
             min_depth=0,
             max_depth=80,
         ).evaluate()
+    elif args.eval == "synthia":
+        # Evaluates on a SYNTHIA test set
+        result = EvaluateSynthia(
+            predicted_disps=disparities,
+            filenames_file=args.test_filenames_file,
+            root_dir=args.data_dir,
+            min_depth=0,
+            max_depth=80,
+        )
     elif args.eval == "none":
         return None
     else:
