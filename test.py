@@ -211,7 +211,7 @@ def _evaluate_scores(disparities, args):
             filenames_file=args.test_filenames_file,
             root_dir=args.data_dir,
             min_depth=0,
-            max_depth=80,
+            max_depth=50,
         ).evaluate()
     elif args.eval == "none":
         return None
