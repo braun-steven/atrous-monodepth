@@ -111,9 +111,9 @@ class EvaluateSynthia:
 
             pred_disp_resized.append(pred_disp)
 
-            mask = pred_disp > 0
+            # mask = pred_disp > 0
 
-            pred_depth = self.baseline * self.focal / (pred_disp + (1.0 - mask))
+            pred_depth = self.baseline * self.focal / pred_disp
 
             pred_depths.append(pred_depth)
 
@@ -147,12 +147,14 @@ class EvaluateSynthia:
             gt_depth = self.gt_depths[i]
             pred_depth = pred_depths[i]
 
+            mask = gt_depth > 0
+
             pred_depth[pred_depth < self.min_depth] = self.min_depth
             pred_depth[pred_depth > self.max_depth] = self.max_depth
 
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
                 i
-            ] = compute_errors(gt_depth, pred_depth)
+            ] = compute_errors(gt_depth[mask], pred_depth[mask])
 
         return Result(
             abs_rel=abs_rel,
