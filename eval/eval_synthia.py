@@ -111,7 +111,9 @@ class EvaluateSynthia:
 
             pred_disp_resized.append(pred_disp)
 
-            pred_depth = self.baseline * self.focal / pred_disp
+            mask = pred_disp > 0
+
+            pred_depth = self.baseline * self.focal / (pred_disp + (1.0 - mask))
 
             pred_depths.append(pred_depth)
 
