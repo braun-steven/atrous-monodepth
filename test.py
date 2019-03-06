@@ -49,6 +49,9 @@ def parse_args() -> argparse.Namespace:
         metavar="DIR",
     )
     parser.add_argument(
+        "--output-stride", type=int, default=64, help="Output stride after the encoder"
+    )
+    parser.add_argument(
         "--atrous-rates",
         nargs="+",
         type=int,
