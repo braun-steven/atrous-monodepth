@@ -56,6 +56,25 @@ def parse_args() -> argparse.Namespace:
         help="Atrous rates for the ASPP Module.",
     )
     parser.add_argument(
+        "--encoder-dilations",
+        nargs="+",
+        type=int,
+        default=[1, 1, 1, 1],
+        help="Atrous rates used in the encoder's resblocks",
+    )
+    parser.add_argument(
+        "--disable-skip-connections",
+        default=False,
+        action="store_true",
+        help="Flag to add skip connections from the encoder to the decoder.",
+    )
+    parser.add_argument(
+        "--disable-aspp-global-avg-pooling",
+        default=False,
+        action="store_true",
+        help="Flag to disable global average pooling.",
+    )
+    parser.add_argument(
         "--output-dir",
         help="Output directory for all results generated during an experiment run",
         metavar="DIR",
@@ -86,7 +105,7 @@ def parse_args() -> argparse.Namespace:
         default="none",
         type=str,
         help="Either evaluate on eigensplit or on kitti gt",
-        choices=["kitti-gt", "eigen", "none"],
+        choices=["kitti-gt", "eigen", "synthia", "none"],
     )
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
