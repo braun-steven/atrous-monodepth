@@ -110,6 +110,9 @@ def parse_args() -> argparse.Namespace:
         help="Either evaluate on eigensplit or on kitti gt",
         choices=["kitti-gt", "eigen", "synthia", "none"],
     )
+    parser.add_argument(
+        "--pin-memory", default=True, help="pin_memory argument to all dataloaders"
+    )
     parser.add_argument("--log-file", default="monolab.log", help="Log file")
     args = parser.parse_args()
     return args
