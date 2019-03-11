@@ -2,24 +2,6 @@ import argparse
 import os
 import random
 
-SYNTHIA_SEQS = [
-    "SYNTHIA-SEQS-01-SPRING",
-    "SYNTHIA-SEQS-01-SUMMER",
-    "SYNTHIA-SEQS-01-FALL",
-    "SYNTHIA-SEQS-02-SPRING",
-    "SYNTHIA-SEQS-02-SUMMER",
-    "SYNTHIA-SEQS-02-FALL",
-    "SYNTHIA-SEQS-04-SPRING",
-    "SYNTHIA-SEQS-04-SUMMER",
-    "SYNTHIA-SEQS-04-FALL",
-    "SYNTHIA-SEQS-05-SPRING",
-    "SYNTHIA-SEQS-05-SUMMER",
-    "SYNTHIA-SEQS-05-FALL",
-    "SYNTHIA-SEQS-06-SPRING",
-    "SYNTHIA-SEQS-06-SUMMER",
-    "SYNTHIA-SEQS-01-FALL",
-]
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate filenames file for SYNTHIA")
@@ -30,6 +12,16 @@ def parse_args() -> argparse.Namespace:
         help="path to the dataset folder. \
                         The filenames given in filenames_file \
                         are relative to this path.",
+    )
+    parser.add_argument(
+        "--sequences",
+        nargs="+",
+        type=str,
+        default=["01", "02", "04", "05", "06"],
+        help="Sequence numbers (as str with leading zero) to be used",
+    )
+    parser.add_argument(
+        "--seasons", nargs="+", type=str, default=["SPRING", "SUMMER", "FALL", "WINTER"]
     )
 
     parser.add_argument(
@@ -68,9 +60,16 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
+    synthia_seqs = []
+    for nr in args.sequences:
+        for season in args.seasons:
+            seq = "SYNTHIA-SEQS-{}-{}".format(nr, season)
+            synthia_seqs.append(seq)
+            print(seq)
+
     # generate all filenames (left and right pair, separated by space)
     filename_lines = []
-    for seq in SYNTHIA_SEQS:
+    for seq in synthia_seqs:
         # Stereo_Left directory
         leftdir = os.path.join(args.data_dir, seq, "RGB", "Stereo_Left", "Omni_F")
         leftfiles = [
