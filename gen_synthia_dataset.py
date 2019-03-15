@@ -21,7 +21,10 @@ def parse_args() -> argparse.Namespace:
         help="Sequence numbers (as str with leading zero) to be used",
     )
     parser.add_argument(
-        "--seasons", nargs="+", type=str, default=["SPRING", "SUMMER", "FALL", "WINTER"]
+        "--seasons",
+        nargs="+",
+        type=str,
+        default=["SPRING", "SUMMER", "FALL", "WINTER", "DAWN"],
     )
 
     parser.add_argument(
