@@ -245,7 +245,7 @@ def _evaluate_scores(disparities, args):
             predicted_disps=disparities,
             root_dir=args.data_dir,
             filenames_file=args.test_filenames_file,
-        )
+        ).evaluate()
     elif args.eval == "none":
         return None
     else:
