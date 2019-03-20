@@ -121,9 +121,12 @@ class EvaluateVKittiGT:
         """
         gt_depths = []
         for path in self.depth_paths:
-            depth = cv2.imread(
-                os.path.join(self.root_dir, path),
-                cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
+            depth = (
+                cv2.imread(
+                    os.path.join(self.root_dir, path),
+                    cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
+                )
+                / 100
             )
 
             gt_depths.append(depth)
