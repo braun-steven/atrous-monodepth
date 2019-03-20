@@ -52,7 +52,7 @@ def main():
 
             directory = os.path.join(args.data_dir, vkitti_name, seq)
             files = [
-                os.path.join(seq, f)
+                os.path.join(vkitti_name, seq, f)
                 for f in sorted(os.listdir(directory))
                 if os.path.isfile(os.path.join(directory, f))
             ]
