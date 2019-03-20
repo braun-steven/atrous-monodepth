@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
-    vkitti_name = args.vkitti_version + "rgb"
+    vkitti_name = args.vkitti_version + "_rgb"
 
     # generate all filenames
     filename_lines = []
