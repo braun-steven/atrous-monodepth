@@ -14,6 +14,11 @@ def parse_args() -> argparse.Namespace:
                         are relative to this path.",
     )
     parser.add_argument(
+        "--vkitti_version",
+        default="vkitti_1.3.1",
+        help="vkitti version name (including 'vkitti_')",
+    )
+    parser.add_argument(
         "--sequences",
         nargs="+",
         type=str,
@@ -37,13 +42,15 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
+    vkitti_name = args.vkitti_version + "rgb"
+
     # generate all filenames
     filename_lines = []
     for nr in args.sequences:
         for variation in args.variations:
             seq = "{}/{}".format(nr, variation)
 
-            directory = os.path.join(args.data_dir, seq)
+            directory = os.path.join(args.data_dir, vkitti_name, seq)
             files = [
                 os.path.join(seq, f)
                 for f in sorted(os.listdir(directory))
