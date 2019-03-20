@@ -18,7 +18,7 @@ class EvaluateVKittiGT:
     """
 
     def __init__(
-        self, predicted_disps, root_dir, filenames_file, min_depth=0, max_depth=80
+        self, predicted_disps, root_dir, filenames_file, min_depth=0, max_depth=655.35
     ):
         """
         Args:
@@ -114,10 +114,10 @@ class EvaluateVKittiGT:
         Loads in the ground truth files from the KITTI Stereo Dataset
 
         Args:
-         -path (string): path to the the training files
 
         Returns:
-         -gt_disparities (list): list of ground truth disparities
+         -gt_depths (list): list of ground truth depth maps
+         -gt_depths (list): list of ground truth depth maps
         """
         gt_depths = []
         for path in self.depth_paths:
@@ -134,14 +134,13 @@ class EvaluateVKittiGT:
 
     def __convert_disps_to_depths_kitti(self, pred_disparities, gt_depths):
         """
-        Converts the ground truth disparities from the KITTI Stereo dataset and the predictions to depth values
+        Converts the predictions to depth values
 
         Args:
-         -gt_disparities (list): ground truth disparities
          -pred_disparities (list): predicted disparities
+         -gt_depths (list): ground truth disparities (only needed for proper sizes)
 
         Returns:
-         -gt_depths (list): list of ground truth depths
          -pred_depths (list): list of predicted depths
          -pred_depths_resized (list): list of predicted depths, resized to ground truth disparity size
 
