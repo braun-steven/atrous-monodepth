@@ -13,16 +13,18 @@ class EvaluateVKittiGT:
     Create an object of this class and then use the evaluate method to evaluate
     EvaluateVKittiGT(
     predicted_disps= np.array containing predicted disparities
-    gt_path='../../data/vkitti/vkitti_1.3.1_depthgt/', test_filenames_file, min_depth=0, max_depth=80).evaluate()
+    gt_path='../../data/vkitti/vkitti_1.3.1_depthgt/', filenames_file, min_depth=0, max_depth=80).evaluate()
 
     """
 
-    def __init__(self, predicted_disps, gt_path, min_depth=0, max_depth=80):
+    def __init__(
+        self, predicted_disps, root_dir, filenames_file, min_depth=0, max_depth=80
+    ):
         """
         Args:
             predicted_disps: (np.ndarray) predicted disparities after training
             gt_path: path of the ground truth
-            test_filenames_file: filenames of the test images
+            filenames_file: filenames of the test images
             min_depth: minimum depth used in predicted disparity map
             max_depth: maximim depth used in predicted disparity map
         """
@@ -34,7 +36,25 @@ class EvaluateVKittiGT:
         self.width_to_focal[1238] = 718.3351
 
         self.predicted_disps = predicted_disps
-        self.gt_path = gt_path
+        self.root_dir = root_dir
+
+        # load image paths
+        with open(filenames_file) as filenames:
+            image_paths = sorted(
+                os.path.join(root_dir, fname.split()[0]) for fname in filenames
+            )
+
+        # convert to depth paths
+        self.depth_paths = [
+            "/".join(
+                [
+                    path if path != "vkitti_1.3.1_rgb" else "vkitti_1.3.1_depthgt"
+                    for path in str.split(image_path, "/")
+                ]
+            )
+            for image_path in image_paths
+        ]
+
         self.min_depth = min_depth
         self.max_depth = max_depth
 
@@ -52,17 +72,18 @@ class EvaluateVKittiGT:
 
         pred_disparities = self.predicted_disps
 
-        num_samples = 200
-        gt_disparities = self.__load_gt_disp_kitti(self.gt_path)
-        gt_depths, pred_depths, pred_disparities_resized = self.__convert_disps_to_depths_kitti(
-            gt_disparities, pred_disparities
+        gt_depths = self.__load_gt_depth_vkitti()
+        num_samples = len(gt_depths)
+
+        pred_depths, pred_disparities_resized = self.__convert_disps_to_depths_kitti(
+            pred_disparities, gt_depths
         )
 
         rms = np.zeros(num_samples, np.float32)
         log_rms = np.zeros(num_samples, np.float32)
         abs_rel = np.zeros(num_samples, np.float32)
         sq_rel = np.zeros(num_samples, np.float32)
-        d1_all = np.zeros(num_samples, np.float32)
+        # d1_all = np.zeros(num_samples, np.float32)
         a1 = np.zeros(num_samples, np.float32)
         a2 = np.zeros(num_samples, np.float32)
         a3 = np.zeros(num_samples, np.float32)
@@ -74,20 +95,9 @@ class EvaluateVKittiGT:
             pred_depth[pred_depth < self.min_depth] = self.min_depth
             pred_depth[pred_depth > self.max_depth] = self.max_depth
 
-            gt_disp = gt_disparities[i]
-            mask = gt_disp > 0
-            pred_disp = pred_disparities_resized[i]
-            disp_diff = np.abs(gt_disp[mask] - pred_disp[mask])
-            bad_pixels = np.logical_and(
-                disp_diff >= 3, (disp_diff / gt_disp[mask]) >= 0.05
-            )
-            d1_all[i] = (
-                100.0 * bad_pixels.sum() / mask.sum()
-            )  # TODO return D1 all error
-
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
                 i
-            ] = compute_errors(gt_depth[mask], pred_depth[mask])
+            ] = compute_errors(gt_depth, pred_depth)
 
         return Result(
             abs_rel=abs_rel,
@@ -99,7 +109,7 @@ class EvaluateVKittiGT:
             a3=a3,
         )
 
-    def __load_gt_disp_kitti(self, path):
+    def __load_gt_depth_vkitti(self):
         """
         Loads in the ground truth files from the KITTI Stereo Dataset
 
@@ -109,16 +119,17 @@ class EvaluateVKittiGT:
         Returns:
          -gt_disparities (list): list of ground truth disparities
         """
-        gt_disparities = []
-        for i in range(200):
-            disp = cv2.imread(
-                path + "/training/disp_noc_0/" + str(i).zfill(6) + "_10.png", -1
+        gt_depths = []
+        for path in self.depth_paths:
+            depth = cv2.imread(
+                os.path.join(self.root_dir, path),
+                cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
             )
-            disp = disp.astype(np.float32) / 256
-            gt_disparities.append(disp)
-        return gt_disparities
 
-    def __convert_disps_to_depths_kitti(self, gt_disparities, pred_disparities):
+            gt_depths.append(depth)
+        return gt_depths
+
+    def __convert_disps_to_depths_kitti(self, pred_disparities, gt_depths):
         """
         Converts the ground truth disparities from the KITTI Stereo dataset and the predictions to depth values
 
@@ -132,13 +143,13 @@ class EvaluateVKittiGT:
          -pred_depths_resized (list): list of predicted depths, resized to ground truth disparity size
 
         """
-        gt_depths = []
+
         pred_depths = []
         pred_disparities_resized = []
 
-        for i in range(len(gt_disparities)):
-            gt_disp = gt_disparities[i]
-            height, width = gt_disp.shape
+        for i in range(len(pred_disparities)):
+            gt_depth = gt_depths[i]
+            height, width = gt_depth.shape
 
             pred_disp = pred_disparities[i]
             pred_disp = width * cv2.resize(
@@ -147,12 +158,8 @@ class EvaluateVKittiGT:
 
             pred_disparities_resized.append(pred_disp)
 
-            mask = gt_disp > 0
-
-            gt_depth = self.width_to_focal[width] * 0.54 / (gt_disp + (1.0 - mask))
             pred_depth = self.width_to_focal[width] * 0.54 / pred_disp
 
-            gt_depths.append(gt_depth)
             pred_depths.append(pred_depth)
 
-        return gt_depths, pred_depths, pred_disparities_resized
+        return pred_depths, pred_disparities_resized
