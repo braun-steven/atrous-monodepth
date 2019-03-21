@@ -14,6 +14,7 @@ from monolab.data_loader import prepare_dataloader
 from eval.eval_eigensplit import EvaluateEigen
 from eval.eval_kitti_gt import EvaluateKittiGT
 from eval.eval_synthia import EvaluateSynthia
+from eval.eval_vkitti_gt import EvaluateVKittiGT
 from torch import nn
 import logging
 
@@ -108,7 +109,7 @@ def parse_args() -> argparse.Namespace:
         default="none",
         type=str,
         help="Either evaluate on eigensplit or on kitti gt",
-        choices=["kitti-gt", "eigen", "synthia", "none"],
+        choices=["kitti-gt", "eigen", "synthia", "vkitti", "none"],
     )
     parser.add_argument(
         "--pin-memory", default=True, help="pin_memory argument to all dataloaders"
@@ -237,6 +238,13 @@ def _evaluate_scores(disparities, args):
             root_dir=args.data_dir,
             min_depth=0,
             max_depth=50,
+        ).evaluate()
+    elif args.eval == "vkitti":
+        # Evaluate on the vkitti ground truth
+        result = EvaluateVKittiGT(
+            predicted_disps=disparities,
+            root_dir=args.data_dir,
+            filenames_file=args.test_filenames_file,
         ).evaluate()
     elif args.eval == "none":
         return None
