@@ -72,11 +72,11 @@ class EvaluateVKittiGT:
 
         pred_disparities = self.predicted_disps
 
-        gt_depths = self.__load_gt_depth_vkitti()
-        num_samples = len(gt_depths)
+        self.gt_depths = self.__load_gt_depth_vkitti()
+        num_samples = len(self.gt_depths)
 
-        pred_depths, pred_disparities_resized = self.__convert_disps_to_depths_kitti(
-            pred_disparities, gt_depths
+        self.pred_depths, pred_disparities_resized = self.__convert_disps_to_depths_kitti(
+            pred_disparities, self.gt_depths
         )
 
         rms = np.zeros(num_samples, np.float32)
@@ -89,18 +89,17 @@ class EvaluateVKittiGT:
         a3 = np.zeros(num_samples, np.float32)
 
         for i in range(num_samples):
-            gt_depth = gt_depths[i]
-            pred_depth = pred_depths[i]
+            gt_depth = self.gt_depths[i]
+            pred_depth = self.pred_depths[i]
 
-            gt_depth[gt_depth < self.min_depth] = self.min_depth
-            gt_depth[gt_depth > self.max_depth] = self.max_depth
+            mask = gt_depth <= 80
 
             pred_depth[pred_depth < self.min_depth] = self.min_depth
             pred_depth[pred_depth > self.max_depth] = self.max_depth
 
             abs_rel[i], sq_rel[i], rms[i], log_rms[i], a1[i], a2[i], a3[
                 i
-            ] = compute_errors(gt_depth, pred_depth)
+            ] = compute_errors(gt_depth[mask], pred_depth[mask])
 
         return Result(
             abs_rel=abs_rel,
@@ -124,13 +123,7 @@ class EvaluateVKittiGT:
         """
         gt_depths = []
         for path in self.depth_paths:
-            depth = (
-                cv2.imread(
-                    os.path.join(self.root_dir, path),
-                    cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH,
-                )
-                / 100
-            )
+            depth = cv2.imread(path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH) / 100
 
             gt_depths.append(depth)
         return gt_depths
