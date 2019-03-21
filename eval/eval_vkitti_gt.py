@@ -18,7 +18,7 @@ class EvaluateVKittiGT:
     """
 
     def __init__(
-        self, predicted_disps, root_dir, filenames_file, min_depth=0, max_depth=655.35
+        self, predicted_disps, root_dir, filenames_file, min_depth=0, max_depth=80
     ):
         """
         Args:
@@ -91,6 +91,9 @@ class EvaluateVKittiGT:
         for i in range(num_samples):
             gt_depth = gt_depths[i]
             pred_depth = pred_depths[i]
+
+            gt_depth[gt_depth < self.min_depth] = self.min_depth
+            gt_depth[gt_depth > self.max_depth] = self.max_depth
 
             pred_depth[pred_depth < self.min_depth] = self.min_depth
             pred_depth[pred_depth > self.max_depth] = self.max_depth
