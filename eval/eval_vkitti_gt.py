@@ -92,7 +92,7 @@ class EvaluateVKittiGT:
             gt_depth = self.gt_depths[i]
             pred_depth = self.pred_depths[i]
 
-            mask = gt_depth <= 80
+            mask = gt_depth <= self.max_depth
 
             pred_depth[pred_depth < self.min_depth] = self.min_depth
             pred_depth[pred_depth > self.max_depth] = self.max_depth
