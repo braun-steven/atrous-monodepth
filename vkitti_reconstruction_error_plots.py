@@ -309,7 +309,9 @@ def evaluate_experiment(
     experiments = {}
     for experiment in files:
         path = experiment_folder + "{}/test/disparities.npy".format(experiment)
-        experiments[experiment] = load_pred_disp(path, resize=True)
+        experiments[experiment] = convert_disps_to_depths_kitti(
+            load_pred_disp(path, resize=True), gt_depth
+        )
 
     width = 1242
     total_height = 375 * (num_experiments + 1)
@@ -337,9 +339,7 @@ def evaluate_experiment(
 
         for j, experiment in enumerate(experiments):
             description = experiment_name + ": " + experiment
-            pred_disp = experiments[experiment][i]
-
-            pred = convert_disps_to_depths_kitti(pred_disp, gt)
+            pred = experiments[experiment][i]
 
             # skip those that are not of the same size as the prediction
             if gt.shape[0] != 375:
