@@ -327,7 +327,7 @@ def evaluate_experiment(
             "/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf", 15
         )
 
-    for i in range(2126):
+    for i in range(num_images):
         # load image and ground truth
         img = load_vkitti_image(
             path=data_dir, index=i, resize=False, image_paths=image_paths
@@ -380,5 +380,6 @@ if __name__ == "__main__":
         results_dir=args.results_dir,
         data_dir=args.data_dir,
         output_dir=args.output_dir,
+        num_images=args.num_images,
         filenames_file=args.filenames_file,
     )
