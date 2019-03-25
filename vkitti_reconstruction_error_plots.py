@@ -291,7 +291,7 @@ def evaluate_experiment(
             os.path.join(data_dir, fname.split()[0]) for fname in filenames
         )
     if not num_images:
-        num_images = len(filenames)
+        num_images = len(image_paths)
 
     experiments = {}
     for experiment in files:
