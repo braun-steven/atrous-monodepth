@@ -335,7 +335,7 @@ def evaluate_experiment(
         )
         gt = gt_depth[i]
 
-        gt[gt >= max_depth] = max_depth
+        gt[gt >= max_depth] = np.nan
 
         new_im = Image.new("RGB", (width, total_height))
         new_im.paste(img, (0, 0))
@@ -344,7 +344,7 @@ def evaluate_experiment(
             description = experiment_name + ": " + experiment
             pred = experiments[experiment][i]
 
-            pred[pred >= max_depth] = max_depth
+            pred[pred >= max_depth] = np.nan
 
             # skip those that are not of the same size as the prediction
             if gt.shape[0] != 375:
