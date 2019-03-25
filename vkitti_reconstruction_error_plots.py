@@ -70,8 +70,6 @@ def load_gt_depth_vkitti(filenames_file, root_dir):
         for image_path in image_paths
     ]
 
-    self.min_depth = min_depth
-    self.max_depth = max_depth
     gt_depths = []
     for path in depth_paths:
         depth = cv2.imread(path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH) / 100
@@ -80,7 +78,7 @@ def load_gt_depth_vkitti(filenames_file, root_dir):
     return gt_depths
 
 
-def load_kitti_image(path, index, resize=True, asTensor=False):
+def load_vkitti_image(path, index, image_paths, resize=True, asTensor=False):
     """
     Loads in the images from the KITTI Stereo Dataset
 
@@ -91,26 +89,20 @@ def load_kitti_image(path, index, resize=True, asTensor=False):
     Returns:
         -images (list): list of images
     """
+
     size = (256, 512)
 
-    left_image = Image.open(
-        path + "/training/image_2/" + str(index).zfill(6) + "_10.png"
-    )
-    right_image = Image.open(
-        path + "/training/image_3/" + str(index).zfill(6) + "_10.png"
-    )
+    left_image = Image.open(os.path.join(path, image_paths[index]))
 
     if resize:
         resize = transforms.Resize(size)
         left_image = resize(left_image)
-        right_image = resize(right_image)
 
     if asTensor:
         toTensor = transforms.ToTensor()
         left_image = toTensor(left_image)
-        right_image = toTensor(right_image)
 
-    return left_image, right_image
+    return left_image
 
 
 def load_pred_disp(path, resize=False):
@@ -283,10 +275,17 @@ def apply_disparity(img, disp):
     return output.squeeze()
 
 
-def evaluate_experiment(experiment_name, gt_depth):
-    experiment_folder = "data/output/milestones/{}/".format(experiment_name)
+def evaluate_experiment(
+    experiment_name, gt_depth, results_dir, data_dir, filenames_file
+):
+    experiment_folder = os.path.join(results_dir, "vkitti/{}/".format(experiment_name))
     files = [f for f in os.listdir(experiment_folder) if not f.startswith(".")]
     num_experiments = len(files)
+
+    with open(filenames_file) as filenames:
+        image_paths = sorted(
+            os.path.join(data_dir, fname.split()[0]) for fname in filenames
+        )
 
     experiments = {}
     for experiment in files:
@@ -309,7 +308,9 @@ def evaluate_experiment(experiment_name, gt_depth):
 
     for i in range(2126):
         # load image and ground truth
-        img, right_img = load_kitti_image(path="data/kitti", index=i, resize=False)
+        img = load_vkitti_image(
+            path=data_dir, index=i, resize=False, image_paths=image_paths
+        )
         gt = gt_depth[i]
 
         new_im = Image.new("RGB", (width, total_height))
@@ -353,4 +354,11 @@ if __name__ == "__main__":
     args = parse_args()
     gt_depth = load_gt_depth_vkitti(
         filenames_file=args.filenames_file, root_dir=args.data_dir
+    )
+    evaluate_experiment(
+        "aspp-rates",
+        gt_depth=gt_depth,
+        results_dir=args.results_dir,
+        data_dir=args.data_dir,
+        filenames_file=args.filenames_file,
     )
