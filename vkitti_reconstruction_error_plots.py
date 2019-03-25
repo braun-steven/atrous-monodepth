@@ -41,6 +41,9 @@ def parse_args() -> argparse.Namespace:
         default="resources/filenames/vkitti_test_files.txt",
         help="Filenames file (png test images)",
     )
+    parser.add_argument(
+        "--num-images", default=10, help="Number of images to process (max 2126)"
+    )
     return parser.parse_args()
 
 
@@ -277,7 +280,7 @@ def apply_disparity(img, disp):
 
 
 def evaluate_experiment(
-    experiment_name, gt_depth, results_dir, data_dir, filenames_file
+    experiment_name, gt_depth, results_dir, data_dir, filenames_file, num_images=None
 ):
     experiment_folder = os.path.join(results_dir, "vkitti/{}/".format(experiment_name))
     files = [f for f in os.listdir(experiment_folder) if not f.startswith(".")]
@@ -287,6 +290,8 @@ def evaluate_experiment(
         image_paths = sorted(
             os.path.join(data_dir, fname.split()[0]) for fname in filenames
         )
+    if not num_images:
+        num_images = len(filenames)
 
     experiments = {}
     for experiment in files:
