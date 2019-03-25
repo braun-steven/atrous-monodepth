@@ -311,7 +311,7 @@ def evaluate_experiment(
         path = experiment_folder + "{}/test/disparities.npy".format(experiment)
         experiments[experiment] = convert_disps_to_depths_kitti(
             load_pred_disp(path, resize=True), gt_depth
-        )
+        )[0][:num_images]
 
     width = 1242
     total_height = 375 * (num_experiments + 1)
