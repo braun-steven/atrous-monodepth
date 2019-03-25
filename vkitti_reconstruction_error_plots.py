@@ -294,6 +294,7 @@ def evaluate_experiment(
     output_dir,
     filenames_file,
     num_images=None,
+    max_depth=80,
 ):
     experiment_folder = os.path.join(results_dir, "vkitti/{}/".format(experiment_name))
     files = [f for f in os.listdir(experiment_folder) if not f.startswith(".")]
@@ -334,12 +335,16 @@ def evaluate_experiment(
         )
         gt = gt_depth[i]
 
+        gt[gt >= max_depth] = max_depth
+
         new_im = Image.new("RGB", (width, total_height))
         new_im.paste(img, (0, 0))
 
         for j, experiment in enumerate(experiments):
             description = experiment_name + ": " + experiment
             pred = experiments[experiment][i]
+
+            pred[pred >= max_depth] = max_depth
 
             # skip those that are not of the same size as the prediction
             if gt.shape[0] != 375:
