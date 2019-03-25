@@ -24,7 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="PyTorch Monolab: Monodepth x " "DeepLabv3+"
     )
-
+    parser.add_argument(
+        "--experiment", default="aspp-rates-os32", help="Experiment name"
+    )
     parser.add_argument(
         "--data-dir",
         default="/visinf/projects_students/monolab/data/vkitti",
@@ -373,7 +375,7 @@ if __name__ == "__main__":
         filenames_file=args.filenames_file, root_dir=args.data_dir
     )
     evaluate_experiment(
-        "aspp-rates",
+        experiment_name=args.experiment,
         gt_depth=gt_depth,
         results_dir=args.results_dir,
         data_dir=args.data_dir,
