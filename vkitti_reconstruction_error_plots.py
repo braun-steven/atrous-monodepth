@@ -251,6 +251,37 @@ def convert_disps_to_depths_kitti(pred_disparities, gt_depths):
     return pred_depths, pred_disparities_resized
 
 
+def convert_depth_to_disp_kitti(depths):
+    """
+        Converts the predictions to depth values
+
+        Args:
+         -depth (list): predicted depth
+
+        Returns:
+         -pred_disp (list): list of predicted disparities
+
+        """
+    width_to_focal = dict()
+    width_to_focal[1242] = 721.5377
+    width_to_focal[1241] = 718.856
+    width_to_focal[1224] = 707.0493
+    width_to_focal[1238] = 718.3351
+
+    disps = []
+
+    for i in range(len(depths)):
+
+        depth = depths[i]
+        height, width = depth.shape
+
+        disp = width_to_focal[width] * 0.54 / depth
+
+        disps.append(disp)
+
+    return disps
+
+
 def apply_disparity(img, disp):
     """ Applies a disparity map to an image.
 
@@ -288,7 +319,7 @@ def apply_disparity(img, disp):
 
 def evaluate_experiment(
     experiment_name,
-    gt_depth,
+    gt_disps,
     results_dir,
     data_dir,
     output_dir,
@@ -310,9 +341,7 @@ def evaluate_experiment(
     experiments = {}
     for experiment in files:
         path = experiment_folder + "{}/test/disparities.npy".format(experiment)
-        experiments[experiment] = convert_disps_to_depths_kitti(
-            load_pred_disp(path, resize=True), gt_depth
-        )[0][:num_images]
+        experiments[experiment] = load_pred_disp(path, resize=True)[:num_images]
 
     width = 1242
     total_height = 375 * (num_experiments + 1)
@@ -333,9 +362,7 @@ def evaluate_experiment(
         img = load_vkitti_image(
             path=data_dir, index=i, resize=False, image_paths=image_paths
         )
-        gt = gt_depth[i]
-
-        gt[gt >= max_depth] = np.nan
+        gt = gt_disps[i]
 
         new_im = Image.new("RGB", (width, total_height))
         new_im.paste(img, (0, 0))
@@ -344,7 +371,7 @@ def evaluate_experiment(
             description = experiment_name + ": " + experiment
             pred = experiments[experiment][i]
 
-            pred[pred >= max_depth] = np.nan
+            pred[pred >= max_depth] = max_depth
 
             # skip those that are not of the same size as the prediction
             if gt.shape[0] != 375:
@@ -353,8 +380,8 @@ def evaluate_experiment(
                 continue
 
                 # get the sparse pixels and calculate difference
-            # mask = gt > 0
-            # pred[np.logical_not(mask)] = 0
+            mask = gt > 0
+            pred[np.logical_not(mask)] = 0
             diff = np.abs(gt - pred)
             diff = diff / np.max(diff)
 
@@ -376,12 +403,12 @@ def evaluate_experiment(
 
 if __name__ == "__main__":
     args = parse_args()
-    gt_depth = load_gt_depth_vkitti(
-        filenames_file=args.filenames_file, root_dir=args.data_dir
+    gt_disp = convert_depth_to_disp_kitti(
+        load_gt_depth_vkitti(filenames_file=args.filenames_file, root_dir=args.data_dir)
     )
     evaluate_experiment(
         experiment_name=args.experiment,
-        gt_depth=gt_depth,
+        gt_disp=gt_disp,
         results_dir=args.results_dir,
         data_dir=args.data_dir,
         output_dir=args.output_dir,
