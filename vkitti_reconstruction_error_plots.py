@@ -37,6 +37,11 @@ def parse_args() -> argparse.Namespace:
         "--results-dir", default="results", help="path to the results directory"
     )
     parser.add_argument(
+        "--output-dir",
+        default="results/vkitti_errormaps",
+        help="where to save the files",
+    )
+    parser.add_argument(
         "--filenames-file",
         default="resources/filenames/vkitti_test_files.txt",
         help="Filenames file (png test images)",
@@ -280,7 +285,13 @@ def apply_disparity(img, disp):
 
 
 def evaluate_experiment(
-    experiment_name, gt_depth, results_dir, data_dir, filenames_file, num_images=None
+    experiment_name,
+    gt_depth,
+    results_dir,
+    data_dir,
+    output_dir,
+    filenames_file,
+    num_images=None,
 ):
     experiment_folder = os.path.join(results_dir, "vkitti/{}/".format(experiment_name))
     files = [f for f in os.listdir(experiment_folder) if not f.startswith(".")]
@@ -300,7 +311,7 @@ def evaluate_experiment(
 
     width = 1242
     total_height = 375 * (num_experiments + 1)
-    output_dir = os.path.join("results", "report_disparity_error", experiment_name)
+    output_dir = os.path.join(output_dir, experiment_name)
 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -366,5 +377,6 @@ if __name__ == "__main__":
         gt_depth=gt_depth,
         results_dir=args.results_dir,
         data_dir=args.data_dir,
+        output_dir=args.output_dir,
         filenames_file=args.filenames_file,
     )
