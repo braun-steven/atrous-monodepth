@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
         default="resources/filenames/vkitti_test_files.txt",
         help="Filenames file (png test images)",
     )
+    return parser.parse_args()
 
 
 def load_gt_depth_vkitti(filenames_file, root_dir):
