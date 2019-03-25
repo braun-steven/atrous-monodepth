@@ -49,7 +49,10 @@ def parse_args() -> argparse.Namespace:
         help="Filenames file (png test images)",
     )
     parser.add_argument(
-        "--num-images", default=10, help="Number of images to process (max 2126)"
+        "--num-images",
+        default=10,
+        type=int,
+        help="Number of images to process (max 2126)",
     )
     return parser.parse_args()
 
