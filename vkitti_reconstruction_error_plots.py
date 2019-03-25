@@ -408,7 +408,7 @@ if __name__ == "__main__":
     )
     evaluate_experiment(
         experiment_name=args.experiment,
-        gt_disp=gt_disp,
+        gt_disps=gt_disp,
         results_dir=args.results_dir,
         data_dir=args.data_dir,
         output_dir=args.output_dir,
