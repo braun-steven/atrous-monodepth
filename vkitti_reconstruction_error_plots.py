@@ -354,10 +354,10 @@ def evaluate_experiment(
         os.mkdir(output_dir)
 
     try:
-        fnt = ImageFont.truetype("/Library/Fonts/Arial.ttf", 15)
+        fnt = ImageFont.truetype("/Library/Fonts/Arial.ttf", 24)
     except OSError:
         fnt = ImageFont.truetype(
-            "/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf", 15
+            "/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf", 24
         )
 
     for i in range(num_images):
@@ -371,7 +371,7 @@ def evaluate_experiment(
         new_im.paste(img, (0, 0))
 
         for j, experiment in enumerate(experiments):
-            description = experiment_name + ": " + experiment
+            description = "ASPP: " + experiment[5:]
             pred = experiments[experiment][i]
 
             pred[pred >= max_depth] = max_depth
