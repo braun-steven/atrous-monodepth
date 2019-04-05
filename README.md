@@ -1,5 +1,11 @@
 # Monocular Depth Estimation with Atrous Convolutions
 
+This repo contains code for the Deep Learning in Computer Vision practical course at TU Darmstadt. The project's goal is to test whether atrous convolutions (convolutions with dilated kernels) can improve monocular depth estimation. We base our implementation upon [Unsupervised single image depth prediction with CNNs](https://github.com/mrharicot/monodepth) and improve the ResNet backbone using ideas from the semantic segmentation network [DeepLab v3+](https://github.com/tensorflow/models/tree/master/research/deeplab). Atrous convolutions might help in using information at different spatial scales without introducing lots of new parameters.
+
+We also provide a [paper](./paper/DLCV_Final_Report.pdf) and a [presentation](./presentation/dlcv_final_presentation.pdf) on our findings.
+
+##### Paper Abstract
+
 Monocular depth estimation is concerned with computing a dense depth map from a single image but faces difficulties especially at object boundaries.
 Atrous convolutions have been successfully employed to this end in the task of semantic segmentation.
 In this paper, we investigate, whether it is  also possible to apply atrous convolutions in unsupervised monocular depth estimation. 
@@ -8,10 +14,6 @@ This block allows for computing feature maps at different spatial scales on top 
 Our experiments show that atrous convolutions in the proposed setup do not improve depth estimation performance. 
 Furthermore, the necessity of a lower output stride after the encoder, such that an increased receptive field size is even applicable, harms runtime and increases memory consumption. 
 Finally, we show that it is possible to reduce the number of channels after the encoder, which reduces the parameter count without impairing predictions.
-
-This repo contains code for the Deep Learning in Computer Vision practical course at TU Darmstadt. The project's goal is to test whether atrous convolutions (convolutions with dilated kernels) can improve monocular depth estimation. We base our implementation upon [Unsupervised single image depth prediction with CNNs](https://github.com/mrharicot/monodepth) and improve the ResNet backbone using ideas from the semantic segmentation network [DeepLab v3+](https://github.com/tensorflow/models/tree/master/research/deeplab). Atrous convolutions might help in using information at different spatial scales without introducing lots of new parameters.
-
-We also provide a [paper](./paper/DLCV_Final_Report.pdf) and a [presentation](./presentation/dlcv_final_presentation.pdf) on our findings.
 
 ## Summary
 
