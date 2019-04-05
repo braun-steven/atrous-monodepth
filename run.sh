@@ -16,6 +16,6 @@ nohup ./env/bin/python main.py \
     --test-filenames-file resources/filenames/kitti_stereo_2015_test_files.txt \
     --eval kitti-gt \
     --log-level info \
-    --tag stride16_atrous-1-3-5-7_skips_dstraub \
-    --notify dominikstraub@yahoo.com &
+    --tag stride16_atrous-1-3-5-7 \
+    --notify your@email.address &
 echo $! > run.pid

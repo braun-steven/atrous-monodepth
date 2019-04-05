@@ -1,0 +1,47 @@
+\section{Related Work}
+Depth estimation can either be performed on stereo or monocular images, the latter being a more challenging problem. Stereo-based approaches have a long history in computer vision, ranging from more classical methods~\cite{scharstein2002taxonomy} to recent advancements in deep learning~\cite{zbontar2016stereo}.
+In this work, we are concerned with monocular depth estimation, where only a single input image is available at test time.
+
+\subsection{Monocular Depth Estimation}
+We give an overview of the two main approaches for monocular depth estimation: supervised methods, which use ground truth depth data, and unsupervised methods, typically using image pairs during training. 
+
+\subsubsection{Supervised Approaches}
+
+Early approaches of monocular depth estimation were based on segmenting images into superpixel patches and then inferring the 3D position and orientation of these patches based on geometric and image-formation assumptions~\cite{saxena2009make3d, Lin2012}. Most of these methods relied on the use of hand-crafted feature representations such as SIFT~\cite{Lin2010}.
+
+Modern Deep Convolutional Neural Networks (CNN) allow representing the data using richer features that are learned within the network for a specific task.
+Eigen \etal~\cite{eigen2015predicting, eigen2014depth} was the first to propose monocular depth estimation as a CNN-based pixel-wise continuous regression problem in order to obtain depth.
+This work also highlights the importance of multi-scale features, by employing two networks to learn both the global scene structure, along with a second network to refine the depth prediction based on more local features (e.g. walls and objects).  
+
+Since then several ideas have been proposed to improve upon the results of a pixel-based regression approach, including the use of multi-scale continuous conditional random fields~\cite{DBLP:journals/corr/abs-1803-00891}, semantic information~\cite{ramirez2018}, attention~\cite{Jiao2018,Chen2019} or edge-specific loss-terms~\cite{Hu2018}. 
+Jiao \etal~\cite{Jiao2018} employ semantic information, in addition to an attention-based loss term that gives higher weight to more distant regions. 
+This setup improves the accuracy of distant depth estimates, as depth estimation networks can suffer from being ``short-sighted'', due to closer distances being over-represented in the loss. 
+The quality of depth predictions at object boundaries can be improved by fusing information from different spatial scales (multi-scale feature fusion) and employing edge-specific loss-functions using both differences in gradients and angle of surface normals between the estimated depth maps and the corresponding ground truths data~\cite{Hu2018}. 
+Alternatively, monocular depth estimation can also be formulated as pixel-wise classification~\cite{Cao2018} or ordinal regression~\cite{Fu2018}. In this approach, the ranges of possible depths are learned instead of exact depth values. These depth ranges are easier to estimate and allow to reason about the confidence of the predictions and can even lead to superior performance. 
+
+\subsubsection{Unsupervised Approaches}
+
+Unsupervised methods provide an alternative to the supervised methods, in so far that they do not need labeled ground truth depth data, which is not widely available for many application domains and datasets.
+Instead, these methods rely on estimating disparity maps from either rectified stereo pairs~\cite{garg2016unsupervised,Godard_2017_CVPR} or sequences of videos~\cite{Wang2017,Godard2018} by learning a mapping between images that correspond to depth or disparity. Importantly, the image pairs are only available during training, which makes the methods monocular at test time.
+Garg \etal~\cite{garg2016unsupervised} suggested directly learning a disparity map through an encoder-decoder CNN, by applying a photo-metric difference loss to compare the reconstructed image, to the true target image.
+This approach was further refined by Godard \etal~\cite{Godard_2017_CVPR} through learning two disparity maps instead of one and enforcing consistency between both maps, along with the reconstructed images and their respective input images. 
+
+More recent work has focused on the use of video data to solve depth estimation by performing view-synthesis based on successive frames~\cite{Wang2017,Casser2018,Godard2018}.
+Typically, this involves training a separate pose network to learn the corresponding camera transformations and depth information.
+Recent work by Godard \etal~\cite{Godard2018} shows that depth features can also help in pose estimation, by sharing weights between the two networks.  
+One drawback of video-based approaches is that they can not effectively deal with moving objects between frames.
+Objects moving together with the camera are typically projected into infinite depth, such that the photo-metric loss is lowered.
+A recent approach~\cite{Casser2018} has shown that it is possible to explicitly model and account for individual object motion by obtaining both their speed and direction and warping them independent of background motion.
+This can lead to performance comparable to stereo-based approaches.
+Gordard \etal~\cite{Godard2018} showed, that the network can be trained with both monocular, as well as stereo data to overcome this problem and achieve state-of-the-art performance.
+
+Furthermore, semi-supervised approaches have been suggested in which both the ground truth depth data, along with the image data is used to ensure image-consistency of the depth maps and correspondence to the ground truth depth~\cite{DBLP:journals/corr/KuznietsovSL17}. 
+
+\subsection{Atrous Convolutions}
+
+%Argument for why to use Atrous Convolutions 
+
+Atrous convolutions were originally introduced in the context of wavelet transforms~\cite{holschneider1990wavelet} as a means of reducing computational complexity. Since atrous convolutions skip certain pixels, they achieve a larger filter without the need for additional parameters.
+Recently, atrous convolutions have been heavily used in semantic segmentation~\cite{chen2018deeplab, chen2018encoder, wang2018understanding, YuKoltun2016}, with some applications to other tasks such as image classification~\cite{Yu_2017_CVPR}.
+When depth estimation is treated as a classification task, recent work suggests that atrous convolutions can also be successfully employed to obtain feature maps at different spatial scales without repeated downsampling of the image~\cite{Fu2018,Chen2019}. 
+Inspired by these successful applications, we apply atrous convolutions to monocular depth estimation as a regression problem.

@@ -1,0 +1,76 @@
+\appendix
+\onecolumn
+\begin{center}
+\textbf{\Large Unsupervised Monocular Depth Estimation Using Atrous Convolutions}
+\textbf{\large Supplementary Material}
+\end{center}
+
+\setcounter{figure}{0}
+\renewcommand\thefigure{\thesection.\arabic{figure}}
+\setcounter{table}{0}
+\renewcommand{\thetable}{\thesection.\arabic{table}}
+
+\section{Atrous Convolutions in the Encoder}\label{appendix:atrous-encoder}
+\setcounter{figure}{0}  
+    
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/architecture/aspp-in-encoder.pdf}
+    \caption{ASPP after the first ResNet block.}
+    \label{fig:appendix:aspp-encoder}
+    \end{figure}
+    \begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/architecture/encoder-with-atrous-rates.pdf}
+    \caption{Atrous convolutions inside the ResNet blocks.}
+    \label{fig:appendix:resnet-atrous}
+    \end{figure}
+    
+     
+\section{Reconstruction error plots}
+\setcounter{figure}{0}    
+% the \\ insures the section title is centered below the phrase: AppendixA
+
+\begin{figure}[h!]
+\centering
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/reconstruction_error/concat_003.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/reconstruction_error/concat_015.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/reconstruction_error/concat_024.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/reconstruction_error/concat_029.png}
+\end{subfigure}
+\caption{Reconstruction error for the experiment in Section \ref{section:aspp-rates} in which the impact of different atrous rates ([1,1,1,1], [1,2,3,4], [1,3,5,7]) was compared to the baseline.}
+\label{appendix:reconstruction-error}
+\end{figure}
+
+\section{VKITTI Error Maps}
+\begin{figure}[h!]
+\centering
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/aspp-rates-vkitti/concat_221.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/aspp-rates-vkitti/concat_1226.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/aspp-rates-vkitti/concat_763.png}
+\end{subfigure}
+\begin{subfigure}[c]{0.24\textwidth}
+\includegraphics[width=\textwidth]{images/visual_comparisons/aspp-rates-vkitti/concat_2083.png}
+\end{subfigure}
+\caption{Disparity error maps on VKITTI (cf. Section \ref{section:vkitti}), in which the impact of different atrous rates ([1,1,1,1], [1,2,3,4], [1,3,5,7]) are compared.}
+\label{fig:appendix:vkitti}
+\end{figure}
+
+
+\section{Full Experimental Results}\label{appendix:full-results}
+\setcounter{figure}{0}    
+% the \\ insures the section title is centered below the phrase: Appendix B
+
+\input{tables/full_results.tex}

@@ -1,0 +1,454 @@
+% GENERAL INTRODUCTION
+@article{scharstein2002taxonomy,
+  title={A taxonomy and evaluation of dense two-frame stereo correspondence algorithms},
+  author={Scharstein, Daniel and Szeliski, Richard},
+  journal={International journal of computer vision},
+  volume={47},
+  number={1-3},
+  pages={7--42},
+  year={2002},
+  publisher={Springer}
+}
+
+% ATROUS CONVS
+@InProceedings{holschneider1990wavelet,
+author="Holschneider, M.
+and Kronland-Martinet, R.
+and Morlet, J.
+and Tchamitchian, Ph.",
+editor="Combes, Jean-Michel
+and Grossmann, Alexander
+and Tchamitchian, Philippe",
+title="A Real-Time Algorithm for Signal Analysis with the Help of the Wavelet Transform",
+booktitle="Wavelets",
+year="1990",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="286--297",
+abstract="The purpose of this paper is to present a real-time algorithm for the analysis of time-varying signals with the help of the wavelet transform. We shall briefly describe this transformation in the following. For more details, we refer to the literature [1].",
+isbn="978-3-642-75988-8"
+}
+
+
+@article{chen2018deeplab,
+  title={Deeplab: Semantic image segmentation with deep convolutional nets, atrous convolution, and fully connected crfs},
+  author={Chen, Liang-Chieh and Papandreou, George and Kokkinos, Iasonas and Murphy, Kevin and Yuille, Alan L},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={40},
+  number={4},
+  pages={834--848},
+  year={2018},
+  publisher={IEEE}
+}
+
+@inproceedings{chen2018encoder,
+  title={Encoder-decoder with atrous separable convolution for semantic image segmentation},
+  author={Chen, Liang-Chieh and Zhu, Yukun and Papandreou, George and Schroff, Florian and Adam, Hartwig},
+  booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},
+  pages={801--818},
+  year={2018}
+}
+
+@inproceedings{wang2018understanding,
+  title={Understanding convolution for semantic segmentation},
+  author={Wang, Panqu and Chen, Pengfei and Yuan, Ye and Liu, Ding and Huang, Zehua and Hou, Xiaodi and Cottrell, Garrison},
+  booktitle={2018 IEEE Winter Conference on Applications of Computer Vision (WACV)},
+  pages={1451--1460},
+  year={2018},
+  organization={IEEE}
+}
+
+@InProceedings{Yu_2017_CVPR,
+author = {Yu, Fisher and Koltun, Vladlen and Funkhouser, Thomas},
+title = {Dilated Residual Networks},
+booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {July},
+year = {2017}
+}
+
+@inproceedings{YuKoltun2016,
+	author    = {Fisher Yu and Vladlen Koltun},
+	title     = {Multi-Scale Context Aggregation by Dilated Convolutions},
+	booktitle = {ICLR},
+	year      = {2016},
+}
+
+% IMAGE PYRAMID
+@Article{Witkin1987,
+author="Witkin, Andrew
+and Terzopoulos, Demetri
+and Kass, Michael",
+title="Signal matching through scale space",
+journal="International Journal of Computer Vision",
+year="1987",
+month="Jun",
+day="01",
+volume="1",
+number="2",
+pages="133--144",
+abstract="Given a collection of similar signals that have been deformed with respect to each other, the general signal-matching problem is to recover the deformation. We formulate the problem as the minimization of an energy measure that combines a smoothness term and a similarity term. The minimization reduces to a dynamic system governed by a set of coupled, first-order differential equations. The dynamic system finds an optimal solution at a coarse scale and then tracks it continuously to a fine scale. Among the major themes in recent work on visual signal matching have been the notions of matching as constrained optimization, of variational surface reconstruction, and of coarse-to-fine matching. Our solution captures these in a precise, succinct, and unified form. Results are presented for one-dimensional signals, a motion sequence, and a stereo pair.",
+issn="1573-1405",
+doi="10.1007/BF00123162",
+url="https://doi.org/10.1007/BF00123162"
+}
+
+@inproceedings{noh2015learning,
+  title={Learning Deconvolution Network for Semantic Segmentation},
+  author={Noh, Hyeonwoo and Hong, Seunghoon and Han, Bohyung},
+  booktitle={Computer Vision (ICCV), 2015 IEEE International Conference on},
+  year={2015}
+} 
+
+@inproceedings{Ronneberger2015,
+abstract = {There is large consent that successful training of deep networks requires many thousand annotated training samples. In this paper, we present a network and training strategy that relies on the strong use of data augmentation to use the available annotated samples more efficiently. The architecture consists of a contracting path to capture context and a symmetric expanding path that enables precise localization. We show that such a network can be trained end-to-end from very few images and outperforms the prior best method (a sliding-window convolutional network) on the ISBI challenge for segmentation of neuronal structures in electron microscopic stacks. Using the same network trained on transmitted light microscopy images (phase contrast and DIC) we won the ISBI cell tracking challenge 2015 in these categories by a large margin. Moreover, the network is fast. Segmentation of a 512x512 image takes less than a second on a recent GPU. The full implementation (based on Caffe) and the trained networks are available at http://lmb.informatik.uni-freiburg.de/people/ronneber/u-net .},
+archivePrefix = {arXiv},
+arxivId = {1505.04597},
+author = {Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
+booktitle = {Lecture Notes in Computer Science (including subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics)},
+doi = {10.1007/978-3-319-24574-4_28},
+eprint = {1505.04597},
+isbn = {9783319245737},
+issn = {16113349},
+mendeley-groups = {DLCV},
+pmid = {23285570},
+title = {{U-net: Convolutional networks for biomedical image segmentation}},
+year = {2015}
+}
+
+
+@incollection{quam1987hierarchical,
+  title={Hierarchical warp stereo},
+  author={Quam, Lynn H},
+  booktitle={Readings in computer vision},
+  pages={80--86},
+  year={1987},
+  publisher={Elsevier}
+}
+
+% STEREO
+@article{zbontar2016stereo,
+  title={Stereo Matching by Training a Convolutional Neural Network to Compare Image Patches.},
+  author={Zbontar, Jure and LeCun, Yann and others},
+  journal={Journal of Machine Learning Research},
+  volume={17},
+  number={1-32},
+  pages={2},
+  year={2016}
+}
+
+% MONODEPTH
+
+% SUPERVISED
+@inproceedings{eigen2014depth,
+  title={Depth map prediction from a single image using a multi-scale deep network},
+  author={Eigen, David and Puhrsch, Christian and Fergus, Rob},
+  booktitle={Advances in neural information processing systems},
+  pages={2366--2374},
+  year={2014}
+}
+
+@inproceedings{eigen2015predicting,
+  title={Predicting depth, surface normals and semantic labels with a common multi-scale convolutional architecture},
+  author={Eigen, David and Fergus, Rob},
+  booktitle={Proceedings of the IEEE international conference on computer vision},
+  pages={2650--2658},
+  year={2015}
+}
+
+@article{saxena2009make3d,
+  title={Make3d: Learning 3d scene structure from a single still image},
+  author={Saxena, Ashutosh and Sun, Min and Ng, Andrew Y},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={31},
+  number={5},
+  pages={824--840},
+  year={2009},
+  publisher={IEEE}
+}
+
+@article{Lin2012,
+author = {Lin, Yu Hsun and Cheng, Wen Huang and Miao, Hsin and Ku, Tsung Hao and Hsieh, Yung Huan},
+doi = {10.1109/ICASSP.2012.6288007},
+isbn = {9781467300469},
+issn = {15206149},
+journal = {ICASSP, IEEE International Conference on Acoustics, Speech and Signal Processing - Proceedings},
+keywords = {Cloud Computing,Depth Estimation,SVM,Single Image},
+mendeley-groups = {DLCV},
+pages = {809--812},
+title = {{Single image depth estimation from image descriptors}},
+year = {2012}
+}
+
+@article{Hu2018,
+archivePrefix = {arXiv},
+arxivId = {1803.08673},
+author = {Hu, Junjie and Ozay, Mete and Zhang, Yan and Okatani, Takayuki},
+doi = {arXiv:1803.08673v2},
+eprint = {1803.08673},
+file = {:Users/fabiankessler/Dropbox/04-ACADEMIC/Papers/Psychology/Locomotion Cue Integration/2018 - Hu et al. - Revisiting Single Image Depth Estimation Toward Higher Resolution Maps with Accurate Object Boundaries.pdf:pdf},
+isbn = {9781728119755},
+journal = {2019 IEEE Winter Conference on Applications of Computer Vision (WACV)},
+mendeley-groups = {DLCV},
+pages = {1043--1051},
+publisher = {IEEE},
+title = {{Revisiting Single Image Depth Estimation: Toward Higher Resolution Maps with Accurate Object Boundaries}},
+url = {http://arxiv.org/abs/1803.08673},
+year = {2018}
+}
+
+@article{Cao2018,
+archivePrefix = {arXiv},
+arxivId = {arXiv:1605.02305v3},
+author = {Cao, Yuanzhouhan and Wu, Zifeng and Shen, Chunhua},
+doi = {10.1109/TCSVT.2017.2740321},
+eprint = {arXiv:1605.02305v3},
+issn = {10518215},
+journal = {IEEE Transactions on Circuits and Systems for Video Technology},
+keywords = {Classification,deep residual networks,depth estimation},
+mendeley-groups = {DLCV},
+number = {11},
+pages = {3174--3182},
+publisher = {IEEE},
+title = {{Estimating Depth from Monocular Images as Classification Using Deep Fully Convolutional Residual Networks}},
+volume = {28},
+year = {2018}
+}
+
+@article{Fu2018,
+author = {Fu, Huan and Gong, Mingming and Wang, Chaohui and Batmanghelich, Kayhan and Fu, Huan and Gong, Mingming and Wang, Chaohui and Batmanghelich, Kayhan and Tao, Dacheng and Ordinal, Deep and Fu, Huan and Gong, Mingming and Wang, Chaohui and Batmanghelich, Kayhan and Tao, Dacheng},
+mendeley-groups = {DLCV},
+title = {{Deep Ordinal Regression Network for Monocular Depth Estimation To cite this version : HAL Id : hal-01741163 Deep Ordinal Regression Network for Monocular Depth Estimation}},
+year = {2018}
+}
+
+@article{Chen2019,
+archivePrefix = {arXiv},
+arxivId = {1901.10137},
+author = {Chen, Yuru and Zhao, Haitao and Hu, Zhengwei},
+doi = {arXiv:1901.10137v1},
+eprint = {1901.10137},
+file = {:Users/fabiankessler/Dropbox/04-ACADEMIC/Papers/Psychology/Locomotion Cue Integration/2019 - Chen, Zhao, Hu - Attention-based Context Aggregation Network for Monocular Depth Estimation.pdf:pdf},
+isbn = {1901.10137v1},
+mendeley-groups = {DLCV},
+month = {jan},
+pages = {1--11},
+title = {{Attention-based Context Aggregation Network for Monocular Depth Estimation}},
+url = {http://arxiv.org/abs/1901.10137},
+year = {2019}
+}
+
+
+
+@inproceedings{Lin2010,
+author = {Liu, Beyang and Gould, Stephen and Koller, Daphne},
+booktitle = {2010 IEEE Computer Society Conference on Computer Vision and Pattern Recognition},
+doi = {10.1109/CVPR.2010.5539823},
+isbn = {978-1-4244-6984-0},
+issn = {15206149},
+keywords = {Cloud Computing,Depth Estimation,SVM,Single Image},
+mendeley-groups = {DLCV},
+month = {jun},
+pages = {1253--1260},
+publisher = {IEEE},
+title = {{Single image depth estimation from predicted semantic labels}},
+url = {http://ieeexplore.ieee.org/document/6288007/ http://ieeexplore.ieee.org/document/5539823/},
+year = {2010}
+}
+
+
+
+
+
+@inproceedings{Jiao2018,
+author = {Jiao, Jianbo and Cao, Ying and Song, Yibing and Lau, Rynson},
+booktitle = {Lecture Notes in Computer Science (including subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics)},
+doi = {10.1007/978-3-030-01267-0_4},
+isbn = {9783030012663},
+issn = {16113349},
+keywords = {Attention loss,Monocular depth,Semantic labeling},
+mendeley-groups = {DLCV},
+pages = {55--71},
+title = {{Look deeper into depth: monocular depth estimation with semantic booster and attention-driven loss}},
+volume = {11219 LNCS},
+year = {2018}
+}
+
+
+% UNSUPERVISED
+
+
+%Stereo Pairs
+@inproceedings{garg2016unsupervised,
+  title={Unsupervised cnn for single view depth estimation: Geometry to the rescue},
+  author={Garg, Ravi and BG, Vijay Kumar and Carneiro, Gustavo and Reid, Ian},
+  booktitle={European Conference on Computer Vision},
+  pages={740--756},
+  year={2016},
+  organization={Springer}
+}
+
+@InProceedings{Godard_2017_CVPR,
+author = {Godard, Clement and Mac Aodha, Oisin and Brostow, Gabriel J.},
+title = {Unsupervised Monocular Depth Estimation With Left-Right Consistency},
+booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {July},
+year = {2017}
+}
+
+
+
+
+%Video
+
+@techreport{Wang2017,
+archivePrefix = {arXiv},
+arxivId = {1712.00175},
+author = {Wang, Chaoyang and Buenaposada, Jose Miguel and Zhu, Rui and Lucey, Simon},
+doi = {10.1109/CVPR.2018.00216},
+eprint = {1712.00175},
+isbn = {978-1-5386-6420-9},
+mendeley-groups = {DLCV},
+title = {{Learning Depth from Monocular Videos using Direct Methods}},
+url = {http://arxiv.org/abs/1712.00175},
+year = {2017}
+}
+
+@article{Godard2018,
+archivePrefix = {arXiv},
+arxivId = {1806.01260},
+author = {Godard, Cl{\'{e}}ment and {Mac Aodha}, Oisin and Brostow, Gabriel},
+doi = {10.1093/nq/s12-XII.259.259-a},
+eprint = {1806.01260},
+isbn = {8439372396},
+issn = {00293970},
+keywords = {cnns,monocular depth,self-supervision},
+mendeley-groups = {DLCV},
+title = {{Digging Into Self-Supervised Monocular Depth Estimation}},
+url = {http://arxiv.org/abs/1806.01260},
+year = {2018}
+}
+
+@article{Casser2018,
+archivePrefix = {arXiv},
+arxivId = {1811.06152},
+author = {Casser, Vincent and Pirk, Soeren and Mahjourian, Reza and Angelova, Anelia},
+doi = {arXiv:1811.06152v1},
+eprint = {1811.06152},
+file = {:Users/fabiankessler/Dropbox/04-ACADEMIC/Papers/Psychology/Locomotion Cue Integration/2018 - Casser et al. - Depth Prediction Without the Sensors Leveraging Structure for Unsupervised Learning from Monocular Videos.pdf:pdf},
+mendeley-groups = {DLCV},
+title = {{Depth Prediction Without the Sensors: Leveraging Structure for Unsupervised Learning from Monocular Videos}},
+url = {http://arxiv.org/abs/1811.06152},
+year = {2018}
+}
+
+% DATASETS
+%KITTI
+@inproceedings{geiger2012we,
+  title={Are we ready for autonomous driving? the kitti vision benchmark suite},
+  author={Geiger, Andreas and Lenz, Philip and Urtasun, Raquel},
+  booktitle={2012 IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={3354--3361},
+  year={2012},
+  organization={IEEE}
+}
+% KITTI RAW
+@ARTICLE{Geiger2013IJRR,
+  author = {Andreas Geiger and Philip Lenz and Christoph Stiller and Raquel Urtasun},
+  title = {Vision meets Robotics: The KITTI Dataset},
+  journal = {International Journal of Robotics Research (IJRR)},
+  year = {2013}
+} 
+% KITTI STEREO 2015
+@INPROCEEDINGS{Menze2015CVPR,
+  author = {Moritz Menze and Andreas Geiger},
+  title = {Object Scene Flow for Autonomous Vehicles},
+  booktitle = {Conference on Computer Vision and Pattern	Recognition (CVPR)},
+  year = {2015}
+}
+% SYNTHIA
+@InProceedings{Ros_2016_CVPR,
+author = {Ros, German and Sellart, Laura and Materzynska, Joanna and Vazquez, David and Lopez, Antonio M.},
+title = {The SYNTHIA Dataset: A Large Collection of Synthetic Images for Semantic Segmentation of Urban Scenes},
+booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {June},
+year = {2016}
+}
+% VKITTI
+@inproceedings{Gaidon:Virtual:CVPR2016,
+    author = {Gaidon, A and Wang, Q and Cabon, Y and Vig, E},
+    title = {Virtual Worlds as Proxy for Multi-Object Tracking Analysis},
+    booktitle = {CVPR},
+    year = {2016}
+}
+% CITYSCAPES
+@inproceedings{Cordts2016Cityscapes,
+title={The Cityscapes Dataset for Semantic Urban Scene Understanding},
+author={Cordts, Marius and Omran, Mohamed and Ramos, Sebastian and Rehfeld, Timo and Enzweiler, Markus and Benenson, Rodrigo and Franke, Uwe and Roth, Stefan and Schiele, Bernt},
+booktitle={Proc. of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+year={2016}
+}
+
+% PyTorch
+@inproceedings{paszke2017automatic,
+  title={Automatic differentiation in {P}y{T}orch},
+  author={Paszke, Adam and Gross, Sam and Chintala, Soumith and Chanan, Gregory and Yang, Edward and DeVito, Zachary and Lin, Zeming and Desmaison, Alban and Antiga, Luca and Lerer, Adam},
+  booktitle={NIPS-W},
+  year={2017}
+}
+
+% Monodepth with CRFs
+@article{DBLP:journals/corr/abs-1803-00891,
+  author    = {Dan Xu and
+               Elisa Ricci and
+               Wanli Ouyang and
+               Xiaogang Wang and
+               Nicu Sebe},
+  title     = {Monocular Depth Estimation using Multi-Scale Continuous CRFs as Sequential
+               Deep Networks},
+  journal   = {CoRR},
+  volume    = {abs/1803.00891},
+  year      = {2018},
+  url       = {http://arxiv.org/abs/1803.00891},
+  archivePrefix = {arXiv},
+  eprint    = {1803.00891},
+  timestamp = {Mon, 13 Aug 2018 16:45:59 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1803-00891},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+% Monodepth using semantic information
+@inproceedings{ramirez2018,
+  title     = {Geometry meets semantic for semi-supervised monocular depth estimation},
+  author    = {Zama Ramirez, Pierluigi and
+                Poggi, Matteo and
+                Tosi, Fabio and
+                Mattoccia, Stefano and
+                Di Stefano, Luigi},
+  booktitle = {14th Asian Conference on Computer Vision (ACCV)},
+  year = {2018}
+}
+
+% Semi supervised depth estimation
+@article{DBLP:journals/corr/KuznietsovSL17,
+  author    = {Yevhen Kuznietsov and
+               J{\"{o}}rg St{\"{u}}ckler and
+               Bastian Leibe},
+  title     = {Semi-Supervised Deep Learning for Monocular Depth Map Prediction},
+  journal   = {CoRR},
+  volume    = {abs/1702.02706},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1702.02706},
+  archivePrefix = {arXiv},
+  eprint    = {1702.02706},
+  timestamp = {Mon, 13 Aug 2018 16:46:15 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/KuznietsovSL17},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+@article{kingma2014adam,
+  title={Adam: A method for stochastic optimization},
+  author={Kingma, Diederik P and Ba, Jimmy},
+  journal={arXiv preprint arXiv:1412.6980},
+  year={2014}
+}

@@ -1,0 +1,101 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{appendix}
+
+% Include other packages here, before hyperref.
+
+% for using the same institution for all three authors
+\usepackage{authblk}
+% for the ä in Universität
+\usepackage[utf8]{inputenc}
+
+\usepackage{subcaption}
+
+% tables
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{nicefrac}
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+\usepackage{xargs}                      % Use more than one optional parameter in a new commands
+\usepackage[pdftex,dvipsnames]{xcolor}  % Coloured text etc.
+\usepackage[colorinlistoftodos,textsize=small]{todonotes}
+\newcommandx{\todoc}[2][1=]{\todo[linecolor=orange,backgroundcolor=orange!25,bordercolor=orange,#1]{TODO: #2}}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{UNSURE: #2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{CHANGE: #2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{INFO: #2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{IMPROVEMENT: #2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{THIS WILL NOT SHOW: #2}}
+\setlength{\marginparwidth}{2cm}
+
+\cvprfinalcopy % *** Uncomment this line for the final submission
+
+\def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+% The following line needs to be commented out if one wants page-number in final publication mode
+%\ifcvprfinal\pagestyle{empty}\fi
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Unsupervised Monocular Depth Estimation Using Atrous Convolutions}
+
+\author{Fabian Kessler}
+\author{Steven Lang}
+\author{Dominik Straub}
+
+\affil{Technische Universität Darmstadt \authorcr
+  \{\tt firstname.lastname\}@stud.tu-darmstadt.de}
+
+\maketitle
+%\thispagestyle{empty}
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+Monocular depth estimation is concerned with computing a dense depth map from a single image but faces difficulties especially at object boundaries.
+Atrous convolutions have been successfully employed to this end in the task of semantic segmentation.
+In this paper, we investigate, whether it is  also possible to apply atrous convolutions in unsupervised monocular depth estimation. 
+Specifically, we place an Atrous Spatial Pyramid Pooling block in a convolutional neural network between the encoder and decoder. 
+This block allows for computing feature maps at different spatial scales on top of the encoder output. 
+Our experiments show that atrous convolutions in the proposed setup do not improve depth estimation performance. 
+Furthermore, the necessity of a lower output stride after the encoder, such that an increased receptive field size is even applicable, harms runtime and increases memory consumption. 
+Finally, we show that it is possible to reduce the number of channels after the encoder, which reduces the parameter count without impairing predictions.
+\end{abstract}
+%%%%%%%%% BODY TEXT
+%%%%%%%%% INTRO
+\input{01-intro.tex}
+
+%%%%%%%%% RELATED WORK
+\input{02-related_work.tex}
+
+
+%%%%%%%%% METHODS
+\input{03-methods.tex}
+
+
+%%%%%%%%% RESULTS
+\input{04-results.tex}
+
+%%%%%%%%% CONCLUSION
+\input{05-conclusion.tex}
+
+{\small
+\bibliographystyle{ieee}
+\bibliography{bibliography}
+}
+
+\clearpage
+%%%%%%%%% APPENDICES
+\input{06-appendix.tex}
+
+
+\end{document}

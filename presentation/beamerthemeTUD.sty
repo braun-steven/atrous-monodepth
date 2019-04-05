@@ -1,0 +1,147 @@
+% Copyright 2004 by Manuel Carro <mcarro@fi.upm.es>
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+% See the file doc/licenses/LICENSE for more details.
+
+\mode<presentation>
+
+\newif\ifbeamer@secheader
+\beamer@secheaderfalse
+
+\DeclareOptionBeamer{secheader}{\beamer@secheadertrue}
+\ProcessOptionsBeamer
+
+
+% ----- COLOR THEME ----------------------------------------------------------
+% Copyright 2004 by Manuel Carro <mcarro@fi.upm.es>
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+% See the file doc/licenses/LICENSE for more details.
+
+\mode<presentation>
+
+\definecolor{tudred}{RGB}{0, 90, 169}
+\definecolor{tuddarkgrey}{RGB}{99, 99, 99}
+\definecolor{tudgrey}{RGB}{172, 172, 172} 
+
+\setbeamercolor{structure}{fg=tudred} 
+\setbeamercolor{normal text}{fg=black}
+  
+% Taken from theme dolphin
+\setbeamercolor*{palette primary}{use=structure,fg=black,bg=structure.fg!40!white}
+\setbeamercolor*{palette secondary}{use=structure,fg=white,bg=structure.fg!60!white}
+\setbeamercolor*{palette tertiary}{use=structure,fg=white,bg=structure.fg!90!white}
+\setbeamercolor*{palette quaternary}{fg=white,bg=black}
+
+\setbeamercolor*{sidebar}{use=structure,bg=structure.fg}
+  
+\setbeamercolor*{palette sidebar primary}{use=structure,fg=structure.fg!10}
+\setbeamercolor*{palette sidebar secondary}{fg=white}
+\setbeamercolor*{palette sidebar tertiary}{use=structure,fg=structure.fg!50}
+\setbeamercolor*{palette sidebar quaternary}{fg=white}
+
+\setbeamercolor*{titlelike}{use=structure,fg=structure.fg}
+
+\setbeamercolor*{separation line}{}
+\setbeamercolor*{fine separation line}{}
+
+% Custom
+\setbeamercolor*{headline}{fg=tuddarkgrey}
+\setbeamercolor*{footline}{fg=tuddarkgrey}
+
+% Taken from theme rose
+\setbeamercolor{block title}{use=structure, fg=tudred, bg=white}
+%\setbeamercolor{block title alerted}{use=alerted text,fg=alerted text.fg,bg=alerted text.fg!20!bg}
+\setbeamercolor{block title example}{use=structure, fg=tudred, bg=white}
+
+%\setbeamercolor{block body}{parent=normal text,use=block title,bg=tudgrey!20!bg}
+%\setbeamercolor{block body alerted}{parent=normal text,use=block title alerted,bg=block title alerted.bg!50!bg}
+\setbeamercolor{block body example}{parent=normal text,use=block title example,bg=white}
+
+
+
+\mode<all>
+% ----- END OF COLOR THEME ---------------------------------------------------
+
+
+% ----- INNER THEME ----------------------------------------------------------
+% Copyright 2007 by Till Tantau
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+% See the file doc/licenses/LICENSE for more details.
+
+\DeclareOptionBeamer{shadow}[false]{\def\beamer@themerounded@shadow{#1}}
+\ExecuteOptionsBeamer{shadow=false}
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+\setbeamertemplate{blocks}[rounded][shadow=\beamer@themerounded@shadow]
+\setbeamertemplate{items}[none]
+\setbeamertemplate{sections/subsections in toc}[none]
+\setbeamertemplate{title page}[default][colsep=-4bp,rounded=true,shadow=\beamer@themerounded@shadow]
+\setbeamertemplate{part page}[default][colsep=-4bp,rounded=true,shadow=\beamer@themerounded@shadow]
+  
+\mode<all>
+% ----- END OF INNER THEME ---------------------------------------------------
+
+
+% Tills' opinion: should be done in an inner theme, not here.
+
+\usesubitemizeitemtemplate{%
+    \tiny\raise1.5pt\hbox{\color{beamerstructure}$\blacktriangleright$}%
+}
+\usesubsubitemizeitemtemplate{%
+    \tiny\raise1.5pt\hbox{\color{beamerstructure}$\blacktriangleright$}%
+}
+
+\ifbeamer@secheader\else\setbeamertemplate{headline}[default]\fi
+
+% Custom
+\graphicspath{{/home/geilke/research/talks/beamer-template-0.8/}}
+\renewcommand{\maketitle}{\frame[plain]{\centering \includegraphics[width=5cm]{./tud_logo.png}\titlepage}}
+
+\setbeamersize{text margin left=2em, text margin right=2em}
+
+\setbeamertemplate{headline}{
+	\hspace{1em}
+	\raisebox{0.1cm}{
+			% HEADLINE %
+			}
+  \vspace*{0.05cm}
+  \hfill 
+  \raisebox{0.1cm}{Technische Universit\"at Darmstadt}
+  \hspace*{0.1cm}
+  \includegraphics[height=0.4cm]{./tud_logo.png}
+  \hspace*{0.05cm}
+  \vspace*{0.05cm}
+  \newline
+  \rule{\paperwidth}{0.1pt} 
+}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{
+  \rule{\paperwidth}{0.1pt}
+  \vspace*{0.1cm}
+  \newline
+  \hspace*{0.2cm}
+  \insertshortauthor \hspace*{0.5cm} \insertdate
+  \hfill 
+  \scriptsize \insertframenumber
+  \hspace*{0.2cm} \vspace*{0.1cm}
+}
+
+\mode
+<all>

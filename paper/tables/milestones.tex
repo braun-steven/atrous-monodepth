@@ -1,0 +1,8 @@
+\begin{tabular}{lrllrrrrrrrrr}
+\toprule
+ Model & Output-stride &     ASPP &  Abs.Rel. &  Sq.Rel. &   RMSE &  Log RMSE &     a1 &     a2 &     a3 &      Params (M) & $\Delta$ Abs. Rel. (\%)\\
+\midrule
+       Godard & 64  &      - &    0.0970 &   0.8960 &  5.093 &     0.176 &  0.962 &  0.962 &  0.986 &         58.4 & -- \\
+       Godard & 16 & - & 0.0955 & 0.8752 &      4.937 &      0.174 &     0.881 &      0.961 &    0.984 & 58.4 & 2.57 \\
+            Ours (A) & 16 &  1-1-1-1 &    \textbf{0.0927} &   \textbf{0.8132} &  \textbf{4.865} &     \textbf{0.168} &  \textbf{0.888} &  \textbf{0.967} &  \textbf{0.987} &         58.4 & \textbf{4.43} \\
+            Ours (B) & 16 &   1 &    0.0944 &   0.8446 &  5.011 &     0.174 &  0.884 &  0.963 &  0.986 &         \textbf{44.1} & 2.68 \\ \bottomrule \end{tabular}
